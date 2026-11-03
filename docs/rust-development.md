@@ -165,3 +165,19 @@ Central identities are from the file-format tables and pinned PyPNM vocabulary;
 PNN10 is the display tag for a fourth byte of 0x0a. LLD01 is recognized as
 4c4c4401 but its layout remains disabled. PXX9 is internal PyPNM SNMP data and is
 not recognized as an on-disk DOCSIS format here.
+
+### Generate JSON from the RxMER fixture
+
+Run the actual parser against the preserved PyPNM fixture:
+
+```bash
+mkdir -p local
+scripts/cargo-local.sh run --quiet --locked -p pnm-core \
+  --example rxmer_json > local/rxmer.json
+```
+
+The example embeds `tests/fixtures/pypnm/tests/files/rxmer.bin` and writes JSON to
+stdout. Generated output stays in ignored `local/`. This fixture produces 7,480
+samples; the first five values are 42.75, 43.0, 43.0, 40.5 and 41.25 dB.
+The generated metadata and every JSON sample were checked against the binary
+fixture, including quarter-dB conversion and unavailable-value handling.
