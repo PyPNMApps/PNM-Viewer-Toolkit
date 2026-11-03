@@ -54,3 +54,15 @@ On Ubuntu 22.04/24.04 (x86_64 or ARM64), run as your normal user:
 The installer uses sudo for missing system packages and keeps pinned Rust and
 Node.js tools in ignored `local/`. See [development setup](docs/development-setup.md)
 for read-only checks, tool commands and platform limitations.
+
+## License
+
+See [LICENSE](LICENSE) for component scope:
+
+- Reusable Rust libraries and project-owned development tooling:
+  [Apache-2.0](LICENSES/Apache-2.0.txt).
+- Planned desktop shell and React/TypeScript UI:
+  [GPL-3.0-only](LICENSES/GPL-3.0-only.txt).
+
+Third-party material retains its original terms and notices.
+Acknowledgment: PyPNM - Proactive Network Maintenance Toolkit.

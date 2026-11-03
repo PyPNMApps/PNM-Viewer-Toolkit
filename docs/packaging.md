@@ -15,7 +15,8 @@ exempt oversized formats. Report size attribution and resolve scope if exceeded.
 Use native CI runners and installed-package smoke tests; cross-compilation does
 not establish runtime support. Produce local artifacts/checksums, license inventory,
 SBOM and source-build instructions. Reusable crates are Apache-2.0; desktop/UI
-are GPL-3.0-only with corresponding-source obligations. Add full license texts
-and applicable NOTICE content with implementation. Do not bundle PDFs, private
+are GPL-3.0-only with corresponding-source obligations. The root [LICENSE](../LICENSE)
+records component scope; full texts are under `LICENSES/`. Include the applicable
+texts and NOTICE content in distributables. Do not bundle PDFs, private
 captures, Python or reference datasets. External signing/notarization, publishing
 and system-wide installation require authorization.
