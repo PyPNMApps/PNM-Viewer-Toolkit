@@ -13,8 +13,8 @@ use pnm::{
         reader::Reader,
     },
 };
-const RXMER: &[u8] = include_bytes!("../../../tests/fixtures/pypnm/tests/files/rxmer.bin");
-const FEC: &[u8] = include_bytes!("../../../tests/fixtures/pypnm/tests/files/fec_summary.bin");
+const RXMER: &[u8] = pnm_fixtures::RXMER;
+const FEC: &[u8] = pnm_fixtures::FEC_SUMMARY;
 
 #[test]
 fn header_retains_original_payload_and_shared_access() {

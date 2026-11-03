@@ -9,7 +9,7 @@ use pnm::{
         pnm_header::{HasPnmHeader, PnmFormatVersion},
     },
 };
-const FIXTURE: &[u8] = include_bytes!("../../../tests/fixtures/pypnm/tests/files/rxmer.bin");
+const FIXTURE: &[u8] = pnm_fixtures::RXMER;
 fn parse(capture_bytes: &[u8]) -> Result<CmDsOfdmRxMer<'_>, pnm::diagnostic::ParseError> {
     CmDsOfdmRxMer::parse(capture_bytes, ParseLimits::default())
 }
@@ -43,8 +43,7 @@ fn every_truncated_prefix_fails_without_panic() {
 }
 #[test]
 fn reject_other_types_versions_and_extra_bytes() {
-    let fec_summary_bytes =
-        include_bytes!("../../../tests/fixtures/pypnm/tests/files/fec_summary.bin");
+    let fec_summary_bytes = pnm_fixtures::FEC_SUMMARY;
     assert_eq!(
         parse(fec_summary_bytes).unwrap_err().code,
         ErrorCode::UnsupportedType

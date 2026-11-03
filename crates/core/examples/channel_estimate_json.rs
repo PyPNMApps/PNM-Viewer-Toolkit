@@ -12,8 +12,7 @@ use pnm::{
     },
 };
 
-const FIXTURE: &[u8] =
-    include_bytes!("../../../tests/fixtures/pypnm/tests/files/channel_estimation.bin");
+const FIXTURE: &[u8] = pnm_fixtures::CHANNEL_ESTIMATE;
 
 /// Parses the selected capture through its concrete public API.
 ///

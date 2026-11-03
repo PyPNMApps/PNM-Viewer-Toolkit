@@ -10,7 +10,7 @@ use pnm::{
     pnm::parser::{cm_ds_ofdm_fec_summary::CmDsOfdmFecSummary, parse_limits::ParseLimits},
 };
 
-const FIXTURE: &[u8] = include_bytes!("../../../tests/fixtures/pypnm/tests/files/fec_summary.bin");
+const FIXTURE: &[u8] = pnm_fixtures::FEC_SUMMARY;
 
 /// Parses the selected capture through its concrete public API.
 ///

@@ -10,8 +10,7 @@ use pnm::{
     pnm::parser::{cm_us_ofdma_pre_eq::CmUsOfdmaPreEq, parse_limits::ParseLimits},
 };
 
-const FIXTURE: &[u8] =
-    include_bytes!("../../../tests/fixtures/pypnm/tests/files/us_pre_equalizer_coef_last.bin");
+const FIXTURE: &[u8] = pnm_fixtures::UPSTREAM_PRE_EQ_LAST;
 
 /// Parses the selected capture through its concrete public API.
 ///

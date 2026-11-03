@@ -29,7 +29,10 @@ Exercise each parser's public API and its JSON representation. Preserve known
 fixture metadata and sample expectations, borrowing behavior where applicable,
 truncation, declared lengths, trailing bytes, unsupported types/versions, decode
 limits and bounded JSON behavior. Reuse common checks without hiding ownership.
-Use preserved PyPNM fixtures with provenance; never run its capture services.
+Use named captures from the development-only `pnm-fixtures` crate (for example
+`pnm_fixtures::RXMER`). Declare fixture paths only in `tests/fixtures/lib.rs`;
+do not repeat relative paths or add fixture dependencies to production code.
+Preserve PyPNM provenance and licenses; never run its capture services.
 Label synthetic inputs clearly. Symbol tests must assert header preservation and
 unsupported semantic decoding, not imply a complete symbol parser.
 

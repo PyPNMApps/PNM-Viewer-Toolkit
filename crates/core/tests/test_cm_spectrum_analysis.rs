@@ -10,8 +10,7 @@ use pnm::{
     pnm::parser::{cm_spectrum_analysis::CmSpectrumAnalysis, parse_limits::ParseLimits},
 };
 use serde_json::json;
-const SPECTRUM: &[u8] =
-    include_bytes!("../../../tests/fixtures/pypnm/tests/files/spectrum_analyzer.bin");
+const SPECTRUM: &[u8] = pnm_fixtures::SPECTRUM;
 #[test]
 fn public_parser_and_input_contract() {
     let capture = CmSpectrumAnalysis::parse(SPECTRUM, ParseLimits::default()).unwrap();

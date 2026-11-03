@@ -12,8 +12,7 @@ use pnm::{
     },
 };
 use serde_json::json;
-const CHANNEL: &[u8] =
-    include_bytes!("../../../tests/fixtures/pypnm/tests/files/channel_estimation.bin");
+const CHANNEL: &[u8] = pnm_fixtures::CHANNEL_ESTIMATE;
 #[test]
 fn public_parser_and_input_contract() {
     let capture = CmDsOfdmChanEstimateCoef::parse(CHANNEL, ParseLimits::default()).unwrap();
@@ -34,8 +33,7 @@ fn golden_channel() {
     assert_eq!(output["subcarrier_spacing"], 25000);
 }
 use pnm::pnm::parser::pnm_header::HasPnmHeader;
-const UPSTREAM: &[u8] =
-    include_bytes!("../../../tests/fixtures/pypnm/tests/files/us_pre_equalizer_coef.bin");
+const UPSTREAM: &[u8] = pnm_fixtures::UPSTREAM_PRE_EQ;
 #[test]
 fn borrowed_samples_and_wrong_type() {
     let channel = CmDsOfdmChanEstimateCoef::parse(CHANNEL, ParseLimits::default()).unwrap();

@@ -10,7 +10,7 @@ use pnm::{
     pnm::parser::{cm_ds_ofdm_fec_summary::CmDsOfdmFecSummary, parse_limits::ParseLimits},
 };
 use serde_json::json;
-const FEC: &[u8] = include_bytes!("../../../tests/fixtures/pypnm/tests/files/fec_summary.bin");
+const FEC: &[u8] = pnm_fixtures::FEC_SUMMARY;
 #[test]
 fn public_parser_and_input_contract() {
     let capture = CmDsOfdmFecSummary::parse(FEC, ParseLimits::default()).unwrap();

@@ -12,8 +12,7 @@ use pnm::{
     },
 };
 
-const FIXTURE: &[u8] =
-    include_bytes!("../../../tests/fixtures/pypnm/tests/files/modulation_profile.bin");
+const FIXTURE: &[u8] = pnm_fixtures::MODULATION_PROFILE;
 
 /// Parses the selected capture through its concrete public API.
 ///

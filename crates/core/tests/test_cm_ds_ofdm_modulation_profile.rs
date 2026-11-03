@@ -12,8 +12,7 @@ use pnm::{
     },
 };
 use serde_json::json;
-const MODULATION: &[u8] =
-    include_bytes!("../../../tests/fixtures/pypnm/tests/files/modulation_profile.bin");
+const MODULATION: &[u8] = pnm_fixtures::MODULATION_PROFILE;
 #[test]
 fn public_parser_and_input_contract() {
     let capture = CmDsOfdmModulationProfile::parse(MODULATION, ParseLimits::default()).unwrap();

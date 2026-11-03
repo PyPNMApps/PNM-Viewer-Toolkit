@@ -10,7 +10,7 @@ use pnm::{
     pnm::parser::{cm_ds_ofdm_rx_mer::CmDsOfdmRxMer, parse_limits::ParseLimits},
 };
 
-const FIXTURE: &[u8] = include_bytes!("../../../tests/fixtures/pypnm/tests/files/rxmer.bin");
+const FIXTURE: &[u8] = pnm_fixtures::RXMER;
 
 /// Parses the selected capture through its concrete public API.
 ///

@@ -13,8 +13,7 @@ use pnm::{
         pnm_header::HasPnmHeader,
     },
 };
-const CHANNEL: &[u8] =
-    include_bytes!("../../../tests/fixtures/pypnm/tests/files/channel_estimation.bin");
+const CHANNEL: &[u8] = pnm_fixtures::CHANNEL_ESTIMATE;
 fn header(tag: &str) -> Vec<u8> {
     let descriptor = identify_tag(tag).unwrap();
     let mut bytes = descriptor.signature.to_vec();

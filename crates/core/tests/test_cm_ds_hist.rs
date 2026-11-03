@@ -10,7 +10,7 @@ use pnm::{
     pnm::parser::{cm_ds_hist::CmDsHist, parse_limits::ParseLimits},
 };
 use serde_json::json;
-const HISTOGRAM: &[u8] = include_bytes!("../../../tests/fixtures/pypnm/tests/files/histogram.bin");
+const HISTOGRAM: &[u8] = pnm_fixtures::HISTOGRAM;
 #[test]
 fn public_parser_and_input_contract() {
     let capture = CmDsHist::parse(HISTOGRAM, ParseLimits::default()).unwrap();

@@ -10,8 +10,7 @@ use pnm::{
     pnm::parser::{cm_ds_const_disp_meas::CmDsConstDispMeas, parse_limits::ParseLimits},
 };
 
-const FIXTURE: &[u8] =
-    include_bytes!("../../../tests/fixtures/pypnm/tests/files/const_display.bin");
+const FIXTURE: &[u8] = pnm_fixtures::CONSTELLATION;
 
 /// Parses the selected capture through its concrete public API.
 ///

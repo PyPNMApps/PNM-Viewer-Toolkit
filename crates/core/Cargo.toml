@@ -12,3 +12,4 @@ tracing = "=0.1.41"
 
 [dev-dependencies]
 logging = { path = "../logging" }
+pnm-fixtures = { path = "../../tests/fixtures" }

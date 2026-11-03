@@ -68,10 +68,15 @@ name = "pnm"
 version = "0.1.0"
 dependencies = [
  "logging",
+ "pnm-fixtures",
  "serde",
  "serde_json",
  "tracing",
 ]
+
+[[package]]
+name = "pnm-fixtures"
+version = "0.1.0"
 
 [[package]]
 name = "proc-macro2"

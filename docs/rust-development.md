@@ -318,3 +318,11 @@ Run a single parser's suite with:
 ```bash
 scripts/cargo-local.sh test -p pnm --test test_cm_ds_ofdm_rx_mer --locked
 ```
+
+### Shared fixture catalog
+
+Tests and examples use named embedded bytes such as `pnm_fixtures::RXMER`.
+The development-only package at `tests/fixtures/` owns the fixture directory
+and each filename in one place, anchored with `CARGO_MANIFEST_DIR`. It is a
+`dev-dependency` of `pnm`, so production library builds do not pull in captures.
+The existing binary files and their provenance remain unchanged.

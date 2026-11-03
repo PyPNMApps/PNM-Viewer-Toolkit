@@ -10,8 +10,7 @@ use pnm::{
     pnm::parser::{cm_spectrum_analysis::CmSpectrumAnalysis, parse_limits::ParseLimits},
 };
 
-const FIXTURE: &[u8] =
-    include_bytes!("../../../tests/fixtures/pypnm/tests/files/spectrum_analyzer.bin");
+const FIXTURE: &[u8] = pnm_fixtures::SPECTRUM;
 
 /// Parses the selected capture through its concrete public API.
 ///

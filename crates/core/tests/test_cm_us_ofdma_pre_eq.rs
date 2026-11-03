@@ -10,8 +10,7 @@ use pnm::{
     pnm::parser::{cm_us_ofdma_pre_eq::CmUsOfdmaPreEq, parse_limits::ParseLimits},
 };
 use serde_json::json;
-const UPSTREAM: &[u8] =
-    include_bytes!("../../../tests/fixtures/pypnm/tests/files/us_pre_equalizer_coef.bin");
+const UPSTREAM: &[u8] = pnm_fixtures::UPSTREAM_PRE_EQ;
 #[test]
 fn public_parser_and_input_contract() {
     let capture = CmUsOfdmaPreEq::parse(UPSTREAM, ParseLimits::default()).unwrap();
@@ -46,8 +45,7 @@ fn golden_last_update() {
 }
 
 use pnm::pnm::parser::pnm_file_type::identify_tag;
-const LAST_UPDATE: &[u8] =
-    include_bytes!("../../../tests/fixtures/pypnm/tests/files/us_pre_equalizer_coef_last.bin");
+const LAST_UPDATE: &[u8] = pnm_fixtures::UPSTREAM_PRE_EQ_LAST;
 #[test]
 fn last_update_contract_and_borrowing() {
     assert_fixture_contract(LAST_UPDATE);

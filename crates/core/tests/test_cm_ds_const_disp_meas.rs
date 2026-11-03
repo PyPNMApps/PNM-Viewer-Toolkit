@@ -10,8 +10,7 @@ use pnm::{
     pnm::parser::{cm_ds_const_disp_meas::CmDsConstDispMeas, parse_limits::ParseLimits},
 };
 use serde_json::json;
-const CONSTELLATION: &[u8] =
-    include_bytes!("../../../tests/fixtures/pypnm/tests/files/const_display.bin");
+const CONSTELLATION: &[u8] = pnm_fixtures::CONSTELLATION;
 #[test]
 fn public_parser_and_input_contract() {
     let capture = CmDsConstDispMeas::parse(CONSTELLATION, ParseLimits::default()).unwrap();
