@@ -85,6 +85,7 @@ impl<'input> CmDsOfdmRxMer<'input> {
     /// # Errors
     /// Rejects non-RxMER identity, truncation, length/limit violations or overflow.
     /// Diagnostics remain relative to the original file.
+    #[tracing::instrument(level = "debug", skip_all, fields(file_type = header.descriptor().tag, max_samples = limits.max_samples), err)]
     pub fn from_header(header: PnmHeader<'input>, limits: ParseLimits) -> Result<Self, ParseError> {
         if header.descriptor().decoder != super::pnm_file_type::PnmDecoderKind::RxMer {
             return Err(ParseError {
@@ -135,6 +136,10 @@ impl<'input> CmDsOfdmRxMer<'input> {
         };
         // Range validation is eager; sample iteration is not needed during parsing.
         let _frequencies = capture.frequencies_hz()?;
+        tracing::debug!(
+            sample_count = capture.raw_values.len(),
+            "Parsed RxMER payload"
+        );
         Ok(capture)
     }
     /// Serializes this capture directly to bounded pretty JSON.

@@ -40,6 +40,7 @@ impl<'input> PnmHeader<'input> {
     /// Header metadata plus the unchanged remaining payload slice.
     /// # Errors
     /// Reports unknown identity/layout/version or truncated fields with file offsets.
+    #[tracing::instrument(level = "debug", skip_all, fields(input_bytes = bytes.len()), err)]
     pub fn from_bytes(bytes: &'input [u8]) -> Result<Self, ParseError> {
         let mut reader = Reader::new(bytes);
         let file_type = reader.read_bytes("file_type")?;
@@ -71,6 +72,11 @@ impl<'input> PnmHeader<'input> {
             HeaderLayout::WithCaptureTime => Some(reader.read_u32_be("capture_time")?),
             HeaderLayout::WithoutCaptureTime => None,
         };
+        tracing::debug!(
+            file_type = descriptor.tag,
+            payload_offset = reader.position(),
+            "Parsed PNM header"
+        );
         Ok(Self {
             descriptor,
             file_type,

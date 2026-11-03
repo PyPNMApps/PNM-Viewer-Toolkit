@@ -58,6 +58,7 @@ impl<'input> PnmFile<'input> {
     /// Typed decoded data; the file remains available for raw inspection.
     /// # Errors
     /// Propagates header/payload errors or reports a known but unavailable decoder.
+    #[tracing::instrument(level = "debug", skip_all, fields(input_bytes = self.bytes.len()), err)]
     pub fn decode(&self, limits: ParseLimits) -> Result<DecodedPnm<'input>, ParseError> {
         let header = self.header.as_ref().map_err(Clone::clone)?;
         match header.descriptor().decoder {

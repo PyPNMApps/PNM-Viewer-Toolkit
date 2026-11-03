@@ -181,3 +181,31 @@ stdout. Generated output stays in ignored `local/`. This fixture produces 7,480
 samples; the first five values are 42.75, 43.0, 43.0, 40.5 and 41.25 dB.
 The generated metadata and every JSON sample were checked against the binary
 fixture, including quarter-dB conversion and unavailable-value handling.
+
+### Logging
+
+`tracing` provides level-based events, structured fields and spans grouping a
+parse operation. The separate `pnm-logging` crate configures the text subscriber;
+applications call `pnm_logging::init()` once during startup. `pnm-core` only emits
+events and never initializes process-global logging. The example uses the logging
+crate as a development dependency; core library consumers choose their subscriber.
+
+Logs go to stderr, keeping JSON on stdout. The default filter is info; parser
+success events and spans use debug. Header/payload/dispatch failures emit error
+events and still return structured ParseError values. Nested failure events may
+appear at both the failing parser and dispatch boundary. Logging fields include
+byte counts, file type and sample count, not capture bytes or MAC addresses.
+
+```bash
+RUST_LOG=pnm_core=debug scripts/cargo-local.sh run --quiet --locked \
+  -p pnm-core --example rxmer_json > local/rxmer.json
+```
+
+Use `RUST_LOG=off` to silence logging or a standard filter such as
+`warn,pnm_core=debug`. Invalid filters and repeated global initialization return
+errors rather than panicking or replacing an existing subscriber. File sinks,
+rotation and remote telemetry are not configured.
+
+The simpler `log` crate offers message levels and targets; `tracing` additionally
+provides structured fields and nested operation context. Both are third-party
+crates. See the [tracing subscriber documentation](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/fmt/).

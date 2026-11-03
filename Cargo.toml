@@ -1,3 +1,3 @@
 [workspace]
-members = ["crates/pnm-core"]
+members = ["crates/pnm-core", "crates/pnm-logging"]
 resolver = "2"

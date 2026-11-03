@@ -16,7 +16,8 @@ const RXMER_FIXTURE: &[u8] = include_bytes!("../../../tests/fixtures/pypnm/tests
 /// Success after generating the complete bounded JSON document.
 /// # Errors
 /// Propagates parsing and serialization errors to the command exit status.
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pnm_logging::init()?;
     let capture = CmDsOfdmRxMer::parse(RXMER_FIXTURE, ParseLimits::default())?;
     println!("{}", capture.to_json(DEFAULT_MAX_JSON_BYTES)?);
     Ok(())

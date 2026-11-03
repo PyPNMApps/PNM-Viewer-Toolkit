@@ -1,5 +1,18 @@
-# Java build and local environment
-/target/
+# Rust build output (workspace and standalone crates)
+target/
+
+# Rust formatter backups and profiling/coverage output
+*.rs.bk
+*.profraw
+*.profdata
+/coverage/
+/lcov.info
+/tarpaulin-report.html
+/tarpaulin-report.json
+
+# Keep Cargo.lock, Cargo.toml, rust-toolchain.toml and .rs source tracked.
+
+# Legacy Java build and local environment
 /build/
 /.gradle/
 /.idea/
