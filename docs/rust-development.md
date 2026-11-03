@@ -299,3 +299,22 @@ Complex captures expose `iq()` and `raw_iq()` in Rust and `iq` in JSON.
 The shared `IqPair` type is ordered `[I, Q]`: in-phase/real then
 quadrature/imaginary. `IqSamples` owns the borrowed wire view; `decode_iq`
 performs fixed-point conversion. RxMER keeps its scalar dB naming.
+
+## Test organization
+
+Each concrete parser has a `crates/core/tests/test_<parser_module>.rs` integration
+test target. Current and last-update pre-EQ share `test_cm_us_ofdma_pre_eq.rs`,
+matching their shared implementation. Header/identity/dispatch tests remain in
+`test_pnm_file.rs`; reusable assertions live under `tests/common/`. Reader unit
+tests remain beside their implementation.
+
+`test_fixed_point_decoder.rs` verifies s2.13 and s1.14 known values, signed
+boundaries, I/Q ordering, and all 65,536 signed input words for each format.
+Parser tests independently verify on-wire scale selection and exclusion rules.
+See the [testing skill](../skills/pnm-testing/SKILL.md) for maintenance rules.
+
+Run a single parser's suite with:
+
+```bash
+scripts/cargo-local.sh test -p pnm --test test_cm_ds_ofdm_rx_mer --locked
+```

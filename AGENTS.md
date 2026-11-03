@@ -81,3 +81,8 @@ Keep field provenance, coverage, source hashes, manifests and private PDFs under
 reference it but must state that evidence files are absent from fresh clones.
 Use the versioned specification skills and parser tests to reconstruct evidence
 when needed; do not assume those local records are distributed with the project.
+
+## Testing
+
+Apply `skills/pnm-testing/SKILL.md` for Rust parser and numeric work. Keep one
+integration-test file per concrete parser and independent math/Q-format tests.
