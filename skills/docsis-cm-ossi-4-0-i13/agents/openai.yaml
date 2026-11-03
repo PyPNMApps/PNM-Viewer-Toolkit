@@ -1,0 +1,6 @@
+interface:
+  display_name: "DOCSIS 4.0 CM-OSSI I13"
+  short_description: "Look up DOCSIS 4.0 CM-OSSI I13 requirements"
+  default_prompt: "Use $docsis-cm-ossi-4-0-i13 to answer this question from CM-SP-CM-OSSIv4.0-I13-260429, citing the exact section and PDF page and preserving normative force."
+policy:
+  allow_implicit_invocation: true

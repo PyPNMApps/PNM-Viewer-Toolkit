@@ -1,0 +1,15 @@
+spec_family: DOCSIS 4.0
+specification: Cable Modem Operations Support System Interface Specification
+document_control_number: CM-SP-CM-OSSIv4.0-I13-260429
+issue: I13
+issue_slug: i13
+publication_date: 2026-04-29
+status: Issued
+pdf_page_count: 355
+source_pdf: CM-SP-CM-OSSIv4.0-I13-260429.pdf
+canonical_skill_name: docsis-cm-ossi-4-0-i13
+extraction:
+  format: layout-preserving UTF-8 text
+  page_marker: "<!-- PDF_PAGE: N -->"
+  authority: "The PDF is authoritative; extracted text is a lookup representation only."
+  caution: "Verify the PDF for ambiguous tables, object-attribute rows, figures, formulas, symbols, MIB syntax, enumerations, units, ranges, or layout-sensitive values."

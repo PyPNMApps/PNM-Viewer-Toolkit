@@ -1,0 +1,17 @@
+# Java build and local environment
+/target/
+/build/
+/.gradle/
+/.idea/
+*.iml
+*.class
+*.log
+.env
+.env.*
+!.env.example
+/local/
+/captures/
+
+# Python development-helper cache
+__pycache__/
+*.pyc
