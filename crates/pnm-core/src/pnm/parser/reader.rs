@@ -6,11 +6,11 @@ use crate::diagnostic::{ErrorCode, ParseError};
 
 /// Cursor over borrowed bytes with checked, transactional reads.
 /// Failed reads leave the cursor unchanged.
-pub struct Reader<'a> {
-    bytes: &'a [u8],
+pub struct Reader<'input> {
+    bytes: &'input [u8],
     offset: usize,
 }
-impl<'a> Reader<'a> {
+impl<'input> Reader<'input> {
     /// Starts a reader at byte offset zero.
     ///
     /// # Arguments
@@ -18,29 +18,35 @@ impl<'a> Reader<'a> {
     ///
     /// # Returns
     /// A cursor borrowing the input without copying it.
-    pub fn new(bytes: &'a [u8]) -> Self {
+    pub fn new(bytes: &'input [u8]) -> Self {
         Self { bytes, offset: 0 }
     }
     /// Copies a fixed-size field and advances only on success.
     ///
     /// # Arguments
-    /// * `N` - Number of bytes to read.
+    /// * `BYTE_COUNT` - Number of bytes to read.
     /// * `field` - Static field label used in failure diagnostics.
     ///
     /// # Returns
-    /// Exactly N bytes in source order; zero-length reads are permitted.
+    /// Exactly BYTE_COUNT bytes in source order; zero-length reads are permitted.
     ///
     /// # Errors
     /// Returns Truncated at the original cursor if bounds or addition fail.
-    pub fn take<const N: usize>(&mut self, field: &'static str) -> Result<[u8; N], ParseError> {
+    pub fn take<const BYTE_COUNT: usize>(
+        &mut self,
+        field: &'static str,
+    ) -> Result<[u8; BYTE_COUNT], ParseError> {
         let error = ParseError {
             code: ErrorCode::Truncated,
             offset: self.offset,
             field,
         };
-        let end_exclusive = self.offset.checked_add(N).ok_or_else(|| error.clone())?;
+        let end_exclusive = self
+            .offset
+            .checked_add(BYTE_COUNT)
+            .ok_or_else(|| error.clone())?;
         let slice = self.bytes.get(self.offset..end_exclusive).ok_or(error)?;
-        let mut result = [0; N];
+        let mut result = [0; BYTE_COUNT];
         result.copy_from_slice(slice);
         self.offset = end_exclusive;
         Ok(result)

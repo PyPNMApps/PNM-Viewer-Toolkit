@@ -26,15 +26,19 @@ impl fmt::Display for ParseError {
     /// Formats a diagnostic for human-readable display.
     ///
     /// # Arguments
-    /// * `f` - Destination formatter.
+    /// * `formatter` - Destination formatter.
     ///
     /// # Returns
     /// The formatter result; machine callers should use structured fields.
     ///
     /// # Errors
     /// Propagates errors from the destination formatter.
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}: {} at byte {}", self.code, self.field, self.offset)
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "{:?}: {} at byte {}",
+            self.code, self.field, self.offset
+        )
     }
 }
 impl std::error::Error for ParseError {}

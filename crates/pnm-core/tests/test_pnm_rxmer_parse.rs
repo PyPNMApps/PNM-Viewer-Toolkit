@@ -10,30 +10,30 @@ use pnm_core::{
     },
 };
 const FIXTURE: &[u8] = include_bytes!("../../../tests/fixtures/pypnm/tests/files/rxmer.bin");
-fn parse(b: &[u8]) -> Result<CmDsOfdmRxMer<'_>, pnm_core::diagnostic::ParseError> {
-    CmDsOfdmRxMer::parse(b, ParseLimits::default())
+fn parse(capture_bytes: &[u8]) -> Result<CmDsOfdmRxMer<'_>, pnm_core::diagnostic::ParseError> {
+    CmDsOfdmRxMer::parse(capture_bytes, ParseLimits::default())
 }
 #[test]
 fn golden_fixture() {
-    let rx = parse(FIXTURE).unwrap();
-    let base: &dyn HasPnmHeader = &rx;
+    let rxmer = parse(FIXTURE).unwrap();
+    let header_access: &dyn HasPnmHeader = &rxmer;
     assert_eq!(
-        base.format_version(),
+        header_access.format_version(),
         PnmFormatVersion { major: 1, minor: 0 }
     );
-    assert_eq!(base.capture_time(), Some(1380970));
-    assert_eq!(rx.channel_id, 34);
-    assert_eq!(rx.mac_address, [0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6]);
-    assert_eq!(rx.subcarrier_zero_frequency_hz, 631100000);
-    assert_eq!(rx.first_active_subcarrier_index, 356);
-    assert_eq!(rx.subcarrier_spacing_khz, 25);
-    assert_eq!(rx.raw_values().len(), 7480);
+    assert_eq!(header_access.capture_time(), Some(1380970));
+    assert_eq!(rxmer.channel_id, 34);
+    assert_eq!(rxmer.mac_address, [0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6]);
+    assert_eq!(rxmer.subcarrier_zero_frequency_hz, 631100000);
+    assert_eq!(rxmer.first_active_subcarrier_index, 356);
+    assert_eq!(rxmer.subcarrier_spacing_khz, 25);
+    assert_eq!(rxmer.raw_values().len(), 7480);
     assert_eq!(
-        rx.values_db().take(3).collect::<Vec<_>>(),
+        rxmer.values_db().take(3).collect::<Vec<_>>(),
         vec![Some(42.75), Some(43.0), Some(43.0)]
     );
-    assert_eq!(rx.frequencies_hz().unwrap().next(), Some(640000000));
-    assert_eq!(rx.frequencies_hz().unwrap().last(), Some(826975000));
+    assert_eq!(rxmer.frequencies_hz().unwrap().next(), Some(640000000));
+    assert_eq!(rxmer.frequencies_hz().unwrap().last(), Some(826975000));
 }
 #[test]
 fn every_truncated_prefix_fails_without_panic() {
@@ -43,8 +43,12 @@ fn every_truncated_prefix_fails_without_panic() {
 }
 #[test]
 fn reject_other_types_versions_and_extra_bytes() {
-    let fec = include_bytes!("../../../tests/fixtures/pypnm/tests/files/fec_summary.bin");
-    assert_eq!(parse(fec).unwrap_err().code, ErrorCode::UnsupportedType);
+    let fec_summary_bytes =
+        include_bytes!("../../../tests/fixtures/pypnm/tests/files/fec_summary.bin");
+    assert_eq!(
+        parse(fec_summary_bytes).unwrap_err().code,
+        ErrorCode::UnsupportedType
+    );
     for offset in [4, 5] {
         let mut bytes = FIXTURE.to_vec();
         bytes[offset] = 2;
@@ -76,12 +80,12 @@ fn preserve_missing_and_boundary_values() {
     let mut bytes = FIXTURE[..28].to_vec();
     bytes[24..28].copy_from_slice(&4_u32.to_be_bytes());
     bytes.extend_from_slice(&[0, 95, 254, 255]);
-    let rx = parse(&bytes).unwrap();
+    let rxmer = parse(&bytes).unwrap();
     assert_eq!(
-        rx.values_db().collect::<Vec<_>>(),
+        rxmer.values_db().collect::<Vec<_>>(),
         vec![Some(0.0), Some(23.75), Some(63.5), None]
     );
-    assert_eq!(rx.raw_values(), &[0, 95, 254, 255]);
+    assert_eq!(rxmer.raw_values(), &[0, 95, 254, 255]);
 }
 
 #[test]

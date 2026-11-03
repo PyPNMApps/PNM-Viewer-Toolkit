@@ -118,6 +118,21 @@ primitive in advance. Raw bytes can remain u8 and ordinary lengths/indexing can
 remain usize when their meaning is clear. Keep Rust ownership, Result/Option
 and traits; C ABI layout is unrelated to these readability choices.
 
+## Descriptive identifiers and lifetime names
+
+Use meaningful names for variables, parameters, generic parameters and Rust
+lifetimes. Avoid single-letter names unless they are obvious in a tiny local
+operation, such as a simple loop counter `i`. The exception is not a default
+for parser fields, buffers, closures, public APIs or lifetimes.
+
+Name lifetimes for the borrow they describe: `'input` for capture bytes and
+`'session` for session-owned borrows, rather than `'a` or `'b`. Keep anonymous
+`'_` where no explicit relationship needs a name; it is lifetime inference,
+not an opaque variable name. Prefer `BYTE_COUNT` to const generic `N`,
+`formatter` to `f`, and `capture_bytes` to `b`. Keep docs and examples aligned
+with renamed parameters. Do not rename identifiers in preserved upstream
+fixtures/reference sources or generated files.
+
 ## Descriptive names and domain types
 
 Name values for domain meaning, including units and bounds where relevant:

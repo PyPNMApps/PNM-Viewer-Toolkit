@@ -67,3 +67,6 @@ when present, and request the bundle if needed in a fresh checkout.
 - Introduce readable domain types incrementally for meaningful fields/APIs. Use
   primitives underneath; aliases name concepts, newtypes enforce separation,
   and structs group related fields. Follow coding-style for placement and reuse.
+
+- Use meaningful identifiers and lifetimes (for example `capture_bytes` and
+  `'input`); reserve single letters for obvious, simple local counters.

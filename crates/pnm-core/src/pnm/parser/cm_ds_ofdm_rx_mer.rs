@@ -44,14 +44,14 @@ impl Default for ParseLimits {
 /// Decoded RxMER metadata with samples borrowed from the caller.
 /// No statistics, I/O or allocation of sample arrays occurs here.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CmDsOfdmRxMer<'a> {
+pub struct CmDsOfdmRxMer<'input> {
     header: PnmHeader,
     pub channel_id: ChannelId,
     pub mac_address: MacAddress,
     pub subcarrier_zero_frequency_hz: FrequencyHz,
     pub first_active_subcarrier_index: SubcarrierIdx,
     pub subcarrier_spacing_khz: SubcarrierSpacingKhz,
-    raw_values: &'a [u8],
+    raw_values: &'input [u8],
 }
 impl HasPnmHeader for CmDsOfdmRxMer<'_> {
     /// Borrows the composed common header.
@@ -62,7 +62,7 @@ impl HasPnmHeader for CmDsOfdmRxMer<'_> {
         &self.header
     }
 }
-impl<'a> CmDsOfdmRxMer<'a> {
+impl<'input> CmDsOfdmRxMer<'input> {
     /// Decodes an RxMER 1.0 file without copying its samples.
     ///
     /// # Arguments
@@ -75,7 +75,7 @@ impl<'a> CmDsOfdmRxMer<'a> {
     /// # Errors
     /// Reports field/offset errors for truncation, unsupported type/version,
     /// exceeded limits, frequency overflow or a payload length mismatch, including trailing bytes.
-    pub fn parse(bytes: &'a [u8], limits: ParseLimits) -> Result<Self, ParseError> {
+    pub fn parse(bytes: &'input [u8], limits: ParseLimits) -> Result<Self, ParseError> {
         let error = |code, offset, field| ParseError {
             code,
             offset,
@@ -148,7 +148,7 @@ impl<'a> CmDsOfdmRxMer<'a> {
     ///
     /// # Returns
     /// The original sample slice, including unavailable-value sentinels.
-    pub fn raw_values(&self) -> &'a [u8] {
+    pub fn raw_values(&self) -> &'input [u8] {
         self.raw_values
     }
     /// Lazily converts quarter-dB samples without allocating.
