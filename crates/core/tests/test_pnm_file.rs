@@ -40,7 +40,9 @@ fn header_retains_original_payload_and_shared_access() {
 fn dispatch_reuses_header_and_matches_direct_parser() {
     let file = PnmFile::from_bytes(RXMER);
     let decoded = file.decode(ParseLimits::default()).unwrap();
-    let DecodedPnm::RxMer(capture) = decoded;
+    let DecodedPnm::RxMer(capture) = decoded else {
+        panic!("wrong decoder")
+    };
     assert_eq!(
         capture,
         CmDsOfdmRxMer::parse(RXMER, ParseLimits::default()).unwrap()
@@ -54,13 +56,12 @@ fn dispatch_reuses_header_and_matches_direct_parser() {
             .code,
         ErrorCode::LimitExceeded
     );
-    assert_eq!(
+    assert!(matches!(
         PnmFile::from_bytes(FEC)
             .decode(ParseLimits::default())
-            .unwrap_err()
-            .code,
-        ErrorCode::UnsupportedDecoder
-    );
+            .unwrap(),
+        DecodedPnm::FecSummary(_)
+    ));
 }
 
 #[test]
@@ -70,13 +71,12 @@ fn unsupported_inputs_remain_inspectable() {
     let mut version = RXMER.to_vec();
     version[4] = 2;
     let mut unverified = RXMER.to_vec();
-    unverified[3] = 6;
+    unverified[3] = 1;
     let mut false_fec = FEC.to_vec();
     false_fec[0] = b'X';
     for (bytes, code) in [
         (&unknown, ErrorCode::UnsupportedType),
         (&version, ErrorCode::UnsupportedVersion),
-        (&unverified, ErrorCode::UnsupportedLayout),
         (&false_fec, ErrorCode::UnsupportedType),
     ] {
         let file = PnmFile::from_bytes(bytes);
@@ -84,6 +84,14 @@ fn unsupported_inputs_remain_inspectable() {
         assert_eq!(file.header().unwrap_err().code, code);
         assert_eq!(file.decode(ParseLimits::default()).unwrap_err().code, code);
     }
+    assert!(PnmFile::from_bytes(&unverified).header().is_ok());
+    assert_eq!(
+        PnmFile::from_bytes(&unverified)
+            .decode(ParseLimits::default())
+            .unwrap_err()
+            .code,
+        ErrorCode::UnsupportedDecoder
+    );
     assert_eq!(
         PnmFile::from_bytes(&RXMER[..3]).header().unwrap_err().code,
         ErrorCode::Truncated
@@ -111,6 +119,18 @@ fn payload_errors_keep_original_file_offsets() {
     assert_eq!(reader.read_u16_be("short").unwrap_err().offset, 10);
     assert_eq!(reader.read_u8("last").unwrap(), 1);
     assert_eq!(reader.position(), 11);
+    let mut reader = Reader::with_origin(&[1, 2, 3], 10).unwrap();
+    assert_eq!(
+        reader
+            .read_slice(usize::MAX, "overflow")
+            .unwrap_err()
+            .offset,
+        10
+    );
+    assert_eq!(reader.position(), 10);
+    assert_eq!(reader.read_slice(2, "slice").unwrap(), &[1, 2]);
+    assert_eq!(reader.read_slice(2, "short").unwrap_err().offset, 12);
+    assert_eq!(reader.read_u8("last").unwrap(), 3);
 }
 
 #[test]

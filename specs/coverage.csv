@@ -1,3 +1,12 @@
 format,file_version,implementation,evidence,limitations
-RxMER,1.0,implemented,text extracts I27/I13 and pinned PyPNM fixture,PDF not rendered;no blanket DOCSIS applicability claim;other versions unsupported
-FEC Summary,1.0,header-only,I27 Table 71 p181 and I13 Table 104 p220;PyPNM fec_summary fixture,payload decoding unsupported;capture time absent;PDF not rendered
+RxMER,1.0,implemented,I27 Table 68;I13 Table 101;PyPNM fixture,text only;strict v1.0;no blanket compliance claim
+Channel estimate,1.0,implemented,I27 Table 63 p168-169;I13 Table 96 p207-208;pinned PyPNM fixture,text only;strict v1.0
+Constellation,1.0,implemented,I27 Table 65 p171-172;I13 Table 98 p210-211;pinned PyPNM fixture,text only;strict v1.0
+Histogram,1.0,implemented,I27 Table 74 p185-186;I13 Table 107 p224-225;pinned PyPNM fixture,text only;strict v1.0
+Current upstream pre-EQ,1.0,implemented,I27 Table 78 p191-192;I13 Table 111 p230-231;pinned PyPNM fixture,text only;strict v1.0
+Last upstream pre-EQ,1.0,implemented,I27 Table 77 p189-190;I13 Table 110 p229;pinned PyPNM fixture,text only;strict v1.0
+FEC summary,1.0,implemented,I27 Table 71 p181;I13 Table 104 p220;D.2.1.6 both;pinned PyPNM fixture,text only;strict v1.0
+Spectrum,1.0,implemented,I27 Table 58 p160-161;I13 Table 91 p200-201;D.2.1.4 both;pinned PyPNM fixture,text only;strict v1.0
+Modulation profiles,1.0,implemented,I27 Table 80 p194;I13 Table 113 p233;D.2.1.7 both;pinned PyPNM fixture,text only;strict v1.0
+Latency summary,1.0,implemented-synthetic-only,I27 Tables 83-84 p197-199;I13 Tables 116-117 p236-238;D.3.3 both,text only;strict v1.0 inbound capture validation pending
+Symbol capture,1.0,header-only stub,I27 Table 61 p165;I13 Table 94 p204,payload intentionally unsupported;no real fixture

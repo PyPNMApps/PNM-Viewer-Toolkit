@@ -31,3 +31,43 @@ pub type DataLengthBytes = u32;
 pub type SampleCount = usize;
 /// Decoded RxMER in decibels; unavailable measurements are represented by Option.
 pub type RxMerDb = f64;
+
+/// Real and imaginary components in linear fixed-point units.
+pub type ComplexValue = [f64; 2];
+/// Unsigned measurement counter encoded in four bytes.
+pub type CounterValue = u32;
+/// Profile identifier encoded in one byte.
+pub type ProfileId = u8;
+/// Number of profiles encoded in one byte.
+pub type ProfileCount = u8;
+/// Encoded modulation assignment; unknown values remain representable.
+pub type ModulationOrder = u8;
+/// Constellation modulation selection encoded in two bytes.
+pub type ConstellationModulationOrder = u16;
+/// Constellation symbol count encoded in two bytes.
+pub type SymbolCount = u16;
+/// Encoded histogram symmetry flag.
+pub type HistogramSymmetry = u8;
+/// Encoded FEC summary selection.
+pub type FecSummaryType = u8;
+/// Encoded record count per profile.
+pub type RecordCount = u16;
+/// Spectrum amplitude in dB referenced to 0 dBmV.
+pub type AmplitudeDb = f64;
+/// Encoded spectrum bin count per segment.
+pub type SegmentBinCount = u16;
+/// Encoded spectrum noise bandwidth parameter.
+pub type NoiseBandwidth = u16;
+/// Encoded spectrum window selection.
+pub type WindowFunction = u16;
+
+/// Service-flow identifier encoded in four bytes.
+pub type ServiceFlowId = u32;
+/// Exact 16-byte service-flow label, including padding.
+pub type ServiceFlowLabel = [u8; 16];
+/// Latency histogram edge in hundredths of a millisecond.
+pub type LatencyBinEdge = u16;
+/// Latency in microseconds.
+pub type LatencyUs = u32;
+/// Latency histogram packet counter encoded in eight bytes.
+pub type PacketCount = u64;

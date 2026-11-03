@@ -52,6 +52,13 @@ pub enum HeaderLayout {
 pub enum PnmDecoderKind {
     RxMer,
     UpstreamPreEqualization,
+    ChannelEstimate,
+    ConstellationDisplay,
+    Histogram,
+    FecSummary,
+    SpectrumAnalysis,
+    ModulationProfile,
+    LatencyReport,
     Unsupported,
 }
 /// Single identity descriptor consumed by header, dispatch and output code.
@@ -105,29 +112,37 @@ pub const FILE_TYPES: &[FileDescriptor] = &[
         SYMBOL_CAPTURE_CODE,
         PnmFileKind::SymbolCapture,
         "PNN1",
-    ),
+    )
+    .with_header(FORMAT_VERSION_1_0, HeaderLayout::WithCaptureTime),
     FileDescriptor::new(
         PNN_PREFIX,
         CHANNEL_ESTIMATE_CODE,
         PnmFileKind::ChannelEstimate,
         "PNN2",
-    ),
+    )
+    .with_header(FORMAT_VERSION_1_0, HeaderLayout::WithCaptureTime)
+    .with_decoder(PnmDecoderKind::ChannelEstimate),
     FileDescriptor::new(
         PNN_PREFIX,
         CONSTELLATION_DISPLAY_CODE,
         PnmFileKind::ConstellationDisplay,
         "PNN3",
-    ),
+    )
+    .with_header(FORMAT_VERSION_1_0, HeaderLayout::WithCaptureTime)
+    .with_decoder(PnmDecoderKind::ConstellationDisplay),
     FileDescriptor::new(PNN_PREFIX, RXMER_CODE, PnmFileKind::RxMer, "PNN4")
         .with_header(FORMAT_VERSION_1_0, HeaderLayout::WithCaptureTime)
         .with_decoder(PnmDecoderKind::RxMer),
-    FileDescriptor::new(PNN_PREFIX, HISTOGRAM_CODE, PnmFileKind::Histogram, "PNN5"),
+    FileDescriptor::new(PNN_PREFIX, HISTOGRAM_CODE, PnmFileKind::Histogram, "PNN5")
+        .with_header(FORMAT_VERSION_1_0, HeaderLayout::WithCaptureTime)
+        .with_decoder(PnmDecoderKind::Histogram),
     FileDescriptor::new(
         PNN_PREFIX,
         UPSTREAM_PRE_EQUALIZATION_CODE,
         PnmFileKind::UpstreamPreEqualization,
         "PNN6",
     )
+    .with_header(FORMAT_VERSION_1_0, HeaderLayout::WithCaptureTime)
     .with_decoder(PnmDecoderKind::UpstreamPreEqualization),
     FileDescriptor::new(
         PNN_PREFIX,
@@ -135,6 +150,7 @@ pub const FILE_TYPES: &[FileDescriptor] = &[
         PnmFileKind::UpstreamPreEqualizationLastUpdate,
         "PNN7",
     )
+    .with_header(FORMAT_VERSION_1_0, HeaderLayout::WithCaptureTime)
     .with_decoder(PnmDecoderKind::UpstreamPreEqualization),
     FileDescriptor::new(
         PNN_PREFIX,
@@ -142,25 +158,32 @@ pub const FILE_TYPES: &[FileDescriptor] = &[
         PnmFileKind::FecSummary,
         "PNN8",
     )
-    .with_header(FORMAT_VERSION_1_0, HeaderLayout::WithoutCaptureTime),
+    .with_header(FORMAT_VERSION_1_0, HeaderLayout::WithoutCaptureTime)
+    .with_decoder(PnmDecoderKind::FecSummary),
     FileDescriptor::new(
         PNN_PREFIX,
         SPECTRUM_ANALYSIS_CODE,
         PnmFileKind::SpectrumAnalysis,
         "PNN9",
-    ),
+    )
+    .with_header(FORMAT_VERSION_1_0, HeaderLayout::WithCaptureTime)
+    .with_decoder(PnmDecoderKind::SpectrumAnalysis),
     FileDescriptor::new(
         PNN_PREFIX,
         MODULATION_PROFILE_CODE,
         PnmFileKind::ModulationProfile,
         "PNN10",
-    ),
+    )
+    .with_header(FORMAT_VERSION_1_0, HeaderLayout::WithCaptureTime)
+    .with_decoder(PnmDecoderKind::ModulationProfile),
     FileDescriptor::new(
         LLD_PREFIX,
         LATENCY_REPORT_CODE,
         PnmFileKind::LatencyReport,
         "LLD01",
-    ),
+    )
+    .with_header(FORMAT_VERSION_1_0, HeaderLayout::WithoutCaptureTime)
+    .with_decoder(PnmDecoderKind::LatencyReport),
 ];
 
 /// Resolves an exact binary signature without text normalization.

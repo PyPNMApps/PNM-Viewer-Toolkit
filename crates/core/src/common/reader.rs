@@ -106,6 +106,34 @@ impl<'input> Reader<'input> {
         Ok(u32::from_be_bytes(self.read_bytes(field)?))
     }
 
+    /// Borrows a variable-length field, advancing only on success.
+    ///
+    /// # Arguments
+    /// * `length` - Required byte count.
+    /// * `field` - Diagnostic field name.
+    /// # Returns
+    /// A slice into the original capture.
+    /// # Errors
+    /// Reports truncation at the original cursor without advancing.
+    pub fn read_slice(
+        &mut self,
+        length: usize,
+        field: &'static str,
+    ) -> Result<&'input [u8], ParseError> {
+        let error = ParseError {
+            code: ErrorCode::Truncated,
+            offset: self.position(),
+            field,
+        };
+        let end = self
+            .offset
+            .checked_add(length)
+            .ok_or_else(|| error.clone())?;
+        let result = self.bytes.get(self.offset..end).ok_or(error)?;
+        self.offset = end;
+        Ok(result)
+    }
+
     /// Copies a fixed-size field and advances only on success.
     ///
     /// # Arguments

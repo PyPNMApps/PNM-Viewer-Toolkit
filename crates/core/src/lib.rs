@@ -4,5 +4,6 @@
  */
 //! Reusable, bounded PNM file decoding.
 #![forbid(unsafe_code)]
+pub mod common;
 pub mod diagnostic;
 pub mod pnm;

@@ -4,13 +4,10 @@
  */
 //! First-tier header object retaining the unprocessed binary payload.
 use super::{
-    model::{
-        self,
-        pnm_header::{PnmHeaderModel, PnmHeaderParameters},
-    },
+    model::pnm_header::{PnmHeaderModel, PnmHeaderParameters},
     pnm_file_type::{identify, FileDescriptor, HeaderLayout},
-    reader::Reader,
 };
+use crate::common::reader::Reader;
 use crate::diagnostic::{ErrorCode, ParseError};
 use crate::pnm::data_type::{CaptureTime, FileVersionComponent, PnmFileType};
 
@@ -151,7 +148,7 @@ impl<'input> PnmHeader<'input> {
             }
             output.data = Some(hex);
         }
-        model::to_json(&output, max_bytes)
+        crate::common::json::to_json(&output, max_bytes)
     }
 }
 impl HasPnmHeader for PnmHeader<'_> {

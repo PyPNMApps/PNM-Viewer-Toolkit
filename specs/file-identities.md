@@ -24,10 +24,10 @@ CM-SP-CM-OSSIv4.0-I13-260429, Annex D PNM measurement file-format tables.
 The exact signature strings locate each row in the versioned full extracts under
 skills/docsis-cm-ossi-*/references/cm-ossi-full.txt. RxMER header uses I27 Table 68 /
 I13 Table 101; FEC Summary uses I27 Table 71 / I13 Table 104. Latency signature is
-I27 Table 83 / I13 Table 116. Only RxMER and FEC header layouts are enabled.
+I27 Table 83 / I13 Table 116. All listed version-1.0 headers are enabled; symbol payload decoding stays unsupported.
 
-PNN6 and PNN7 share a future upstream pre-equalization route, matching PyPNM's
-pnm_parameter.py. Neither payload decoder is enabled. Header support remains
+PNN6 and PNN7 share the upstream pre-equalization route, matching PyPNM's
+pnm_parameter.py. Their distinct identities select s2.13 and s1.14 respectively. Header support remains
 explicit per identity/version. No fallback assumes every PNN type has capture time.
 
 Text tags normalize case, whitespace and numeric padding; binary signatures are

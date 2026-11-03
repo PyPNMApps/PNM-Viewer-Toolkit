@@ -12,3 +12,12 @@ pub const HZ_PER_KHZ: u32 = 1_000;
 /// Divide a valid quarter-dB sample by this factor to express it in dB.
 /// Format-specific unavailable-value handling belongs to the decoder.
 pub const QUARTER_DB_PER_DB: f64 = 4.0;
+
+/// Number of hundredth-decibel steps in one decibel.
+pub const HUNDREDTH_DB_PER_DB: f64 = 100.0;
+
+/// Fixed-point counts per unit for signed s2.13 components.
+pub const S2_13_UNITS_PER_UNIT: f64 = 8192.0;
+
+/// Fixed-point counts per unit for signed s1.14 components.
+pub const S1_14_UNITS_PER_UNIT: f64 = 16384.0;

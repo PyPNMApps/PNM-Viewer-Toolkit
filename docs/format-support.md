@@ -1,36 +1,68 @@
 # Format support and evidence
 
-RxMER file version 1.0 is implemented in pnm; no desktop viewer exists yet.
+The Rust core implements the following file-format version **1.0** decoders.
+The project remains in the dev phase; no desktop viewer exists yet.
 
-| Target | Status | Evidence still needed |
+| Capture | Route/module | Verification |
 | --- | --- | --- |
-| Generic hex/ASCII | Planned first delivery | Bounded import and byte fixtures |
-| RxMER 1.0 | Parser and fixture tests pass | Text-extract evidence recorded; PDF rendering and wider capture coverage pending |
-| FEC Summary 1.0 header | Six-byte header and raw payload retained; payload decoder unsupported | Full payload evidence and decoder tests |
-| Other measurement families | Planned, unsupported | Per-format evidence and fixtures before implementation |
+| RxMER (PNN4) | `cm_ds_ofdm_rx_mer` | PyPNM fixture and boundary tests |
+| Channel estimate (PNN2) | `cm_ds_ofdm_chan_estimate_coef` | PyPNM fixture; signed s2.13 and exclusion pairs |
+| Constellation (PNN3) | `cm_ds_const_disp_meas` | PyPNM fixture; signed s2.13 |
+| Histogram (PNN5) | `cm_ds_hist` | PyPNM fixture; separate dwell/hit lengths |
+| Current upstream pre-EQ (PNN6) | `cm_us_ofdma_pre_eq` | PyPNM fixture; s2.13 |
+| Last upstream pre-EQ update (PNN7) | `cm_us_ofdma_pre_eq` | Separate PyPNM fixture; s1.14 |
+| FEC summary (PNN8) | `cm_ds_ofdm_fec_summary` | PyPNM fixture; profile/interval counts |
+| Spectrum analysis (PNN9) | `cm_spectrum_analysis` | PyPNM fixture; signed hundredths dB; partial final segment |
+| Modulation profiles (PNN10) | `cm_ds_ofdm_modulation_profile` | PyPNM fixture; synthetic skip assignments |
+| Latency summary (LLD01) | `cm_latency_rpt` | **Synthetic tests only; real capture still needed** |
+| Symbol capture (PNN1) | `cm_symbol_capture` | **Header-only stub; semantic dispatch returns UnsupportedDecoder** |
 
-Use skills/docsis-31-ossi and skills/docsis-40-ossi for field provenance. Their
-JSON templates contain unknown fields, not protocol definitions. Preserve the
-existing I27/I13 extraction skills as issue-specific lookup aids; do not present
-them as rendered-PDF verification or verified latest issues.
+Each concrete decoder composes `PnmHeader`, implements `HasPnmHeader`, accepts
+`parse(bytes, limits)` or `from_header(header, limits)`, and serializes directly.
+The common header retains the original payload. Samples are borrowed and decoded
+lazily for complex, histogram, FEC and spectrum measurements. Modulation keeps
+bounded compact schemes; latency keeps bounded typed records. Neither duplicates
+the input file. Symbol capture intentionally has no measurement fields.
 
-Place user-provided PDFs under ignored specs/private/docsis-31 or docsis-40.
-Record document ID, issue/date/hash, physical and printed pages, section/table,
-offset/width/signedness/endian/scale/units/counts/sentinels and applicability.
-Create manifests and field-provenance/coverage records when evidence arrives.
-Keep implementation evidence separate from normative evidence; no inferred
-cross-version equivalence. Review layout-sensitive PDF pages visually.
+All decoders reject truncated fields, inconsistent declared lengths and trailing
+bytes. Nested work/allocations count against `ParseLimits.max_samples` as well as
+wire bounds. Unknown identities, schemas and versions return structured errors;
+`PnmFile.bytes()` still exposes the original input after a decoding failure.
+Only minor version zero is enabled; this is an implementation support policy,
+not a claim that vendor minor versions are invalid.
 
-PyPNM parser names are not support proof: pnm_parameter.py at the pinned revision
-raises NotImplementedError for latency reports and symbol capture. Its common
-header has an FEC-summary capture-time exception; do not interpret absence as a
-real epoch-zero sample. These observations are not normative file definitions.
+## Evidence and compatibility
 
-## Available RxMER fixtures
+Layouts were reviewed in the authorized text extracts of
+CM-SP-CM-OSSIv3.1-I27-250219 and CM-SP-CM-OSSIv4.0-I13-260429. See
+[coverage](../specs/coverage.csv), [field provenance](../specs/field-provenance.csv)
+and [format evidence](../specs/measurement-formats.md). No rendered-PDF validation,
+latest-issue verification or blanket DOCSIS compliance is claimed.
 
-Pinned PyPNM RxMER and non-RxMER rejection fixtures plus the upstream Python
-test are available in [tests/fixtures/pypnm](../tests/fixtures/pypnm/README.md).
-Copies match the recorded upstream Git blobs and hashes. No Rust parser or
-semantic validation is implied by importing these inputs.
+PyPNM is pinned at `82bbf79fe04a0b5e766dc3eb4d5ca2004008bca9`.
+[Unmodified fixtures and licensing](../tests/fixtures/pypnm/README.md) are retained.
+PyPNM's latency implementation is a stub; its symbol parser is not used.
+Internal SNMP spectrum `PXX9` remains excluded from this offline file viewer.
 
-See [Rust development](rust-development.md) for API, limits and validation results.
+JSON follows PyPNM vocabulary where practical, with these deliberate differences:
+
+- Channel-estimate `(0x8000, 0x8000)` pairs become `null`; raw bytes remain intact.
+- Complex fixed-point values retain exact binary fractions rather than rounding
+  to six decimals. No derived bandwidth, statistics or analysis is added.
+- Complex capture byte lengths use `data_length`, including constellation and
+  upstream coefficients. Constellation values use `samples`; the others `values`.
+- FEC `codeword_entries` is an array of records, each with timestamp and counters.
+  Its common header capture time stays `null`, rather than being synthesized from
+  the first interval. Latency also has no common capture timestamp.
+- Modulation schemes are tagged `range`/`skip` and preserve numeric assignment
+  codes, including reserved/unknown values. Unknown scheme layouts are rejected.
+- Histogram symmetry is retained as the encoded number: the real fixture uses 2.
+  This reader does not guess a boolean mapping or invent bin coordinates.
+- Spectrum retains raw ENBW/window parameters without assigning unverified units.
+  A partial final segment is valid; missing declared bytes are not.
+- Latency labels remain exact 16-byte arrays, bin edges use hundredths of a
+  millisecond, and maximum latency uses microseconds. Reserved words are retained.
+  JSON emits exact u64 bin counts; future JavaScript IPC must avoid narrowing them
+  to JavaScript Number when they exceed its safe integer range.
+
+See [Rust development](rust-development.md) for export commands.

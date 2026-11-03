@@ -4,8 +4,8 @@ The reusable library lives in `crates/core/src/pnm/`. Its Cargo package and Rust
 import name remain `pnm`; the directory name does not change those names.
 
 The first core crate contains a checked byte reader, structured errors, and
-PnmHeader/HasPnmHeader. RxMER 1.0 decoding is implemented from the versioned text extracts and pinned
-PyPNM fixture, as authorized by the user. Rendered-PDF validation is not claimed.
+PnmHeader/HasPnmHeader. Measurement decoding follows the RxMER pattern, using
+the authorized versioned text extracts and pinned PyPNM fixtures. Rendered-PDF validation is not claimed.
 
 The shared-header design uses composition: each capture owns a PnmHeader and
 implements HasPnmHeader. Default trait methods expose common file type, version
@@ -102,11 +102,10 @@ metadata and slice references, never the capture buffer.
 
 `PnmHeader::from_bytes(bytes)` owns common metadata and retains `pnm_data()` plus
 `payload_offset()`. The central `pnm_file_type.rs` registry supplies identity,
-canonical tag, enabled version/layout and decoder route. RxMER and FEC Summary
-1.0 header layouts are enabled. Other recognized types retain their bytes with an
-UnsupportedLayout diagnostic until their header layouts are enabled. FEC header
-recognition does not implement its payload decoder: decode returns
-UnsupportedDecoder. Unknown signatures and unsupported enabled-layout versions
+canonical tag, enabled version/layout and decoder route. All eleven listed 1.0
+headers are enabled. FEC and latency omit capture time; symbol capture remains a
+header-only stub whose semantic decode returns UnsupportedDecoder. Other routes
+return their concrete typed captures. Unknown signatures and unsupported versions
 return UnsupportedType and UnsupportedVersion respectively.
 
 RxMER's `from_header(header, limits)` reads only the remaining payload through
@@ -212,3 +211,79 @@ rotation and remote telemetry are not configured.
 The simpler `log` crate offers message levels and targets; `tracing` additionally
 provides structured fields and nested operation context. Both are third-party
 crates. See the [tracing subscriber documentation](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/fmt/).
+
+## Additional measurement decoders
+
+See [format support](format-support.md) for the full matrix and JSON differences.
+The same RxMER flow applies to every implemented family:
+`PnmFile -> PnmHeader -> from_header -> typed capture -> bounded JSON`.
+`parse_limits::ParseLimits` is shared; the old RxMER import remains available.
+Its default 65,536-item budget includes nested profile/flow containers and records,
+and latency edges/bins. It is application policy, not a protocol maximum.
+
+Export any supported local capture with the generic example:
+
+```bash
+cd /home/dev01/Projects/pnm-viewer &&
+scripts/cargo-local.sh run --quiet --locked -p pnm --example pnm_json --   tests/fixtures/pypnm/tests/files/channel_estimation.bin > local/channel-estimate.json
+```
+
+The example caps input at 16 MiB and uses the existing bounded JSON writer.
+It writes JSON to stdout and diagnostics to stderr. Core parsers perform no I/O.
+Validation on Linux: 24 Rust tests, formatting and Clippy with warnings denied.
+Nine real fixture JSON exports passed; eight additional fixtures were compared
+value-by-value with independent `struct` decoding. Latency has synthetic tests
+only. No GUI, packaging or other-OS runtime validation is implied.
+
+## Numeric, DSP and parser organization
+
+```text
+crates/core/src/
+├── lib.rs                         # Rust crate entry point
+├── common/                        # PyPNM top-level lib equivalent
+│   ├── reader.rs                  # Checked binary cursor
+│   ├── json.rs                    # Bounded JSON writer
+│   └── signal_processing/         # Future DSP modules; scaffold only
+├── pnm/
+│   ├── data_type/                 # Domain types and shared unit constants
+│   ├── lib/
+│   │   └── fixed_point_decoder.rs # QFormat and pure signed conversion
+│   └── parser/
+│       ├── pnm_file.rs            # Central dispatch
+│       ├── pnm_header.rs          # Shared header and borrowed payload
+│       ├── pnm_file_type.rs       # Identity/layout registry
+│       ├── parse_limits.rs       # Application decode budgets
+│       ├── cm_*.rs               # Measurement-specific parsers
+│       ├── model/                # Header JSON representation
+│       └── support/
+│           ├── payload.rs        # Length, route and budget validation
+│           ├── serialization.rs  # Shared JSON field adapters
+│           └── values.rs         # Borrowed wire arrays and lazy JSON views
+└── diagnostic.rs                  # Shared structured failures
+```
+
+This follows the inspected PyPNM checkout: `pypnm/pnm/lib/fixed_point_decoder.py`
+owns fixed-point math, while `pypnm/lib/signal_processing/` holds separate
+algorithms such as IFFT, group delay, windows and complex-array operations.
+Rust uses `common` for that top-level utility package to distinguish it from
+`src/lib.rs`, the crate entry point. `pnm/lib` is an ordinary nested Rust module.
+
+`pnm::lib::fixed_point_decoder::{QFormat, decode_fixed_point, decode_complex}`
+accepts already-decoded signed components. It has no Serde, reader, file-routing
+or sentinel logic. `QFormat::S2_13` and `QFormat::S1_14` select the existing
+central scale constants in `pnm::data_type::units`. Wire adapters handle byte
+order and channel-estimate exclusions before calling the numeric helper.
+
+Future DSP algorithms belong in focused modules under `common/signal_processing`.
+That directory currently contains documentation only; no FIR filter, FFT/IFFT,
+group-delay analysis or other DSP algorithm was added by this organization change.
+PNM-specific analysis can compose those algorithms later without making generic
+DSP depend on capture parsers. The mixed `binary_values.rs` module was removed.
+
+The existing `pnm::parser::reader` and `pnm::parser::model::to_json` import paths
+remain re-exports of the single implementations in `common`. New general-purpose
+code should use `common::reader` and `common::json` directly. Concrete parser
+APIs and JSON contracts are unchanged.
+
+Validation: all 24 tests, rustfmt and Clippy passed. JSON exports from all nine
+real fixtures were byte-for-byte identical before and after the reorganization.

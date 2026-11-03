@@ -3,14 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 //! RxMER version 1.0, based on I27 Table 68 and I13 Table 101 text extracts.
-use super::{
-    pnm_header::{HasPnmHeader, PnmHeader},
-    reader::Reader,
-};
+use super::pnm_header::{HasPnmHeader, PnmHeader};
+use crate::common::reader::Reader;
 use crate::diagnostic::{ErrorCode, ParseError};
 use crate::pnm::data_type::units::{HZ_PER_KHZ, QUARTER_DB_PER_DB};
 use crate::pnm::data_type::{
-    ChannelId, DataLengthBytes, FrequencyHz, MacAddress, RxMerDb, SampleCount, SubcarrierIdx,
+    ChannelId, DataLengthBytes, FrequencyHz, MacAddress, RxMerDb, SubcarrierIdx,
     SubcarrierSpacingKhz,
 };
 use serde::{ser::SerializeStruct, Serialize, Serializer};
@@ -18,25 +16,7 @@ use serde::{ser::SerializeStruct, Serialize, Serializer};
 const RXMER_ZERO_FREQUENCY_OFFSET: usize = 17;
 const RXMER_LENGTH_OFFSET: usize = 24;
 const RXMER_UNAVAILABLE: u8 = 0xff;
-const DEFAULT_MAX_SAMPLES: SampleCount = 65_536;
-
-/// Application resource policy, not a DOCSIS format limit.
-#[derive(Debug, Clone, Copy)]
-pub struct ParseLimits {
-    /// Maximum payload samples accepted by this caller.
-    pub max_samples: SampleCount,
-}
-impl Default for ParseLimits {
-    /// Builds the default application sample budget.
-    ///
-    /// # Returns
-    /// A limit of 65,536 samples; this is not a DOCSIS limit.
-    fn default() -> Self {
-        Self {
-            max_samples: DEFAULT_MAX_SAMPLES,
-        }
-    }
-}
+pub use super::parse_limits::ParseLimits;
 
 /// Decoded RxMER metadata with samples borrowed from the caller.
 /// No statistics, I/O or allocation of sample arrays occurs here.
@@ -151,7 +131,7 @@ impl<'input> CmDsOfdmRxMer<'input> {
     /// # Errors
     /// Reports serialization failures or an exceeded output limit.
     pub fn to_json(&self, max_bytes: usize) -> serde_json::Result<String> {
-        super::model::to_json(self, max_bytes)
+        crate::common::json::to_json(self, max_bytes)
     }
     /// Borrows the unchanged encoded RxMER samples.
     ///
