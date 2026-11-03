@@ -30,6 +30,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20870f649af7073d53e38067b2a84312175d56ea15217e1b15bc83506ec50afb"
 
 [[package]]
+name = "logging"
+version = "0.1.0"
+dependencies = [
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "matchers"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -57,20 +64,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 
 [[package]]
-name = "pnm-core"
+name = "pnm"
 version = "0.1.0"
 dependencies = [
- "pnm-logging",
+ "logging",
  "serde",
  "serde_json",
  "tracing",
-]
-
-[[package]]
-name = "pnm-logging"
-version = "0.1.0"
-dependencies = [
- "tracing-subscriber",
 ]
 
 [[package]]

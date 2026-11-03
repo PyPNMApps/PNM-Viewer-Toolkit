@@ -163,7 +163,7 @@ artificial constants. Distinguish application safety limits from protocol limits
 Preserve the PyPNM-inspired module hierarchy. Use snake_case Rust modules and
 UpperCamelCase types. Parsing consumes bytes and returns models without file/network
 I/O, derived statistics or Tauri dependencies. Share PnmHeader behavior through
-composition and HasPnmHeader. Keep unsafe code forbidden in pnm-core.
+composition and HasPnmHeader. Keep unsafe code forbidden in pnm.
 
 ## UI component ownership
 

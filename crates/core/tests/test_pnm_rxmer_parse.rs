@@ -2,7 +2,7 @@
  * Copyright 2026 PNM Viewer contributors
  * SPDX-License-Identifier: Apache-2.0
  */
-use pnm_core::{
+use pnm::{
     diagnostic::ErrorCode,
     pnm::parser::{
         cm_ds_ofdm_rx_mer::{CmDsOfdmRxMer, ParseLimits},
@@ -10,7 +10,7 @@ use pnm_core::{
     },
 };
 const FIXTURE: &[u8] = include_bytes!("../../../tests/fixtures/pypnm/tests/files/rxmer.bin");
-fn parse(capture_bytes: &[u8]) -> Result<CmDsOfdmRxMer<'_>, pnm_core::diagnostic::ParseError> {
+fn parse(capture_bytes: &[u8]) -> Result<CmDsOfdmRxMer<'_>, pnm::diagnostic::ParseError> {
     CmDsOfdmRxMer::parse(capture_bytes, ParseLimits::default())
 }
 #[test]

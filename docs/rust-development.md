@@ -1,5 +1,8 @@
 # Rust development
 
+The reusable library lives in `crates/core/src/pnm/`. Its Cargo package and Rust
+import name remain `pnm`; the directory name does not change those names.
+
 The first core crate contains a checked byte reader, structured errors, and
 PnmHeader/HasPnmHeader. RxMER 1.0 decoding is implemented from the versioned text extracts and pinned
 PyPNM fixture, as authorized by the user. Rendered-PDF validation is not claimed.
@@ -118,7 +121,7 @@ The caller owns the original bytes throughout. Parser objects borrow those bytes
 no self-referential owning buffer, unsafe code or Python sidecar is required.
 
 ```rust
-use pnm_core::pnm::parser::{
+use pnm::pnm::parser::{
     cm_ds_ofdm_rx_mer::ParseLimits,
     pnm_file::{PnmFile, DecodedPnm},
     model::DEFAULT_MAX_JSON_BYTES,
@@ -172,7 +175,7 @@ Run the actual parser against the preserved PyPNM fixture:
 
 ```bash
 mkdir -p local
-scripts/cargo-local.sh run --quiet --locked -p pnm-core \
+scripts/cargo-local.sh run --quiet --locked -p pnm \
   --example rxmer_json > local/rxmer.json
 ```
 
@@ -185,8 +188,8 @@ fixture, including quarter-dB conversion and unavailable-value handling.
 ### Logging
 
 `tracing` provides level-based events, structured fields and spans grouping a
-parse operation. The separate `pnm-logging` crate configures the text subscriber;
-applications call `pnm_logging::init()` once during startup. `pnm-core` only emits
+parse operation. The separate `logging` crate configures the text subscriber;
+applications call `logging::init()` once during startup. `pnm` only emits
 events and never initializes process-global logging. The example uses the logging
 crate as a development dependency; core library consumers choose their subscriber.
 
@@ -197,12 +200,12 @@ appear at both the failing parser and dispatch boundary. Logging fields include
 byte counts, file type and sample count, not capture bytes or MAC addresses.
 
 ```bash
-RUST_LOG=pnm_core=debug scripts/cargo-local.sh run --quiet --locked \
-  -p pnm-core --example rxmer_json > local/rxmer.json
+RUST_LOG=pnm=debug scripts/cargo-local.sh run --quiet --locked \
+  -p pnm --example rxmer_json > local/rxmer.json
 ```
 
 Use `RUST_LOG=off` to silence logging or a standard filter such as
-`warn,pnm_core=debug`. Invalid filters and repeated global initialization return
+`warn,pnm=debug`. Invalid filters and repeated global initialization return
 errors rather than panicking or replacing an existing subscriber. File sinks,
 rotation and remote telemetry are not configured.
 

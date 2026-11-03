@@ -2,7 +2,7 @@
  * Copyright 2026 PNM Viewer contributors
  * SPDX-License-Identifier: Apache-2.0
  */
-use pnm_core::{
+use pnm::{
     diagnostic::ErrorCode,
     pnm::parser::{
         cm_ds_ofdm_rx_mer::{CmDsOfdmRxMer, ParseLimits},

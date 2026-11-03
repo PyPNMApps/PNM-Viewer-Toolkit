@@ -1,6 +1,6 @@
 # Format support and evidence
 
-RxMER file version 1.0 is implemented in pnm-core; no desktop viewer exists yet.
+RxMER file version 1.0 is implemented in pnm; no desktop viewer exists yet.
 
 | Target | Status | Evidence still needed |
 | --- | --- | --- |
