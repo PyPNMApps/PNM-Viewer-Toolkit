@@ -38,7 +38,7 @@ application build or other platform validation is claimed.
 
 ## RxMER behavior and evidence
 
-See specs/field-provenance.csv and specs/coverage.csv. Layout: I27 Table 68,
+See development/specs/field-provenance.csv and development/specs/coverage.csv. Layout: I27 Table 68,
 pages 176-177; I13 Table 101, pages 215-216. Value semantics: both D.2.1.3.1.
 Big-endian decoding is corroborated by pinned PyPNM's ! struct formats and fixture;
 this note does not claim an independently located normative byte-order rule.
@@ -211,6 +211,13 @@ rotation and remote telemetry are not configured.
 The simpler `log` crate offers message levels and targets; `tracing` additionally
 provides structured fields and nested operation context. Both are third-party
 crates. See the [tracing subscriber documentation](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/fmt/).
+
+## Public API examples
+
+See [the examples guide](../crates/core/examples/README.md) for one runnable
+example per file type, concrete parser imports, fixture defaults, and direct
+typed sample access. `pnm_json` demonstrates automatic file dispatch.
+Latency requires an input path; symbol capture exports header metadata only.
 
 ## Additional measurement decoders
 

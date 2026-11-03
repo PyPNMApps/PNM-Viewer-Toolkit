@@ -25,3 +25,7 @@ plans in ignored development/; the references here remain available in fresh clo
 
 Archive checksums and consolidation provenance are in
 [references/source-provenance.json](references/source-provenance.json).
+
+Current evidence location: `development/specs/` (ignored, local-only). Original
+bootstrap references use `specs/`; resolve those historical paths to the current
+location. Do not recreate the former root directory.

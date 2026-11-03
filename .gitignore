@@ -32,7 +32,6 @@ __pycache__/
 # Tauri/React build output and private evidence
 node_modules/
 dist/
-/specs/private/
 
-# Local development plans and working notes
+# Local development plans, specification evidence and working notes
 /development/

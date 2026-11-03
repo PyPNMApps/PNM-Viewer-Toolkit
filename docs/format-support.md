@@ -35,8 +35,10 @@ not a claim that vendor minor versions are invalid.
 
 Layouts were reviewed in the authorized text extracts of
 CM-SP-CM-OSSIv3.1-I27-250219 and CM-SP-CM-OSSIv4.0-I13-260429. See
-[coverage](../specs/coverage.csv), [field provenance](../specs/field-provenance.csv)
-and [format evidence](../specs/measurement-formats.md). No rendered-PDF validation,
+[coverage](../development/specs/coverage.csv), [field provenance](../development/specs/field-provenance.csv)
+and [format evidence](../development/specs/measurement-formats.md). These evidence
+files are local-only under ignored `development/` and are absent from fresh clones.
+No rendered-PDF validation,
 latest-issue verification or blanket DOCSIS compliance is claimed.
 
 PyPNM is pinned at `82bbf79fe04a0b5e766dc3eb4d5ca2004008bca9`.

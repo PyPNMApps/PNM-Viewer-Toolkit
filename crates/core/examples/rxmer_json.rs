@@ -2,23 +2,26 @@
  * Copyright 2026 PNM Viewer contributors
  * SPDX-License-Identifier: Apache-2.0
  */
-//! Export the preserved PyPNM RxMER fixture using the actual parser.
-use pnm::pnm::parser::{
-    cm_ds_ofdm_rx_mer::{CmDsOfdmRxMer, ParseLimits},
-    model::DEFAULT_MAX_JSON_BYTES,
+//! Use the public CmDsOfdmRxMer API and export its JSON.
+mod common;
+use common::ExampleError;
+use pnm::{
+    common::json::DEFAULT_MAX_JSON_BYTES,
+    pnm::parser::{cm_ds_ofdm_rx_mer::CmDsOfdmRxMer, parse_limits::ParseLimits},
 };
 
-const RXMER_FIXTURE: &[u8] = include_bytes!("../../../tests/fixtures/pypnm/tests/files/rxmer.bin");
+const FIXTURE: &[u8] = include_bytes!("../../../tests/fixtures/pypnm/tests/files/rxmer.bin");
 
-/// Parses the bundled fixture and prints its decoded JSON to stdout.
+/// Parses the selected capture through its concrete public API.
 ///
 /// # Returns
-/// Success after generating the complete bounded JSON document.
+/// Success after writing bounded JSON to stdout; logging uses stderr.
 /// # Errors
-/// Propagates parsing and serialization errors to the command exit status.
-fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+/// Propagates CLI, input, parsing, logging and serialization failures.
+fn main() -> Result<(), ExampleError> {
     logging::init()?;
-    let capture = CmDsOfdmRxMer::parse(RXMER_FIXTURE, ParseLimits::default())?;
+    let bytes = common::capture_bytes(Some(FIXTURE))?;
+    let capture = CmDsOfdmRxMer::parse(&bytes, ParseLimits::default())?;
     println!("{}", capture.to_json(DEFAULT_MAX_JSON_BYTES)?);
     Ok(())
 }

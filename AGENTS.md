@@ -73,3 +73,11 @@ for the preserved original guidance before creating new working plans.
 
 - Use meaningful identifiers and lifetimes (for example `capture_bytes` and
   `'input`); reserve single letters for obvious, simple local counters.
+
+## Local specification evidence
+
+Keep field provenance, coverage, source hashes, manifests and private PDFs under
+`development/specs/`. This directory is ignored and local-only. Tracked docs may
+reference it but must state that evidence files are absent from fresh clones.
+Use the versioned specification skills and parser tests to reconstruct evidence
+when needed; do not assume those local records are distributed with the project.
