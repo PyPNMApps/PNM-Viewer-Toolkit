@@ -30,8 +30,9 @@ Original bootstrap references live in skills/pnm-viewer-development/references/;
 they are historical guidance, not generated app source.
 
 Keep canonical skills under skills/ and relative links under both .agents/skills/
-and .claude/skills/. Use docsis-31-ossi and docsis-40-ossi for field-evidence work;
-existing versioned extraction skills are lookup aids, not proof of PDF validation.
+and .claude/skills/. Use docsis-cm-ossi-3-1-i27 and docsis-cm-ossi-4-0-i13 for OSSI lookup
+and field-evidence work. Both link to one shared PNM evidence workflow; text
+extractions do not establish rendered-PDF validation.
 Validate changed skills and discovery links. The redundant root ZIP and extracted
 bootstrap directory have been consolidated into the canonical skills.
 Keep architecture, requirements, development guidance and checklists in ignored

@@ -18,7 +18,7 @@ when this skill loads. Verify source paths and behavior before reuse. Current us
 choices supersede the original bootstrap, including authorization to use clear
 versioned OSSI text extracts. Do not claim rendered-PDF or latest-issue verification.
 
-Use the canonical coding-style, docsis-31-ossi and docsis-40-ossi skills for their
+Use the canonical coding-style, docsis-cm-ossi-3-1-i27 and docsis-cm-ossi-4-0-i13 skills for their
 respective work; their guidance is not duplicated here. Track current support in
 docs/format-support.md and APIs in docs/rust-development.md. Keep evolving local
 plans in ignored development/; the references here remain available in fresh clones.
@@ -29,3 +29,8 @@ Archive checksums and consolidation provenance are in
 Current evidence location: `development/specs/` (ignored, local-only). Original
 bootstrap references use `specs/`; resolve those historical paths to the current
 location. Do not recreate the former root directory.
+
+The two versioned OSSI skills use one [PNM evidence workflow](references/pnm-evidence-workflow.md)
+and [record template](references/evidence-record.json). The former generic
+`docsis-31-ossi` and `docsis-40-ossi` scaffolds have been consolidated into them.
+Names and checksums in the original bootstrap/provenance are historical records.

@@ -15,6 +15,13 @@ definition, MIB fragment, formula, figure, footnote, or page layout is
 ambiguous in the extraction. Do not claim that a value was verified against
 the PDF unless the PDF was available and inspected.
 
+## PNM Viewer implementation
+
+For PNM parser implementation or field-evidence work, apply the
+[shared evidence workflow](../pnm-viewer-development/references/pnm-evidence-workflow.md).
+Clear versioned text extracts are authorized; request PDFs for ambiguous layouts.
+Keep this skill's revision-specific source and interpretation rules.
+
 ## Retrieval workflow
 
 1. Read [the topic map](references/topic-map.md) to identify the likely area.
