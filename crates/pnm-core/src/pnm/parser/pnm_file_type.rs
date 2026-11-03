@@ -8,6 +8,9 @@ use crate::pnm::data_type::PnmFileType;
 
 // Binary signatures contain an ASCII family followed by a numeric type code.
 const PNN_PREFIX: &str = "PNN";
+/// Alternate PNM family prefix, reserved for future confirmed file identities.
+/// Defining this prefix does not alias PNM signatures to PNN decoder routes.
+pub const PNM_PREFIX: &str = "PNM";
 const LLD_PREFIX: &str = "LLD";
 const FILE_PREFIX_BYTES: usize = 3;
 const FORMAT_VERSION_1_0: PnmFormatVersion = PnmFormatVersion { major: 1, minor: 0 };
