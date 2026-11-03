@@ -2,87 +2,161 @@
  * Copyright 2026 PNM Viewer contributors
  * SPDX-License-Identifier: Apache-2.0
  */
-//! Shared header data and inheritance-like access without class inheritance.
-//! Decoders select their own evidenced layout; this is not a universal decoder.
-use super::reader::Reader;
+//! First-tier header object retaining the unprocessed binary payload.
+use super::{
+    model::{
+        self,
+        pnm_header::{PnmHeaderModel, PnmHeaderParameters},
+    },
+    pnm_file_type::{identify, FileDescriptor, HeaderLayout},
+    reader::Reader,
+};
 use crate::diagnostic::{ErrorCode, ParseError};
 use crate::pnm::data_type::{CaptureTime, FileVersionComponent, PnmFileType};
 
-/// Version of a PNM binary layout, distinct from the DOCSIS protocol version.
-/// Named fields keep major and vendor-specific minor components explicit.
+/// File-format version, distinct from DOCSIS version and file identity.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PnmFormatVersion {
-    /// Specification-assigned major file-format version.
     pub major: FileVersionComponent,
-    /// Vendor-specific minor version; zero is the default.
     pub minor: FileVersionComponent,
 }
 
-/// Common metadata owned by a format-specific capture.
-/// Capture time may be absent for formats that do not encode it.
+/// Common metadata and remaining bytes borrowed from the original capture.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PnmHeader {
-    pub file_type: PnmFileType,
-    /// Encoded binary-layout version.
-    pub format_version: PnmFormatVersion,
-    pub capture_time: Option<CaptureTime>,
+pub struct PnmHeader<'input> {
+    descriptor: &'static FileDescriptor,
+    file_type: PnmFileType,
+    format_version: PnmFormatVersion,
+    capture_time: Option<CaptureTime>,
+    pnm_data: &'input [u8],
+    payload_offset: usize,
 }
-
-impl PnmHeader {
-    /// Decodes the identifier/version/capture-time layout used by RxMER.
-    ///
-    /// Only use this reader for formats confirmed to share this layout:
-    /// four identifier bytes, two version bytes, then a big-endian u32 time.
-    /// Each successful field advances the reader; errors do not roll back
-    /// previously read fields. Type and version are checked before reading time.
+impl<'input> PnmHeader<'input> {
+    /// Recognizes and decodes an evidenced common header exactly once.
     ///
     /// # Arguments
-    /// * `reader` - Cursor positioned at the start of this header.
-    /// * `expected_file_type` - Identifier accepted by the owning parser.
-    /// * `expected_version` - Exact version supported by the owning parser.
-    ///
+    /// * `bytes` - Complete original capture, retained for the object's lifetime.
     /// # Returns
-    /// An owned header with capture time present, leaving the cursor after it.
-    ///
+    /// Header metadata plus the unchanged remaining payload slice.
     /// # Errors
-    /// Reports Truncated for incomplete fields, UnsupportedType for a different
-    /// identifier, or UnsupportedVersion for a different major/minor pair.
-    /// Diagnostic offsets are relative to the reader's original input.
-    pub fn parse_with_capture_time(
-        reader: &mut Reader<'_>,
-        expected_file_type: PnmFileType,
-        expected_version: PnmFormatVersion,
-    ) -> Result<Self, ParseError> {
-        let file_type_offset = reader.position();
-        let file_type: PnmFileType = reader.read_bytes("file_type")?;
-        if file_type != expected_file_type {
-            return Err(ParseError {
-                code: ErrorCode::UnsupportedType,
-                offset: file_type_offset,
-                field: "file_type",
-            });
-        }
-        let version_offset = reader.position();
+    /// Reports unknown identity/layout/version or truncated fields with file offsets.
+    pub fn from_bytes(bytes: &'input [u8]) -> Result<Self, ParseError> {
+        let mut reader = Reader::new(bytes);
+        let file_type = reader.read_bytes("file_type")?;
+        let descriptor = identify(file_type).ok_or(ParseError {
+            code: ErrorCode::UnsupportedType,
+            offset: 0,
+            field: "file_type",
+        })?;
         let format_version = PnmFormatVersion {
             major: reader.read_u8("major_version")?,
             minor: reader.read_u8("minor_version")?,
         };
-        if format_version != expected_version {
+        if descriptor
+            .header_version
+            .is_some_and(|supported| format_version != supported)
+        {
             return Err(ParseError {
                 code: ErrorCode::UnsupportedVersion,
-                offset: version_offset,
+                offset: 4,
                 field: "format_version",
             });
         }
-        let capture_time: CaptureTime = reader.read_u32_be("capture_time")?;
+        let layout = descriptor.layout.ok_or(ParseError {
+            code: ErrorCode::UnsupportedLayout,
+            offset: 4,
+            field: "header_layout",
+        })?;
+        let capture_time = match layout {
+            HeaderLayout::WithCaptureTime => Some(reader.read_u32_be("capture_time")?),
+            HeaderLayout::WithoutCaptureTime => None,
+        };
         Ok(Self {
+            descriptor,
             file_type,
             format_version,
-            capture_time: Some(capture_time),
+            capture_time,
+            pnm_data: reader.remaining(),
+            payload_offset: reader.position(),
         })
     }
+    /// Borrows the central identity descriptor.
+    ///
+    /// # Returns
+    /// The single routing/layout definition used to recognize this header.
+    pub fn descriptor(&self) -> &'static FileDescriptor {
+        self.descriptor
+    }
+    /// Borrows unprocessed format-specific bytes.
+    ///
+    /// # Returns
+    /// The original input slice immediately following the common header.
+    pub fn pnm_data(&self) -> &'input [u8] {
+        self.pnm_data
+    }
+    /// Reports the payload's position in the original file.
+    ///
+    /// # Returns
+    /// The number of bytes consumed by the common header.
+    pub fn payload_offset(&self) -> usize {
+        self.payload_offset
+    }
+    /// Builds the header-only serializable output model.
+    ///
+    /// # Returns
+    /// PyPNM-compatible field names; missing capture time remains None.
+    pub fn to_model(&self) -> PnmHeaderModel {
+        PnmHeaderModel {
+            pnm_header: PnmHeaderParameters {
+                file_type: self.descriptor.prefix,
+                file_type_version: self.file_type[3],
+                major_version: self.format_version.major,
+                minor_version: self.format_version.minor,
+                capture_time: self.capture_time,
+            },
+            data: None,
+        }
+    }
+    /// Exports header metadata as bounded pretty JSON.
+    ///
+    /// # Arguments
+    /// * `include_payload` - Explicitly include remaining bytes as hexadecimal data.
+    /// * `max_bytes` - Maximum JSON size and payload-hex allocation budget.
+    /// # Returns
+    /// A complete JSON representation without modifying the binary input.
+    /// # Errors
+    /// Reports serialization failure or an exceeded export budget.
+    pub fn to_json(&self, include_payload: bool, max_bytes: usize) -> serde_json::Result<String> {
+        let mut output = self.to_model();
+        if include_payload {
+            let length = self
+                .pnm_data
+                .len()
+                .checked_mul(2)
+                .filter(|length| *length <= max_bytes)
+                .ok_or_else(|| {
+                    serde_json::Error::io(std::io::Error::other("payload hex exceeds JSON budget"))
+                })?;
+            let mut hex = String::with_capacity(length);
+            const DIGITS: &[u8; 16] = b"0123456789abcdef";
+            for &byte in self.pnm_data {
+                hex.push(DIGITS[usize::from(byte >> 4)] as char);
+                hex.push(DIGITS[usize::from(byte & 0x0f)] as char);
+            }
+            output.data = Some(hex);
+        }
+        model::to_json(&output, max_bytes)
+    }
 }
-
+impl HasPnmHeader for PnmHeader<'_> {
+    /// Borrows this header through the shared capture interface.
+    ///
+    /// # Returns
+    /// This header, without copying metadata or bytes.
+    fn pnm_header(&self) -> &PnmHeader<'_> {
+        self
+    }
+}
 /// Implemented by captures that embed a common header.
 /// Default methods provide the shared base-class API through composition.
 pub trait HasPnmHeader {
@@ -90,7 +164,7 @@ pub trait HasPnmHeader {
     ///
     /// # Returns
     /// A shared reference; ownership stays with the capture.
-    fn pnm_header(&self) -> &PnmHeader;
+    fn pnm_header(&self) -> &PnmHeader<'_>;
     /// Reads the encoded file-type identifier.
     ///
     /// # Returns
@@ -111,89 +185,5 @@ pub trait HasPnmHeader {
     /// The named major/minor components, not the DOCSIS protocol version.
     fn format_version(&self) -> PnmFormatVersion {
         self.pnm_header().format_version
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    struct Capture {
-        header: PnmHeader,
-    }
-    impl HasPnmHeader for Capture {
-        /// Borrows the header embedded in this capture.
-        ///
-        /// # Returns
-        /// A shared reference; ownership stays with the capture.
-        fn pnm_header(&self) -> &PnmHeader {
-            &self.header
-        }
-    }
-    #[test]
-    fn header_reader_preserves_following_fields() {
-        let mut reader = Reader::new(b"TEST\x01\x00\x12\x34\x56\x78\xab");
-        let header = PnmHeader::parse_with_capture_time(
-            &mut reader,
-            *b"TEST",
-            PnmFormatVersion { major: 1, minor: 0 },
-        )
-        .unwrap();
-        assert_eq!(header.file_type, *b"TEST");
-        assert_eq!(
-            header.format_version,
-            PnmFormatVersion { major: 1, minor: 0 }
-        );
-        assert_eq!(header.capture_time, Some(0x12345678));
-        assert_eq!(reader.position(), 10);
-        assert_eq!(reader.read_u8("next_field").unwrap(), 0xab);
-    }
-
-    #[test]
-    fn header_validation_precedes_later_truncation() {
-        for (bytes, expected_code, expected_offset, expected_field) in [
-            (&b"!FAIL"[..], ErrorCode::UnsupportedType, 1, "file_type"),
-            (
-                &b"!TEST\x02\x00"[..],
-                ErrorCode::UnsupportedVersion,
-                5,
-                "format_version",
-            ),
-            (
-                &b"!TEST\x01\x00\x12"[..],
-                ErrorCode::Truncated,
-                7,
-                "capture_time",
-            ),
-        ] {
-            let mut reader = Reader::new(bytes);
-            reader.read_u8("prefix").unwrap();
-            let failure = PnmHeader::parse_with_capture_time(
-                &mut reader,
-                *b"TEST",
-                PnmFormatVersion { major: 1, minor: 0 },
-            )
-            .unwrap_err();
-            assert_eq!(failure.code, expected_code);
-            assert_eq!(failure.offset, expected_offset);
-            assert_eq!(failure.field, expected_field);
-        }
-    }
-
-    #[test]
-    fn shared_access_works_through_trait_object() {
-        let capture = Capture {
-            header: PnmHeader {
-                file_type: *b"TEST",
-                format_version: PnmFormatVersion { major: 1, minor: 0 },
-                capture_time: None,
-            },
-        };
-        let base: &dyn HasPnmHeader = &capture;
-        assert_eq!(base.file_type(), *b"TEST");
-        assert_eq!(
-            base.format_version(),
-            PnmFormatVersion { major: 1, minor: 0 }
-        );
-        assert_eq!(base.capture_time(), None);
     }
 }

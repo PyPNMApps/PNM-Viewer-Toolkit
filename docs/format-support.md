@@ -6,6 +6,7 @@ RxMER file version 1.0 is implemented in pnm-core; no desktop viewer exists yet.
 | --- | --- | --- |
 | Generic hex/ASCII | Planned first delivery | Bounded import and byte fixtures |
 | RxMER 1.0 | Parser and fixture tests pass | Text-extract evidence recorded; PDF rendering and wider capture coverage pending |
+| FEC Summary 1.0 header | Six-byte header and raw payload retained; payload decoder unsupported | Full payload evidence and decoder tests |
 | Other measurement families | Planned, unsupported | Per-format evidence and fixtures before implementation |
 
 Use skills/docsis-31-ossi and skills/docsis-40-ossi for field provenance. Their

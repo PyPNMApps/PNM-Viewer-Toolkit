@@ -9,6 +9,7 @@ use crate::diagnostic::{ErrorCode, ParseError};
 pub struct Reader<'input> {
     bytes: &'input [u8],
     offset: usize,
+    origin: usize,
 }
 impl<'input> Reader<'input> {
     /// Starts a reader at byte offset zero.
@@ -19,14 +20,48 @@ impl<'input> Reader<'input> {
     /// # Returns
     /// A cursor borrowing the input without copying it.
     pub fn new(bytes: &'input [u8]) -> Self {
-        Self { bytes, offset: 0 }
+        Self {
+            bytes,
+            offset: 0,
+            origin: 0,
+        }
     }
+    /// Starts a payload reader with original-file diagnostic offsets.
+    ///
+    /// # Arguments
+    /// * `bytes` - Borrowed payload bytes.
+    /// * `origin` - Payload offset within the original file.
+    /// # Returns
+    /// A reader positioned at the beginning of the payload.
+    /// # Errors
+    /// Returns ArithmeticOverflow if the represented file range exceeds usize.
+    pub fn with_origin(bytes: &'input [u8], origin: usize) -> Result<Self, ParseError> {
+        origin.checked_add(bytes.len()).ok_or(ParseError {
+            code: ErrorCode::ArithmeticOverflow,
+            offset: origin,
+            field: "payload_offset",
+        })?;
+        Ok(Self {
+            bytes,
+            offset: 0,
+            origin,
+        })
+    }
+
+    /// Borrows all unread bytes without advancing the cursor.
+    ///
+    /// # Returns
+    /// A slice into the original input, valid for its full lifetime.
+    pub fn remaining(&self) -> &'input [u8] {
+        &self.bytes[self.offset..]
+    }
+
     /// Reports the next unread byte's offset in the original input.
     ///
     /// # Returns
     /// The current byte offset without advancing the reader.
     pub fn position(&self) -> usize {
-        self.offset
+        self.origin + self.offset
     }
 
     /// Reads one unsigned byte and advances only on success.
@@ -88,7 +123,7 @@ impl<'input> Reader<'input> {
     ) -> Result<[u8; BYTE_COUNT], ParseError> {
         let error = ParseError {
             code: ErrorCode::Truncated,
-            offset: self.offset,
+            offset: self.position(),
             field,
         };
         let end_exclusive = self

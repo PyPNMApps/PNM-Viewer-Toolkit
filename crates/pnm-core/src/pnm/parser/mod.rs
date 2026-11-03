@@ -3,5 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 pub mod cm_ds_ofdm_rx_mer;
+pub mod model;
+pub mod pnm_file;
+pub mod pnm_file_type;
 pub mod pnm_header;
 pub mod reader;

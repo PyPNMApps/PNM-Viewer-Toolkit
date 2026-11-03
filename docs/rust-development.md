@@ -9,7 +9,8 @@ implements HasPnmHeader. Default trait methods expose common file type, version
 and optional capture time. Trait objects support polymorphic access without
 class inheritance, duplicated decoding, or treating every format as one header.
 
-Rust 1.85.1 is pinned for this initial dependency-free crate. The locally installed
+Rust 1.85.1 is pinned. Serde and serde_json provide output serialization;
+exact direct dependency versions and Cargo.lock are committed. The locally installed
 toolchain lives in ignored local/cargo and local/rustup; no shell profile was
 changed. Run `./install.sh --development` to prepare the local toolchain and native
 prerequisites; see [development setup](development-setup.md). The wrapper
@@ -28,7 +29,7 @@ scripts/cargo-local.sh clippy --workspace --all-targets --locked -- -D warnings
 
 With an existing Rust installation, standard cargo commands can be run from the
 repository root using rust-toolchain.toml. Cargo.lock is committed with source.
-Validation: two unit tests and five RxMER integration tests passed on Linux,
+Validation: three reader unit tests and thirteen integration tests passed on Linux,
 including every truncated fixture prefix. Formatting and Clippy passed. No
 application build or other platform validation is claimed.
 
@@ -88,16 +89,77 @@ label. Each format still needs its own evidence for layout, endianness, header
 fields, sentinels and payload constraints; RxMER's 28-byte header and one-byte
 samples are not universal. Add other primitive read methods only when needed.
 
-### Shared header decoding
+### Two-tier file decoding
 
-RxMER delegates to `PnmHeader::parse_with_capture_time(&mut reader,
-expected_file_type, expected_version)`. This reusable method owns reading the
-four-byte identifier, major/minor version, and big-endian capture time. Each
-format supplies its supported identifier/version. Validation occurs before
-reading later fields, retaining early rejection and original-input offsets.
-The method advances through successful fields; it is not a transactional read
-of the entire header. RxMER then reads only its format-specific fields.
+`PnmFile::from_bytes(bytes)` retains the original byte slice and parses the common
+header once. `header()` returns the header or its diagnostic; unsupported and
+truncated files still expose `bytes()` for raw inspection. `decode(limits)` routes
+the parsed header to the supported second-tier parser. It clones only header
+metadata and slice references, never the capture buffer.
 
-Use this helper only after confirming that another format shares that layout.
-Formats without capture time require a separate evidenced decoding path while
-still composing `PnmHeader` and implementing `HasPnmHeader` for shared access.
+`PnmHeader::from_bytes(bytes)` owns common metadata and retains `pnm_data()` plus
+`payload_offset()`. The central `pnm_file_type.rs` registry supplies identity,
+canonical tag, enabled version/layout and decoder route. RxMER and FEC Summary
+1.0 header layouts are enabled. Other recognized types retain their bytes with an
+UnsupportedLayout diagnostic until their header layouts are enabled. FEC header
+recognition does not implement its payload decoder: decode returns
+UnsupportedDecoder. Unknown signatures and unsupported enabled-layout versions
+return UnsupportedType and UnsupportedVersion respectively.
+
+RxMER's `from_header(header, limits)` reads only the remaining payload through
+`Reader::with_origin`, preserving original-file offsets. `parse(bytes, limits)`
+remains a convenience entry point using the same header object. The previous
+`parse_with_capture_time` helper is replaced. Header fields are private and accessed
+through `HasPnmHeader`; callers no longer construct them with struct literals.
+Generic header errors precede second-tier type validation (for example, a truncated
+FEC header is a truncation error before RxMER rejects that type).
+
+The caller owns the original bytes throughout. Parser objects borrow those bytes;
+no self-referential owning buffer, unsafe code or Python sidecar is required.
+
+```rust
+use pnm_core::pnm::parser::{
+    cm_ds_ofdm_rx_mer::ParseLimits,
+    pnm_file::{PnmFile, DecodedPnm},
+    model::DEFAULT_MAX_JSON_BYTES,
+};
+
+// `capture_bytes` is owned by the caller and outlives these objects.
+let file = PnmFile::from_bytes(&capture_bytes);
+let header = file.header()?;
+let header_json = header.to_json(false, DEFAULT_MAX_JSON_BYTES)?;
+let DecodedPnm::RxMer(rxmer) = file.decode(ParseLimits::default())?;
+let decoded_json = rxmer.to_json(DEFAULT_MAX_JSON_BYTES)?;
+```
+
+### Output models and JSON
+
+Header `to_model()` returns `pnm_header` with PyPNM's file_type,
+file_type_version, major_version, minor_version and capture_time keys. The historic
+file_type_version key holds the numeric file discriminator, not the format version.
+Missing capture time is null. `to_json(false, limit)` produces header-only JSON;
+`to_json(true, limit)` explicitly adds remaining bytes as hexadecimal `data`.
+
+RxMER `to_model()` returns a typed output view. The model has colon-separated MAC,
+spacing/frequency in Hz, dB values and null for unavailable samples. Its values
+serializer traverses original samples lazily, without allocating a decoded vector.
+`to_json(limit)` uses that model and Serde's bounded writer to produce pretty JSON.
+The limit includes indentation; exceeding it returns an error and discards partial
+output. Payload hex allocation is separately checked before construction. The
+provided default budget is 16 MiB; callers may supply another limit.
+
+JSON is an output representation, never the handoff between parsing tiers. Model
+views and the original binary data remain independently accessible. Statistics and
+occupied bandwidth are not part of this decoder output, so it is not full PyPNM
+analysis JSON parity. No desktop/UI implementation is included in this change.
+
+### Shared header evidence
+
+FEC Summary: I27 Table 71 p181 and I13 Table 104 p220 show the four-byte signature,
+two version bytes and then channel ID; there is no capture-time field. Both use
+1.0 for the supported header. The fixture and PyPNM pnm_header.py corroborate this
+six-byte split. This does not imply a byte order for multi-byte FEC payload fields.
+Central identities are from the file-format tables and pinned PyPNM vocabulary;
+PNN10 is the display tag for a fourth byte of 0x0a. LLD01 is recognized as
+4c4c4401 but its layout remains disabled. PXX9 is internal PyPNM SNMP data and is
+not recognized as an on-disk DOCSIS format here.

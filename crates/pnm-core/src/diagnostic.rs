@@ -10,6 +10,8 @@ pub enum ErrorCode {
     Truncated,
     UnsupportedType,
     UnsupportedVersion,
+    UnsupportedLayout,
+    UnsupportedDecoder,
     LimitExceeded,
     LengthMismatch,
     ArithmeticOverflow,

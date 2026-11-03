@@ -4,21 +4,18 @@
  */
 //! RxMER version 1.0, based on I27 Table 68 and I13 Table 101 text extracts.
 use super::{
-    pnm_header::{HasPnmHeader, PnmFormatVersion, PnmHeader},
+    pnm_header::{HasPnmHeader, PnmHeader},
     reader::Reader,
 };
 use crate::diagnostic::{ErrorCode, ParseError};
 use crate::pnm::data_type::units::{HZ_PER_KHZ, QUARTER_DB_PER_DB};
 use crate::pnm::data_type::{
-    ChannelId, DataLengthBytes, FrequencyHz, MacAddress, PnmFileType, RxMerDb, SampleCount,
-    SubcarrierIdx, SubcarrierSpacingKhz,
+    ChannelId, DataLengthBytes, FrequencyHz, MacAddress, RxMerDb, SampleCount, SubcarrierIdx,
+    SubcarrierSpacingKhz,
 };
 
-const RXMER_FILE_TYPE: PnmFileType = [0x50, 0x4e, 0x4e, 0x04];
-const RXMER_FORMAT_VERSION: PnmFormatVersion = PnmFormatVersion { major: 1, minor: 0 };
 const RXMER_ZERO_FREQUENCY_OFFSET: usize = 17;
 const RXMER_LENGTH_OFFSET: usize = 24;
-const RXMER_HEADER_BYTES: usize = 28;
 const RXMER_UNAVAILABLE: u8 = 0xff;
 const DEFAULT_MAX_SAMPLES: SampleCount = 65_536;
 
@@ -44,7 +41,7 @@ impl Default for ParseLimits {
 /// No statistics, I/O or allocation of sample arrays occurs here.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CmDsOfdmRxMer<'input> {
-    header: PnmHeader,
+    header: PnmHeader<'input>,
     pub channel_id: ChannelId,
     pub mac_address: MacAddress,
     pub subcarrier_zero_frequency_hz: FrequencyHz,
@@ -57,7 +54,7 @@ impl HasPnmHeader for CmDsOfdmRxMer<'_> {
     ///
     /// # Returns
     /// A shared header reference valid for the capture borrow.
-    fn pnm_header(&self) -> &PnmHeader {
+    fn pnm_header(&self) -> &PnmHeader<'_> {
         &self.header
     }
 }
@@ -75,14 +72,32 @@ impl<'input> CmDsOfdmRxMer<'input> {
     /// Reports field/offset errors for truncation, unsupported type/version,
     /// exceeded limits, frequency overflow or a payload length mismatch, including trailing bytes.
     pub fn parse(bytes: &'input [u8], limits: ParseLimits) -> Result<Self, ParseError> {
+        Self::from_header(PnmHeader::from_bytes(bytes)?, limits)
+    }
+    /// Decodes RxMER-specific fields from an already-parsed header.
+    ///
+    /// # Arguments
+    /// * `header` - First-tier header retaining the remaining original bytes.
+    /// * `limits` - Maximum accepted sample count.
+    /// # Returns
+    /// A capture retaining the header and borrowing raw samples without copying.
+    /// # Errors
+    /// Rejects non-RxMER identity, truncation, length/limit violations or overflow.
+    /// Diagnostics remain relative to the original file.
+    pub fn from_header(header: PnmHeader<'input>, limits: ParseLimits) -> Result<Self, ParseError> {
+        if header.descriptor().decoder != super::pnm_file_type::PnmDecoderKind::RxMer {
+            return Err(ParseError {
+                code: ErrorCode::UnsupportedType,
+                offset: 0,
+                field: "file_type",
+            });
+        }
         let error = |code, offset, field| ParseError {
             code,
             offset,
             field,
         };
-        let mut reader = Reader::new(bytes);
-        let header =
-            PnmHeader::parse_with_capture_time(&mut reader, RXMER_FILE_TYPE, RXMER_FORMAT_VERSION)?;
+        let mut reader = Reader::with_origin(header.pnm_data(), header.payload_offset())?;
         let channel_id: ChannelId = reader.read_u8("channel_id")?;
         let mac_address: MacAddress = reader.read_bytes("mac_address")?;
         let subcarrier_zero_frequency_hz: FrequencyHz = reader.read_u32_be("zero_frequency")?;
@@ -100,7 +115,7 @@ impl<'input> CmDsOfdmRxMer<'input> {
                 "data_length",
             ));
         }
-        let raw_values = &bytes[RXMER_HEADER_BYTES..]; // Reader established the complete fixed header.
+        let raw_values = reader.remaining();
         if raw_values.len() != payload_length {
             return Err(error(
                 ErrorCode::LengthMismatch,
@@ -121,6 +136,41 @@ impl<'input> CmDsOfdmRxMer<'input> {
         let _frequencies = capture.frequencies_hz()?;
         Ok(capture)
     }
+    /// Builds a PyPNM-aligned output view without copying sample arrays.
+    ///
+    /// # Returns
+    /// Header and RxMER fields, colon-separated MAC, Hz spacing and lazy dB values.
+    pub fn to_model(&self) -> super::model::cm_ds_ofdm_rx_mer::CmDsOfdmRxMerModel<'input> {
+        use super::model::cm_ds_ofdm_rx_mer::{CmDsOfdmRxMerModel, RxMerValues};
+        let mac_address = self
+            .mac_address
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<Vec<_>>()
+            .join(":");
+        CmDsOfdmRxMerModel {
+            pnm_header: self.header.to_model().pnm_header,
+            channel_id: self.channel_id,
+            mac_address,
+            subcarrier_zero_frequency: self.subcarrier_zero_frequency_hz,
+            first_active_subcarrier_index: self.first_active_subcarrier_index,
+            subcarrier_spacing: FrequencyHz::from(self.subcarrier_spacing_khz) * HZ_PER_KHZ,
+            data_length: self.raw_values.len(),
+            value_units: "dB",
+            values: RxMerValues(self.raw_values),
+        }
+    }
+    /// Serializes the decoded model to bounded pretty JSON.
+    ///
+    /// # Arguments
+    /// * `max_bytes` - Maximum output bytes including indentation.
+    /// # Returns
+    /// A JSON string; unavailable readings remain null.
+    /// # Errors
+    /// Reports serialization failures or an exceeded output limit.
+    pub fn to_json(&self, max_bytes: usize) -> serde_json::Result<String> {
+        super::model::to_json(&self.to_model(), max_bytes)
+    }
     /// Borrows the unchanged encoded RxMER samples.
     ///
     /// # Returns
@@ -133,13 +183,7 @@ impl<'input> CmDsOfdmRxMer<'input> {
     /// # Returns
     /// An iterator of dB values; None denotes an unavailable sample.
     pub fn values_db(&self) -> impl Iterator<Item = Option<RxMerDb>> + '_ {
-        self.raw_values.iter().map(|&value| {
-            if value == RXMER_UNAVAILABLE {
-                None
-            } else {
-                Some(f64::from(value) / QUARTER_DB_PER_DB)
-            }
-        })
+        self.raw_values.iter().copied().map(decode_rxmer_value)
     }
     /// Validates the frequency range and lazily yields sample frequencies.
     ///
@@ -174,5 +218,19 @@ impl<'input> CmDsOfdmRxMer<'input> {
         }
         // Nonnegative, monotonic offsets are bounded by the checked final sample.
         Ok((0..sample_count).map(move |index| start_hz + index * spacing_hz))
+    }
+}
+
+/// Converts one encoded RxMER sample for both typed iteration and JSON output.
+///
+/// # Arguments
+/// * `raw_value` - Original quarter-dB byte, including the unavailable sentinel.
+/// # Returns
+/// A dB reading or None for unavailable data, without clamping the input.
+pub(crate) fn decode_rxmer_value(raw_value: u8) -> Option<RxMerDb> {
+    if raw_value == RXMER_UNAVAILABLE {
+        None
+    } else {
+        Some(f64::from(raw_value) / QUARTER_DB_PER_DB)
     }
 }
