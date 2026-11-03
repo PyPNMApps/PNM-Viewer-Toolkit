@@ -7,8 +7,7 @@ description: Prepare PNM Viewer three-component version bumps and release comman
 
 Read `docs/release.md`, `VERSION`, and the repository's helpers before preparing
 commands. Resolve those paths from the repository root (two levels above this
-canonical skill directory). VERSION is the only version source while the Java
-build is undecided; integrate the future build before claiming artifact versions
+canonical skill directory). VERSION is the only version source until Cargo/Tauri/UI manifests exist; integrate the future build before claiming artifact versions
 are synchronized.
 
 Use `tools/bump-version.sh --bump major|minor|patch`, with `--dry-run` to preview.

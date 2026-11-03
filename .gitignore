@@ -15,3 +15,11 @@
 # Python development-helper cache
 __pycache__/
 *.pyc
+
+# Tauri/React build output and private evidence
+node_modules/
+dist/
+/specs/private/
+
+# Local development plans and working notes
+/development/

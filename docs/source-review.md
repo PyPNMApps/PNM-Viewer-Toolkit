@@ -56,3 +56,9 @@ Renamed `/home/dev01/Projects/simple-pnm` to
 directory and original archive. Copied the initial project setup from
 `PersonalDevelopmentEnviroment/pnm-viewer`, excluding that source's `.git`.
 The setup-source directory remains in place.
+
+## Superseding development direction
+
+On 2026-11-02 the user adopted the supplied Tauri/Rust bootstrap guide, replacing
+the Java plan. The Java investigation above is historical. See
+[bootstrap review](bootstrap-review.md) for the pinned-source checks and decisions.

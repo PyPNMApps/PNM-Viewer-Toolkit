@@ -2,7 +2,7 @@
 
 PNM Viewer uses `MAJOR.MINOR.PATCH`, initially `0.1.0`, in the root `VERSION`
 file. The project is in the dev phase; this is not a published release.
-Python 3 is needed for the development helper, not the planned Java runtime.
+Python 3 is needed for the development helper, not the planned Rust/Tauri runtime.
 
 | Bump | Example | Intended use |
 | --- | --- | --- |
@@ -39,8 +39,8 @@ only the intended tag with an explicit tag ref. Never overwrite tags.
 
 Tag creation and publication are explicit release actions; the bump helper does
 not perform them. The project skill `pnm-viewer-release` guides this workflow.
-There is no application packaging or hosted-release automation yet. When a Java
-build is selected, consume VERSION or add tested synchronization before release.
+There is no application packaging or hosted-release automation yet. When the Cargo/Tauri/UI build is added, consume VERSION or add tested
+synchronization across package manifests before release.
 
 ## Tool validation
 
