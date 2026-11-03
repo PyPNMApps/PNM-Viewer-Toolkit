@@ -28,3 +28,16 @@ Current repository instructions
 retain the existing Git and MAJOR.MINOR.PATCH workflows.
 
 - [Rust development and validation](docs/rust-development.md)
+
+## Development setup
+
+On Ubuntu 22.04/24.04 (x86_64 or ARM64), run as your normal user:
+
+```bash
+./install.sh --development --dry-run
+./install.sh --development
+```
+
+The installer uses sudo for missing system packages and keeps pinned Rust and
+Node.js tools in ignored `local/`. See [development setup](docs/development-setup.md)
+for read-only checks, tool commands and platform limitations.

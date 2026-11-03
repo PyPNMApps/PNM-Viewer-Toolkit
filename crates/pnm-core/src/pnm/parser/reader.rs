@@ -21,6 +21,56 @@ impl<'input> Reader<'input> {
     pub fn new(bytes: &'input [u8]) -> Self {
         Self { bytes, offset: 0 }
     }
+    /// Reports the next unread byte's offset in the original input.
+    ///
+    /// # Returns
+    /// The current byte offset without advancing the reader.
+    pub fn position(&self) -> usize {
+        self.offset
+    }
+
+    /// Reads one unsigned byte and advances only on success.
+    ///
+    /// # Arguments
+    /// * `field` - Static field label used in failure diagnostics.
+    ///
+    /// # Returns
+    /// The decoded unsigned value.
+    ///
+    /// # Errors
+    /// Returns Truncated at the original cursor without advancing on failure.
+    pub fn read_u8(&mut self, field: &'static str) -> Result<u8, ParseError> {
+        Ok(self.read_bytes::<1>(field)?[0])
+    }
+
+    /// Reads a big-endian unsigned 16-bit field and advances only on success.
+    ///
+    /// # Arguments
+    /// * `field` - Static field label used in failure diagnostics.
+    ///
+    /// # Returns
+    /// The decoded unsigned value.
+    ///
+    /// # Errors
+    /// Returns Truncated at the original cursor without advancing on failure.
+    pub fn read_u16_be(&mut self, field: &'static str) -> Result<u16, ParseError> {
+        Ok(u16::from_be_bytes(self.read_bytes(field)?))
+    }
+
+    /// Reads a big-endian unsigned 32-bit field and advances only on success.
+    ///
+    /// # Arguments
+    /// * `field` - Static field label used in failure diagnostics.
+    ///
+    /// # Returns
+    /// The decoded unsigned value.
+    ///
+    /// # Errors
+    /// Returns Truncated at the original cursor without advancing on failure.
+    pub fn read_u32_be(&mut self, field: &'static str) -> Result<u32, ParseError> {
+        Ok(u32::from_be_bytes(self.read_bytes(field)?))
+    }
+
     /// Copies a fixed-size field and advances only on success.
     ///
     /// # Arguments
@@ -32,7 +82,7 @@ impl<'input> Reader<'input> {
     ///
     /// # Errors
     /// Returns Truncated at the original cursor if bounds or addition fail.
-    pub fn take<const BYTE_COUNT: usize>(
+    pub fn read_bytes<const BYTE_COUNT: usize>(
         &mut self,
         field: &'static str,
     ) -> Result<[u8; BYTE_COUNT], ParseError> {
@@ -56,10 +106,38 @@ impl<'input> Reader<'input> {
 mod tests {
     use super::*;
     #[test]
+    fn typed_reads_decode_big_endian_fields() {
+        let mut reader = Reader::new(&[0xab, 0x12, 0x34, 0x89, 0xab, 0xcd, 0xef]);
+        assert_eq!(reader.read_u8("channel").unwrap(), 0xab);
+        assert_eq!(reader.read_u16_be("index").unwrap(), 0x1234);
+        assert_eq!(reader.read_u32_be("frequency").unwrap(), 0x89abcdef);
+        let failure = reader.read_u8("past_end").unwrap_err();
+        assert_eq!(failure.code, ErrorCode::Truncated);
+        assert_eq!(failure.offset, 7);
+        assert_eq!(failure.field, "past_end");
+    }
+
+    #[test]
+    fn failed_typed_reads_preserve_cursor_and_diagnostics() {
+        let mut reader = Reader::new(&[0xaa, 0x12, 0x34, 0x56]);
+        assert_eq!(reader.read_u8("prefix").unwrap(), 0xaa);
+        let failure = reader.read_u32_be("frequency").unwrap_err();
+        assert_eq!(failure.code, ErrorCode::Truncated);
+        assert_eq!(failure.offset, 1);
+        assert_eq!(failure.field, "frequency");
+        assert_eq!(reader.read_u16_be("index").unwrap(), 0x1234);
+        let failure = reader.read_u16_be("short_index").unwrap_err();
+        assert_eq!(failure.code, ErrorCode::Truncated);
+        assert_eq!(failure.offset, 3);
+        assert_eq!(failure.field, "short_index");
+        assert_eq!(reader.read_u8("last").unwrap(), 0x56);
+    }
+
+    #[test]
     fn truncated_read_does_not_advance() {
         let mut reader = Reader::new(&[1, 2, 3]);
-        assert_eq!(reader.take::<2>("first").unwrap(), [1, 2]);
-        assert_eq!(reader.take::<2>("second").unwrap_err().offset, 2);
-        assert_eq!(reader.take::<1>("last").unwrap(), [3]);
+        assert_eq!(reader.read_bytes::<2>("first").unwrap(), [1, 2]);
+        assert_eq!(reader.read_bytes::<2>("second").unwrap_err().offset, 2);
+        assert_eq!(reader.read_bytes::<1>("last").unwrap(), [3]);
     }
 }

@@ -11,7 +11,9 @@ class inheritance, duplicated decoding, or treating every format as one header.
 
 Rust 1.85.1 is pinned for this initial dependency-free crate. The locally installed
 toolchain lives in ignored local/cargo and local/rustup; no shell profile was
-changed. The wrapper requires that local installation; it does not auto-install.
+changed. Run `./install.sh --development` to prepare the local toolchain and native
+prerequisites; see [development setup](development-setup.md). The wrapper
+requires that local installation; it does not auto-install.
 
 ```bash
 cd /home/dev01/Projects/pnm-viewer &&
@@ -65,3 +67,37 @@ Raw byte buffers and cursor offsets retain primitive types.
 FrequencyHz is u32 throughout. frequencies_hz now returns Result<iterator,
 ParseError>; parsing rejects overflowing frequency ranges, and later calls
 revalidate public metadata. This is numeric safety, not a 3 GHz PHY limit.
+
+## Parser implementation pattern
+
+Use `cm_ds_ofdm_rx_mer.rs` as the first concrete parser example:
+
+1. Read and validate the file identifier and supported format version.
+2. Decode fields in their documented wire order with the shared `Reader`:
+   `read_bytes` for fixed arrays, `read_u8`, `read_u16_be`, and `read_u32_be`
+   for unsigned fields. The `be` suffix makes big-endian byte order explicit.
+3. Annotate decoded fields with shared domain aliases such as `ChannelId`,
+   `MacAddress` and `FrequencyHz`. Reader handles bytes, not PNM semantics.
+4. Keep the encoded `DataLengthBytes` separate from `payload_length: usize`.
+   Use a checked conversion before host-sized indexing and resource checks.
+5. Validate format-specific lengths and limits, borrow the original payload,
+   compose `PnmHeader`, and validate derived ranges before returning.
+
+Reader failures preserve the cursor and report the original field offset and
+label. Each format still needs its own evidence for layout, endianness, header
+fields, sentinels and payload constraints; RxMER's 28-byte header and one-byte
+samples are not universal. Add other primitive read methods only when needed.
+
+### Shared header decoding
+
+RxMER delegates to `PnmHeader::parse_with_capture_time(&mut reader,
+expected_file_type, expected_version)`. This reusable method owns reading the
+four-byte identifier, major/minor version, and big-endian capture time. Each
+format supplies its supported identifier/version. Validation occurs before
+reading later fields, retaining early rejection and original-input offsets.
+The method advances through successful fields; it is not a transactional read
+of the entire header. RxMER then reads only its format-specific fields.
+
+Use this helper only after confirming that another format shares that layout.
+Formats without capture time require a separate evidenced decoding path while
+still composing `PnmHeader` and implementing `HasPnmHeader` for shared access.

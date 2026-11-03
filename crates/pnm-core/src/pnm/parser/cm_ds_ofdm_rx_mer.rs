@@ -10,14 +10,13 @@ use super::{
 use crate::diagnostic::{ErrorCode, ParseError};
 use crate::pnm::data_type::units::{HZ_PER_KHZ, QUARTER_DB_PER_DB};
 use crate::pnm::data_type::{
-    CaptureTime, ChannelId, DataLengthBytes, FileVersionComponent, FrequencyHz, MacAddress,
-    PnmFileType, RxMerDb, SampleCount, SubcarrierIdx, SubcarrierSpacingKhz,
+    ChannelId, DataLengthBytes, FrequencyHz, MacAddress, PnmFileType, RxMerDb, SampleCount,
+    SubcarrierIdx, SubcarrierSpacingKhz,
 };
 
 const RXMER_FILE_TYPE: PnmFileType = [0x50, 0x4e, 0x4e, 0x04];
 const RXMER_FORMAT_VERSION: PnmFormatVersion = PnmFormatVersion { major: 1, minor: 0 };
 const RXMER_ZERO_FREQUENCY_OFFSET: usize = 17;
-const RXMER_VERSION_OFFSET: usize = 4;
 const RXMER_LENGTH_OFFSET: usize = 24;
 const RXMER_HEADER_BYTES: usize = 28;
 const RXMER_UNAVAILABLE: u8 = 0xff;
@@ -82,41 +81,19 @@ impl<'input> CmDsOfdmRxMer<'input> {
             field,
         };
         let mut reader = Reader::new(bytes);
-        let file_type: PnmFileType = reader.take("file_type")?;
-        if file_type != RXMER_FILE_TYPE {
-            return Err(error(ErrorCode::UnsupportedType, 0, "file_type"));
-        }
-        let major_version: FileVersionComponent = reader.take::<1>("major_version")?[0];
-        let minor_version: FileVersionComponent = reader.take::<1>("minor_version")?[0];
-        let format_version = PnmFormatVersion {
-            major: major_version,
-            minor: minor_version,
-        };
-        // Vendor minor versions are preserved as unsupported until verified.
-        if format_version != RXMER_FORMAT_VERSION {
-            return Err(error(
-                ErrorCode::UnsupportedVersion,
-                RXMER_VERSION_OFFSET,
-                "format_version",
-            ));
-        }
-        let capture_time = Some(CaptureTime::from_be_bytes(reader.take("capture_time")?));
-        let header = PnmHeader {
-            file_type,
-            format_version,
-            capture_time,
-        };
-        let channel_id: ChannelId = reader.take::<1>("channel_id")?[0];
-        let mac_address: MacAddress = reader.take("mac_address")?;
-        let subcarrier_zero_frequency_hz =
-            FrequencyHz::from_be_bytes(reader.take("zero_frequency")?);
-        let first_active_subcarrier_index =
-            SubcarrierIdx::from_be_bytes(reader.take("first_subcarrier")?);
-        let subcarrier_spacing_khz: SubcarrierSpacingKhz = reader.take::<1>("spacing_khz")?[0];
-        let data_length_bytes = DataLengthBytes::from_be_bytes(reader.take("data_length")?);
-        let data_length_bytes = usize::try_from(data_length_bytes)
+        let header =
+            PnmHeader::parse_with_capture_time(&mut reader, RXMER_FILE_TYPE, RXMER_FORMAT_VERSION)?;
+        let channel_id: ChannelId = reader.read_u8("channel_id")?;
+        let mac_address: MacAddress = reader.read_bytes("mac_address")?;
+        let subcarrier_zero_frequency_hz: FrequencyHz = reader.read_u32_be("zero_frequency")?;
+        let first_active_subcarrier_index: SubcarrierIdx =
+            reader.read_u16_be("first_subcarrier")?;
+        let subcarrier_spacing_khz: SubcarrierSpacingKhz = reader.read_u8("spacing_khz")?;
+        let data_length_bytes: DataLengthBytes = reader.read_u32_be("data_length")?;
+        // Convert the encoded length separately for host-sized indexing and limits.
+        let payload_length = usize::try_from(data_length_bytes)
             .map_err(|_| error(ErrorCode::LimitExceeded, RXMER_LENGTH_OFFSET, "data_length"))?;
-        if data_length_bytes > limits.max_samples {
+        if payload_length > limits.max_samples {
             return Err(error(
                 ErrorCode::LimitExceeded,
                 RXMER_LENGTH_OFFSET,
@@ -124,7 +101,7 @@ impl<'input> CmDsOfdmRxMer<'input> {
             ));
         }
         let raw_values = &bytes[RXMER_HEADER_BYTES..]; // Reader established the complete fixed header.
-        if raw_values.len() != data_length_bytes {
+        if raw_values.len() != payload_length {
             return Err(error(
                 ErrorCode::LengthMismatch,
                 RXMER_LENGTH_OFFSET,
