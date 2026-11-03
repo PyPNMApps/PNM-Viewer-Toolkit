@@ -4,41 +4,44 @@
  */
 //! Borrowed wire arrays and Serde views; exclusions are PNM interpretation.
 use crate::pnm::{
-    data_type::{ComplexValue, CounterValue},
-    lib::fixed_point_decoder::{decode_complex, QFormat},
+    data_type::{CounterValue, IqPair},
+    lib::fixed_point_decoder::{decode_iq, QFormat},
 };
 use serde::{Serialize, Serializer};
 
-pub(crate) const COMPLEX_BYTES: usize = 4;
+pub(crate) const IQ_PAIR_BYTES: usize = 4;
 pub(crate) const COUNTER_BYTES: usize = 4;
 pub(crate) const AMPLITUDE_BYTES: usize = 2;
 const EXCLUDED_COMPONENT: i16 = i16::MIN;
 
 /// Borrowed fixed-point pairs. Channel estimates alone recognize exclusion pairs.
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct ComplexValues<'input> {
+pub(crate) struct IqSamples<'input> {
     pub bytes: &'input [u8],
     pub format: QFormat,
     pub excluded_pair: bool,
 }
-impl ComplexValues<'_> {
+impl IqSamples<'_> {
     /// Lazily converts signed complex components, preserving exclusion markers.
     ///
     /// # Returns
     /// Fixed-point real/imaginary pairs or None for configured exclusions.
-    pub(crate) fn values(&self) -> impl Iterator<Item = Option<ComplexValue>> + '_ {
-        self.bytes.chunks_exact(COMPLEX_BYTES).map(|pair| {
-            let real = i16::from_be_bytes([pair[0], pair[1]]);
-            let imaginary = i16::from_be_bytes([pair[2], pair[3]]);
-            if self.excluded_pair && real == EXCLUDED_COMPONENT && imaginary == EXCLUDED_COMPONENT {
+    pub(crate) fn iq(&self) -> impl Iterator<Item = Option<IqPair>> + '_ {
+        self.bytes.chunks_exact(IQ_PAIR_BYTES).map(|pair| {
+            let in_phase = i16::from_be_bytes([pair[0], pair[1]]);
+            let quadrature = i16::from_be_bytes([pair[2], pair[3]]);
+            if self.excluded_pair
+                && in_phase == EXCLUDED_COMPONENT
+                && quadrature == EXCLUDED_COMPONENT
+            {
                 None
             } else {
-                Some(decode_complex(real, imaginary, self.format))
+                Some(decode_iq(in_phase, quadrature, self.format))
             }
         })
     }
 }
-impl Serialize for ComplexValues<'_> {
+impl Serialize for IqSamples<'_> {
     /// Streams decoded pairs without allocating a sample array.
     ///
     /// # Arguments
@@ -51,7 +54,7 @@ impl Serialize for ComplexValues<'_> {
         &self,
         serializer: Output,
     ) -> Result<Output::Ok, Output::Error> {
-        serializer.collect_seq(self.values())
+        serializer.collect_seq(self.iq())
     }
 }
 #[derive(Debug, Clone, PartialEq)]

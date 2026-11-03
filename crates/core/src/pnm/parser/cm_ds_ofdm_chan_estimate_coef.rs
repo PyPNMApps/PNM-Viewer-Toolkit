@@ -10,7 +10,7 @@ use super::{
     support::{
         payload::{finish, payload, require_decoder},
         serialization::{serialize_header, serialize_mac, serialize_spacing},
-        values::{ComplexValues, COMPLEX_BYTES},
+        values::{IqSamples, IQ_PAIR_BYTES},
     },
 };
 use crate::common::reader::Reader;
@@ -32,7 +32,7 @@ pub struct CmDsOfdmChanEstimateCoef<'input> {
     #[serde(rename = "subcarrier_spacing", serialize_with = "serialize_spacing")]
     pub subcarrier_spacing_khz: SubcarrierSpacingKhz,
     pub data_length: DataLengthBytes,
-    values: ComplexValues<'input>,
+    iq: IqSamples<'input>,
 }
 impl<'input> CmDsOfdmChanEstimateCoef<'input> {
     /// Parses a complete capture, borrowing its original bytes.
@@ -65,10 +65,10 @@ impl<'input> CmDsOfdmChanEstimateCoef<'input> {
         let subcarrier_zero_frequency_hz = reader.read_u32_be("zero_frequency")?;
         let first_active_subcarrier_index = reader.read_u16_be("first_subcarrier")?;
         let subcarrier_spacing_khz = reader.read_u8("spacing_khz")?;
-        let bytes = payload(&mut reader, COMPLEX_BYTES, limits)?;
+        let bytes = payload(&mut reader, IQ_PAIR_BYTES, limits)?;
         finish(&reader)?;
         let data_length = bytes.len() as DataLengthBytes;
-        let values = ComplexValues {
+        let iq = IqSamples {
             bytes,
             format: QFormat::S2_13,
             excluded_pair: true,
@@ -81,7 +81,7 @@ impl<'input> CmDsOfdmChanEstimateCoef<'input> {
             first_active_subcarrier_index,
             subcarrier_spacing_khz,
             data_length,
-            values,
+            iq,
         })
     }
     /// Serializes the capture directly into bounded pretty JSON.
@@ -110,14 +110,14 @@ impl<'input> CmDsOfdmChanEstimateCoef<'input> {
     ///
     /// # Returns
     /// Original I/Q bytes, with no second copy of the file.
-    pub fn raw_values(&self) -> &'input [u8] {
-        self.values.bytes
+    pub fn raw_iq(&self) -> &'input [u8] {
+        self.iq.bytes
     }
-    /// Lazily decodes fixed-point pairs.
+    /// Lazily decodes fixed-point I/Q pairs.
     ///
     /// # Returns
-    /// Real/imaginary pairs; channel-estimate exclusion pairs become None.
-    pub fn values(&self) -> impl Iterator<Item = Option<ComplexValue>> + '_ {
-        self.values.values()
+    /// [I, Q] pairs (in-phase/real, quadrature/imaginary); channel-estimate exclusion pairs become None.
+    pub fn iq(&self) -> impl Iterator<Item = Option<IqPair>> + '_ {
+        self.iq.iq()
     }
 }

@@ -32,8 +32,8 @@ pub type SampleCount = usize;
 /// Decoded RxMER in decibels; unavailable measurements are represented by Option.
 pub type RxMerDb = f64;
 
-/// Real and imaginary components in linear fixed-point units.
-pub type ComplexValue = [f64; 2];
+/// Decoded [I, Q] pair: in-phase (real), then quadrature (imaginary).
+pub type IqPair = [f64; 2];
 /// Unsigned measurement counter encoded in four bytes.
 pub type CounterValue = u32;
 /// Profile identifier encoded in one byte.

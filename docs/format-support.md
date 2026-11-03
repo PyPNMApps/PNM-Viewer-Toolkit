@@ -50,7 +50,8 @@ JSON follows PyPNM vocabulary where practical, with these deliberate differences
 - Complex fixed-point values retain exact binary fractions rather than rounding
   to six decimals. No derived bandwidth, statistics or analysis is added.
 - Complex capture byte lengths use `data_length`, including constellation and
-  upstream coefficients. Constellation values use `samples`; the others `values`.
+  upstream coefficients. Constellation samples and coefficient pairs use `iq`, ordered
+  `[I, Q]` (in-phase/real then quadrature/imaginary). RxMER retains `values` in dB.
 - FEC `codeword_entries` is an array of records, each with timestamp and counters.
   Its common header capture time stays `null`, rather than being synthesized from
   the first interval. Latency also has no common capture timestamp.

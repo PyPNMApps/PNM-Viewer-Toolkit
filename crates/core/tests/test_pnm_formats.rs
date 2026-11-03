@@ -73,28 +73,28 @@ fn golden_complex_fixtures_and_borrowed_samples() {
     for (bytes, key, count, first, last) in [
         (
             CHANNEL,
-            "values",
+            "iq",
             7480,
             [-0.216552734375, -1.1671142578125],
             [-0.587890625, 0.593994140625],
         ),
         (
             CONSTELLATION,
-            "samples",
+            "iq",
             8192,
             [0.376953125, -1.15625],
             [1.146484375, 0.0859375],
         ),
         (
             UPSTREAM,
-            "values",
+            "iq",
             1776,
             [0.642822265625, -0.6092529296875],
             [-0.8643798828125, 0.8048095703125],
         ),
         (
             LAST_UPDATE,
-            "values",
+            "iq",
             1776,
             [0.03173828125, -0.169921875],
             [-0.17144775390625, 0.01422119140625],
@@ -108,13 +108,13 @@ fn golden_complex_fixtures_and_borrowed_samples() {
         assert_eq!(output["subcarrier_spacing"], 25000);
     }
     let channel = CmDsOfdmChanEstimateCoef::parse(CHANNEL, ParseLimits::default()).unwrap();
-    assert_eq!(channel.raw_values().as_ptr(), CHANNEL[28..].as_ptr());
+    assert_eq!(channel.raw_iq().as_ptr(), CHANNEL[28..].as_ptr());
     assert_eq!(
         channel.pnm_header().pnm_data().as_ptr(),
         CHANNEL[10..].as_ptr()
     );
     let upstream = CmUsOfdmaPreEq::parse(UPSTREAM, ParseLimits::default()).unwrap();
-    assert_eq!(upstream.raw_values().as_ptr(), UPSTREAM[34..].as_ptr());
+    assert_eq!(upstream.raw_iq().as_ptr(), UPSTREAM[34..].as_ptr());
     assert_eq!(
         CmDsOfdmChanEstimateCoef::parse(UPSTREAM, ParseLimits::default())
             .unwrap_err()
@@ -195,7 +195,7 @@ fn complex_signed_boundaries_exclusion_and_distinct_scales() {
     channel[24..28].copy_from_slice(&12_u32.to_be_bytes());
     channel.extend_from_slice(&[0x80, 0, 0x80, 0, 0x80, 0, 0x7f, 0xff, 0x24, 0, 0xf8, 0]);
     assert_eq!(
-        json_capture(&channel)["values"],
+        json_capture(&channel)["iq"],
         json!([null, [-4.0, 3.9998779296875], [1.125, -0.25]])
     );
     for (tag, expected) in [
@@ -206,7 +206,7 @@ fn complex_signed_boundaries_exclusion_and_distinct_scales() {
         bytes[..4].copy_from_slice(&identify_tag(tag).unwrap().signature);
         bytes[30..34].copy_from_slice(&4_u32.to_be_bytes());
         bytes.extend_from_slice(&[0x20, 0, 0xe0, 0]);
-        assert_eq!(json_capture(&bytes)["values"], expected);
+        assert_eq!(json_capture(&bytes)["iq"], expected);
     }
     channel[24..28].copy_from_slice(&11_u32.to_be_bytes());
     assert_eq!(failure(&channel), ErrorCode::LengthMismatch);

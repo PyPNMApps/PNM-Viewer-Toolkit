@@ -268,7 +268,7 @@ algorithms such as IFFT, group delay, windows and complex-array operations.
 Rust uses `common` for that top-level utility package to distinguish it from
 `src/lib.rs`, the crate entry point. `pnm/lib` is an ordinary nested Rust module.
 
-`pnm::lib::fixed_point_decoder::{QFormat, decode_fixed_point, decode_complex}`
+`pnm::lib::fixed_point_decoder::{QFormat, decode_fixed_point, decode_iq}`
 accepts already-decoded signed components. It has no Serde, reader, file-routing
 or sentinel logic. `QFormat::S2_13` and `QFormat::S1_14` select the existing
 central scale constants in `pnm::data_type::units`. Wire adapters handle byte
@@ -287,3 +287,8 @@ APIs and JSON contracts are unchanged.
 
 Validation: all 24 tests, rustfmt and Clippy passed. JSON exports from all nine
 real fixtures were byte-for-byte identical before and after the reorganization.
+
+Complex captures expose `iq()` and `raw_iq()` in Rust and `iq` in JSON.
+The shared `IqPair` type is ordered `[I, Q]`: in-phase/real then
+quadrature/imaginary. `IqSamples` owns the borrowed wire view; `decode_iq`
+performs fixed-point conversion. RxMER keeps its scalar dB naming.

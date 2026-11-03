@@ -4,7 +4,7 @@
  */
 //! Signed fixed-point conversion, corresponding to PyPNM pnm/lib/fixed_point_decoder.py.
 //! Byte order, payload length and unavailable-value rules belong to the parser.
-use crate::pnm::data_type::{units, ComplexValue};
+use crate::pnm::data_type::{units, IqPair};
 
 /// Supported signed 16-bit layouts, with the sign bit excluded from integer bits.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -34,14 +34,14 @@ pub fn decode_fixed_point(value: i16, format: QFormat) -> f64 {
 /// Converts the real and imaginary components using one fixed-point format.
 ///
 /// # Arguments
-/// * `real` - Signed encoded real component.
-/// * `imaginary` - Signed encoded imaginary component.
+/// * `in_phase` - Signed encoded I (real) component.
+/// * `quadrature` - Signed encoded Q (imaginary) component.
 /// * `format` - Shared component format.
 /// # Returns
-/// A real/imaginary pair without rounding or allocation.
-pub fn decode_complex(real: i16, imaginary: i16, format: QFormat) -> ComplexValue {
+/// An [I, Q] pair without rounding or allocation.
+pub fn decode_iq(in_phase: i16, quadrature: i16, format: QFormat) -> IqPair {
     [
-        decode_fixed_point(real, format),
-        decode_fixed_point(imaginary, format),
+        decode_fixed_point(in_phase, format),
+        decode_fixed_point(quadrature, format),
     ]
 }
