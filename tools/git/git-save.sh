@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+#
+# Copyright 2026 PNM Viewer contributors
+# SPDX-License-Identifier: Apache-2.0
+#
+#
+# Stage all non-ignored project changes and create a local commit.
+# Require --commit-msg; never push. Git failures propagate to the caller.
 
 set -euo pipefail
 
@@ -6,6 +13,8 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 COMMIT_MSG=""
 
+# Print command usage to stdout without changing repository state.
+# Arguments are unused unless described above; failures stop this script.
 usage() {
   cat <<'EOF'
 Usage: git-save.sh --commit-msg <message>
@@ -21,11 +30,15 @@ Example:
 EOF
 }
 
+# Print the supplied error to stderr and exit with status 1.
+# Arguments are unused unless described above; failures stop this script.
 die() {
   echo "ERROR: $*" >&2
   exit 1
 }
 
+# Reject nested Git metadata and company-skill Gitlinks before staging.
+# Arguments are unused unless described above; failures stop this script.
 reject_nested_skill_checkouts() {
   local nested_git
 
@@ -50,7 +63,9 @@ reject_nested_skill_checkouts() {
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --commit-msg)
-      [[ $# -ge 2 ]] || die "--commit-msg requires a message"
+      if [[ $# -lt 2 ]]; then
+        die "--commit-msg requires a message"
+      fi
       COMMIT_MSG="$2"
       shift 2
       ;;
@@ -62,9 +77,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-[[ -n "${COMMIT_MSG}" ]] || die "--commit-msg is required"
-git -C "${PROJECT_DIR}" rev-parse --is-inside-work-tree >/dev/null 2>&1 || \
+if [[ -z "${COMMIT_MSG}" ]]; then
+  die "--commit-msg is required"
+fi
+if ! git -C "${PROJECT_DIR}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   die "Project directory is not a Git working tree: ${PROJECT_DIR}"
+fi
 
 reject_nested_skill_checkouts
 git -C "${PROJECT_DIR}" add --all

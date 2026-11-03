@@ -1,0 +1,226 @@
+---
+name: coding-style
+description: Apply PNM Viewer coding conventions when writing, modifying, or reviewing project-owned code, including SPDX headers, full public-function documentation banners, multiline branches and PyPNM-aligned Rust modules.
+---
+
+# PNM Viewer coding style
+
+Adapted from OSCAR-UI's `skills/coding-style/SKILL.md` on 2026-11-03.
+Source checkout HEAD: `4dfe461eab736a71a7dd35e71491fd83f74c4eb3` (working-tree skill reviewed).
+Retain its documentation and readability conventions; Rust/Tauri ownership and
+PNM evidence rules below replace Java/Qt/Oscar-specific details.
+
+## Member and module order
+
+Place constants and type declarations before implementation blocks. Within an
+inherent Rust impl, place constructors first, then public operations and private
+helpers, keeping related operations together. Keep trait implementations cohesive
+and each banner/attribute with its declaration. Do not alter visibility or behavior
+just to satisfy ordering. Preserve initialization and execution order.
+
+## Public function banners
+
+Every explicitly declared public function, associated function, constructor-like
+function and method must have a multiline documentation banner immediately above
+its attributes or declaration. Include public trait methods and trait implementations,
+accessors, overrides and entry points. Document public types and their fields where
+needed; do not generate accessors solely to attach documentation.
+
+For Rust, use `///` rustdoc containing:
+
+- A clear summary and purpose.
+- Caller-visible behavior: preconditions, side effects, state changes, threading,
+  ownership and borrowing lifetimes where material.
+- `# Arguments` describing every parameter/type parameter, units and constraints.
+- `# Returns` describing results, empty values, None and borrowed data.
+- `# Errors` describing intentional Result failures and triggers.
+- `# Panics` only when caller-visible panics are possible; never invent guarantees.
+
+Omit sections that do not apply. Use equivalent multiline JSDoc/TSDoc for exported
+TypeScript functions, Python docstrings for public functions, and comment banners
+for script entry points/reusable shell functions. A one-line comment, repeated
+method name or bare inherited-doc reference is not a complete banner.
+
+```rust
+/// Decodes an RxMER capture while borrowing the supplied bytes.
+///
+/// # Arguments
+/// * `bytes` - Complete capture bytes, retained by the caller for the result's lifetime.
+/// * `limits` - Application sample-count policy, not a protocol limit.
+///
+/// # Returns
+/// A typed capture exposing unchanged samples and shared header access.
+///
+/// # Errors
+/// Returns a field/offset diagnostic for unsupported versions, truncated input,
+/// inconsistent lengths or exceeded resource limits.
+```
+
+Keep banners consistent with actual signatures and behavior. In particular,
+missing samples are not zeros and file-format versions are not DOCSIS versions.
+
+## Regular-expression documentation
+
+When adding/changing a regex, comment directly above its declaration or inline
+use. Explain extraction/validation intent, a synthetic input and expected output,
+consumed capture groups, whole-input versus substring behavior, flags,
+preprocessing, empty values and excluded delimiters where relevant. Distinguish
+extraction from validation. Update the example when behavior changes; comment-only
+changes do not require new tests.
+
+## Conditional statements
+
+Put if/else bodies on separate lines with normal language block syntax, including
+guards, returns, errors and branches inside closures. Use braces in Rust and
+TypeScript. Do not replace branches with ternaries or short-circuit expressions
+just to evade this rule. Keep match arms readable; do not change control flow
+merely for formatting.
+
+## Primitive representation and readable domain types
+
+Use native Rust primitives as the underlying representation. As features are
+added or APIs are modified, define meaningful domain types for values whose
+purpose would otherwise be unclear, especially public fields and parameters.
+Examples include MacAddress, PnmFileType, ChannelId, FrequencyHz, SubcarrierIndex
+and PnmFormatVersion. Type aliases, structs and enums use UpperCamelCase
+(PascalCase), such as `MacAddress`, not `macAddress` or `MAC_ADDRESS`. Fields
+and variables remain snake_case, such as `mac_address`. Reuse `MacAddress` for
+six-octet MAC values and `PnmFileType` for four-byte PNM identifiers; do not replace
+unrelated byte arrays merely because they have the same length.
+Do not rename primitives solely by width (such as UInt8); name their meaning.
+
+Before adding common PNM fields, inspect PyPNM `src/pypnm/lib/types.py` and reuse
+its meaningful domain vocabulary where semantics match (CaptureTime, ChannelId,
+FrequencyHz, SubcarrierIdx). Define the corresponding aliases centrally in our
+`pnm/data_type` module and use them consistently in fields, constants and APIs.
+Python int has no fixed wire width: preserve encoded widths explicitly.
+FrequencyHz is u32 for stored and calculated Hz; use checked arithmetic and
+report overflow rather than silently wrapping or introducing a wider public type.
+Python NewType gives static identity separation; Rust aliases do not. Use a Rust
+newtype if that separation is required, and document the distinction.
+
+Choose the lightest appropriate representation:
+
+- A type alias such as `pub type ChannelId = u8;` improves readability when
+  interchangeability is intentional. It does not enforce identity or validation.
+- A newtype such as `pub struct FrequencyHz(u64);` is appropriate when mixing
+  units/identifiers must be prevented or construction must enforce invariants.
+- A struct such as PnmFormatVersion groups named major/minor components.
+
+Introduce shared domain types in `pnm/data_type/` when needed; keep types owned
+by a specific component near that component (for example PnmFormatVersion in
+pnm_header). Reuse existing definitions rather than creating parser-local aliases
+for the same concept. Document units, ranges and whether validation is enforced.
+Do not change encoded widths, accepted input or conversions merely to add a name.
+
+Apply incrementally as we develop and review each parser; do not migrate every
+primitive in advance. Raw bytes can remain u8 and ordinary lengths/indexing can
+remain usize when their meaning is clear. Keep Rust ownership, Result/Option
+and traits; C ABI layout is unrelated to these readability choices.
+
+## Descriptive names and domain types
+
+Name values for domain meaning, including units and bounds where relevant:
+`data_length_bytes`, `subcarrier_spacing_khz`, `source_end_exclusive`, and
+`captures_by_channel`. Distinguish byte offsets, subcarrier indices, capture IDs,
+transaction IDs, protocol applicability and file-format versions.
+Use domain types when they prevent mixing unrelated identities. Do not wrap every
+counter or text string. Do not create closed enums for extensible domains without
+an explicit unknown/unsupported path.
+
+## PNM ownership and named constants
+
+Before defining protocol constants, inspect pinned PyPNM implementation evidence
+and the applicable OSSI source. Use the repository's evidence policy; do not
+promote Python behavior to normative requirements or modify the reference checkout.
+Centralize shared definitions only when their semantics actually match.
+
+Keep reusable unit conversions in `pnm::data_type::units` and import them across
+parsers and analysis modules. Search that module before adding a conversion factor.
+Keep format-specific sentinels, offsets and signatures with their owning format;
+equal numeric values alone do not justify sharing a constant.
+
+Name protocol signatures, sentinels, header sizes and application limits rather
+than scattering unexplained numbers. `0xFF` as an unavailable RxMER sample is a
+different concept from the maximum unsigned byte. Ordinary loop origins need no
+artificial constants. Distinguish application safety limits from protocol limits.
+
+Preserve the PyPNM-inspired module hierarchy. Use snake_case Rust modules and
+UpperCamelCase types. Parsing consumes bytes and returns models without file/network
+I/O, derived statistics or Tauri dependencies. Share PnmHeader behavior through
+composition and HasPnmHeader. Keep unsafe code forbidden in pnm-core.
+
+## UI component ownership
+
+Give each substantial pane/dialog a cohesive React component or feature module.
+Keep the app shell focused on layout, navigation and coordination. Shared small
+controls stay with their owner unless actual reuse justifies extraction.
+
+Keep scientific interpretation, parsing, storage, aggregation, decimation and
+exports in Rust. React owns presentation and transient interaction state. Expose
+typed operations and bounded DTOs rather than mutable internal state or entire
+captures. Preserve cancellation, session cleanup, stale-result rejection and
+accessible controls when moving responsibilities. Browser mock tests do not
+replace native Tauri validation.
+
+## SPDX headers
+
+Add the full copyright/SPDX file banner below to new project-owned source and
+test files. A single-line SPDX comment alone does not satisfy the banner style. When modifying an existing source file without one, add the appropriate
+header after checking its ownership and license context.
+
+| Scope | Identifier |
+| --- | --- |
+| Reusable Rust libraries under crates/ and their tests | Apache-2.0 |
+| Project-owned development tooling under scripts/ and tools/ | Apache-2.0 |
+| Desktop Rust shell and React/TypeScript UI under apps/desktop/ | GPL-3.0-only |
+
+Rust, JavaScript and TypeScript:
+
+```rust
+/*
+ * Copyright 2026 PNM Viewer contributors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+```
+
+The user confirmed this copyright holder and year for the current project-owned
+files. Preserve existing years/notices; use the actual creation year for new files.
+Use GPL-3.0-only for the desktop scope. Place the banner before module docs,
+attributes or imports. Use the file language's valid comment syntax (for example,
+CSS supports the same multiline block banner).
+
+Shell/Python executable scripts retain the shebang on the first line:
+
+```bash
+#!/usr/bin/env bash
+#
+# Copyright 2026 PNM Viewer contributors
+# SPDX-License-Identifier: Apache-2.0
+#
+```
+
+Preserve existing copyright statements; do not invent authors, dates or ownership.
+SPDX identifiers must agree with package licenses and applicable full license texts.
+A header does not replace required LICENSE/NOTICE files.
+
+Do not relabel third-party code, copied PyPNM fixtures/tests, extracted OSSI text,
+or preserved bootstrap files. Inspect their original licensing first and retain
+applicable upstream headers/notices. Do not insert comments into binary files,
+JSON, generated files or lockfiles; use package metadata or provenance for those.
+
+## Applying and checking the style
+
+Apply these conventions to new and modified code. Installing this skill alone
+does not authorize repository-wide formatting or API migrations. During reviews,
+report violations in the requested scope. During migrations, preserve behavior
+and run appropriate existing checks.
+
+Review full changed methods, signatures and comments, not regex matches alone.
+Check banners against errors, ownership and missing-value semantics; confirm
+branch reformatting preserves execution order. Run rustfmt, Clippy with warnings
+denied and relevant tests for behavior changes. For header/comment-only edits,
+formatting and syntax checks suffice. Follow AGENTS.md for project commands.
+
+Verify SPDX scope and position without relabeling upstream material. Validate
+this skill and both discovery links after edits. Keep one canonical copy.

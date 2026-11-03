@@ -7,7 +7,7 @@ Build PNM Viewer with Tauri 2, React/TypeScript presentation and Rust backend be
 - React renders charts, navigation and transient interaction state. Rust owns filesystem access, parsing, scientific interpretation, analysis, aggregation, persistence, downloads, exports and decimation.
 - Domain/parser libraries must not depend on Tauri, HTTP or app crates. Separate decoding from analysis, aggregation, storage and transport. Keep Cargo dependencies acyclic.
 - Reusable libraries are Apache-2.0. Desktop shell and UI are GPL-3.0-only. Set package licenses explicitly; preserve third-party licenses, copyrights and applicable NOTICE content.
-- Use separate project skills for DOCSIS 3.1 and 4.0 OSSI work. Require user-provided PDFs for normative claims. Do not substitute MULPI configuration TLVs, MIB objects or API JSON schemas for PNM binary layouts.
+- Use separate project skills for DOCSIS 3.1 and 4.0 OSSI work. The user authorized clear versioned text extracts for RxMER; request PDFs for ambiguous layouts and never claim rendered-PDF verification. Do not substitute MULPI configuration TLVs, MIB objects or API JSON schemas for PNM binary layouts.
 - Never invent file identifiers, offsets, widths, byte order, scaling, sentinels or version equivalence. Trace implemented fields to pinned PDF evidence or explicitly labeled implementation evidence. Protocol version and file-format version are separate.
 - Missing evidence blocks affected semantic decoders, not the generic bootstrap. Unknown files remain viewable as bytes with structured diagnostics. Do not label unsupported formats complete.
 - Bound external-input allocations, arithmetic, archive expansion and work. Return structured errors with offsets; preserve original capture bytes and never overwrite inputs.
@@ -23,7 +23,7 @@ Build PNM Viewer with Tauri 2, React/TypeScript presentation and Rust backend be
 ## Project status and guidance
 
 The user adopted the bundle's Tauri/Rust stack on 2026-11-02, superseding the
-initial Java plan. The project remains in the dev phase; no application exists.
+initial Java plan. The project remains in the dev phase; no desktop application exists. The core reader/header foundation is implemented.
 Use development/requirements.md, development/architecture.md, development/checklist.md and
 development/development-guide.md together. Maintain the docs as work lands.
 The bootstrap bundle is preserved reference material, not generated app source.
@@ -56,3 +56,14 @@ when present, and request the bundle if needed in a fresh checkout.
 - Use the `pnm-viewer-release` skill for version bumps and release work.
 - Keep VERSION in MAJOR.MINOR.PATCH format; use tools/bump-version.sh.
 - See docs/release.md. Version bumps do not authorize commits, tags, or pushes.
+
+## Coding style
+
+- Apply the coding-style skill for source, tests and scripts.
+- Use the full multiline copyright/SPDX file banner from coding-style, not a
+  standalone SPDX line. Preserve upstream notices and the component license.
+- Project-owned development tooling uses Apache-2.0; desktop/UI uses GPL-3.0-only.
+
+- Introduce readable domain types incrementally for meaningful fields/APIs. Use
+  primitives underneath; aliases name concepts, newtypes enforce separation,
+  and structs group related fields. Follow coding-style for placement and reuse.

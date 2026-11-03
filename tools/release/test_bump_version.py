@@ -1,3 +1,7 @@
+#
+# Copyright 2026 PNM Viewer contributors
+# SPDX-License-Identifier: Apache-2.0
+#
 import importlib.util
 from pathlib import Path
 import shutil
@@ -13,16 +17,28 @@ SPEC.loader.exec_module(MODULE)
 
 class BumpVersionTests(unittest.TestCase):
     def test_reset_rules(self):
+        """Check each bump resets only the lower components.
+
+        Returns None; assertion failures report a behavior regression.
+        """
         for part, expected in [("major", "2.0.0"), ("minor", "1.3.0"), ("patch", "1.2.10")]:
             with self.subTest(part=part):
                 self.assertEqual(MODULE.bumped("1.2.9", part), expected)
 
     def test_invalid_versions(self):
+        """Check malformed versions raise ValueError.
+
+        Returns None; assertion failures report a behavior regression.
+        """
         for value in ["1.2", "1.2.3.4", "01.2.3", "1.-2.3", "1.2.3-dev", "a.b.c", ""]:
             with self.subTest(value=value), self.assertRaises(ValueError):
                 MODULE.bumped(value, "patch")
 
     def test_cli_from_other_directory(self):
+        """Check preview, writes and failure preservation outside the repo.
+
+        Returns None; assertion failures report a behavior regression.
+        """
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             script = root / "tools/release/bump-version.py"

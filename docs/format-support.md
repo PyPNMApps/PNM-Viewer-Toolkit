@@ -1,11 +1,11 @@
 # Format support and evidence
 
-No semantic decoder or raw-byte viewer is implemented yet.
+RxMER file version 1.0 is implemented in pnm-core; no desktop viewer exists yet.
 
 | Target | Status | Evidence still needed |
 | --- | --- | --- |
 | Generic hex/ASCII | Planned first delivery | Bounded import and byte fixtures |
-| RxMER | Awaiting source and fixtures | Pinned PDF field records, usable captures, independent expected values |
+| RxMER 1.0 | Parser and fixture tests pass | Text-extract evidence recorded; PDF rendering and wider capture coverage pending |
 | Other measurement families | Planned, unsupported | Per-format evidence and fixtures before implementation |
 
 Use skills/docsis-31-ossi and skills/docsis-40-ossi for field provenance. Their
@@ -24,3 +24,12 @@ PyPNM parser names are not support proof: pnm_parameter.py at the pinned revisio
 raises NotImplementedError for latency reports and symbol capture. Its common
 header has an FEC-summary capture-time exception; do not interpret absence as a
 real epoch-zero sample. These observations are not normative file definitions.
+
+## Available RxMER fixtures
+
+Pinned PyPNM RxMER and non-RxMER rejection fixtures plus the upstream Python
+test are available in [tests/fixtures/pypnm](../tests/fixtures/pypnm/README.md).
+Copies match the recorded upstream Git blobs and hashes. No Rust parser or
+semantic validation is implied by importing these inputs.
+
+See [Rust development](rust-development.md) for API, limits and validation results.

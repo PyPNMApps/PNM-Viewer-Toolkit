@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+#
+# Copyright 2026 PNM Viewer contributors
+# SPDX-License-Identifier: Apache-2.0
+#
 """Bump the repository's three-component VERSION without Git mutations."""
 import argparse
 from pathlib import Path
@@ -6,6 +10,18 @@ import re
 
 
 def bumped(version: str, part: str) -> str:
+    """Return a bumped three-component version without modifying files.
+
+    Args:
+        version: Whole numeric MAJOR.MINOR.PATCH string without leading zeros.
+        part: Component to increment: major, minor or patch.
+    Returns:
+        Incremented version with lower components reset to zero.
+    Raises:
+        ValueError: Version syntax or component name is invalid.
+    """
+    # Match the entire input, with no capture groups or whitespace normalization.
+    # Accept "1.2.3"; reject "01.2.3", "1.2" and "1.2.3-dev".
     if not re.fullmatch(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", version):
         raise ValueError("VERSION must contain MAJOR.MINOR.PATCH without leading zeros")
     parts = [int(value) for value in version.split(".")]
@@ -16,6 +32,12 @@ def bumped(version: str, part: str) -> str:
 
 
 def main() -> None:
+    """Parse CLI options and update VERSION unless dry-run is requested.
+
+    Uses paths relative to this script; prints the old/new versions.
+    Returns None on success. Argument failures exit with status 2; read,
+    validation or write failures exit with status 1. No Git actions occur.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bump", required=True, choices=("major", "minor", "patch"))
     parser.add_argument("--dry-run", action="store_true", help="Preview without writing")

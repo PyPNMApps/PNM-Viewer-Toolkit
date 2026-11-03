@@ -1,0 +1,11 @@
+field,offset,width_bytes,interpretation,evidence,status
+file_type,0,4,504E4E04,I27 Table 68 p176 and I13 Table 101 p215,text-verified
+version,4,2,major/minor,I27 D.2.8.10.1 and I13 D.2.8.10.1,text-verified
+capture_time,6,4,unsigned epoch seconds,same tables;text endian corroborated by PyPNM ! format,implementation-corroborated
+channel_id,10,1,unsigned,same tables,text-verified
+mac,11,6,raw bytes,same tables,text-verified
+zero_frequency,17,4,unsigned Hz,same tables;PyPNM big endian,implementation-corroborated
+first_subcarrier,21,2,unsigned index,same tables;PyPNM big endian,implementation-corroborated
+spacing,23,1,kHz,same tables,text-verified
+data_length,24,4,byte count,same tables;PyPNM big endian,implementation-corroborated
+values,28,data_length,quarter dB;255 missing,I27 and I13 D.2.1.3.1,text-verified

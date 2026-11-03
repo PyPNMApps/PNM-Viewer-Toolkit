@@ -1,0 +1,33 @@
+{
+  "repository": "https://github.com/PyPNMApps/PyPNM",
+  "commit": "82bbf79fe04a0b5e766dc3eb4d5ca2004008bca9",
+  "copied_on": "2026-11-03",
+  "modified": false,
+  "files": [
+    {
+      "path": "tests/files/rxmer.bin",
+      "sha256": "406d98c348a3481c73015690fd576e83cbc12ff403486bc15c0c680a73cc4b88",
+      "size_bytes": 7508
+    },
+    {
+      "path": "tests/files/fec_summary.bin",
+      "sha256": "331b0bca95ec1a9507529a46f433cd012adb1127176a89ba196df69e22c358b1",
+      "size_bytes": 48030
+    },
+    {
+      "path": "tests/test_pnm_rxmer_parse.py",
+      "sha256": "114b4b74bf829f68631cbad4435c3095d30ae69f4a25ab23225b3daf6f472441",
+      "size_bytes": 2998
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "507435d71ab5dacd16fd13e968649a1940b72b67faa6381124200ec5d0162ef3",
+      "size_bytes": 11344
+    },
+    {
+      "path": "NOTICE",
+      "sha256": "067995de122a64cc41a5d561c3c79c1ba0b88f81e965506000d60d66ca3092a7",
+      "size_bytes": 500
+    }
+  ]
+}

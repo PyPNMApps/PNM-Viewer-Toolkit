@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+#
+# Copyright 2026 PNM Viewer contributors
+# SPDX-License-Identifier: Apache-2.0
+#
+#
+# Push a clean main/master branch to origin without forcing.
+# Validate remote ancestry before pushing; propagate Git failures.
 
 set -euo pipefail
 
@@ -6,6 +13,8 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 REMOTE="origin"
 
+# Print command usage to stdout without changing repository state.
+# Arguments are unused unless described above; failures stop this script.
 usage() {
   cat <<'EOF'
 Usage: git-push.sh
@@ -21,6 +30,8 @@ Safety checks:
 EOF
 }
 
+# Print the supplied error to stderr and exit with status 1.
+# Arguments are unused unless described above; failures stop this script.
 die() {
   echo "ERROR: $*" >&2
   exit 1
@@ -35,8 +46,9 @@ case "${1:-}" in
   *) die "Unknown argument: $1 (see --help)" ;;
 esac
 
-git -C "${PROJECT_DIR}" rev-parse --is-inside-work-tree >/dev/null 2>&1 || \
+if ! git -C "${PROJECT_DIR}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   die "Project directory is not a Git working tree: ${PROJECT_DIR}"
+fi
 
 if [[ -n "$(git -C "${PROJECT_DIR}" status --porcelain)" ]]; then
   git -C "${PROJECT_DIR}" status --short >&2
@@ -50,8 +62,9 @@ case "${branch}" in
   *) die "Refusing to push branch '${branch}'; use main or master" ;;
 esac
 
-git -C "${PROJECT_DIR}" remote get-url "${REMOTE}" >/dev/null 2>&1 || \
+if ! git -C "${PROJECT_DIR}" remote get-url "${REMOTE}" >/dev/null 2>&1; then
   die "Remote '${REMOTE}' is not configured"
+fi
 
 if [[ -n "$(git -C "${PROJECT_DIR}" ls-remote --heads \
     "${REMOTE}" "refs/heads/${branch}")" ]]; then
@@ -59,9 +72,9 @@ if [[ -n "$(git -C "${PROJECT_DIR}" ls-remote --heads \
   git -C "${PROJECT_DIR}" fetch "${REMOTE}" "${branch}"
   remote_ref="${REMOTE}/${branch}"
 
-  git -C "${PROJECT_DIR}" merge-base --is-ancestor \
-    "${remote_ref}" HEAD || \
+  if ! git -C "${PROJECT_DIR}" merge-base --is-ancestor "${remote_ref}" HEAD; then
     die "Local ${branch} is behind or diverged from ${remote_ref}"
+  fi
 else
   echo "Remote branch ${REMOTE}/${branch} does not exist; creating it."
 fi

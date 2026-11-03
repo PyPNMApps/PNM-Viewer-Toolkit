@@ -1,0 +1,2 @@
+format,file_version,implementation,evidence,limitations
+RxMER,1.0,implemented,text extracts I27/I13 and pinned PyPNM fixture,PDF not rendered;no blanket DOCSIS applicability claim;other versions unsupported

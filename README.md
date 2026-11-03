@@ -2,7 +2,7 @@
 
 A desktop PNM viewer using Tauri 2, Rust, React, TypeScript and Vite.
 The user adopted this stack on 2026-11-02, superseding the initial Java plan.
-Status: in the dev phase; requirements and tooling only, no runnable app yet.
+Status: in the dev phase; core reader/header foundation and tooling; no runnable app yet.
 
 Local files work offline without an HTTP backend. Rust owns decoding, analysis,
 aggregation, storage and optional retrieval of existing PyPNM captures. React
@@ -26,3 +26,5 @@ These local planning links require that folder; it is not included in Git.
 The original ZIP retains the source files covered by the bundled checksums.
 Current repository instructions
 retain the existing Git and MAJOR.MINOR.PATCH workflows.
+
+- [Rust development and validation](docs/rust-development.md)
