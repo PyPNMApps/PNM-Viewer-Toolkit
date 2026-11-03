@@ -2,7 +2,7 @@
 
 Reviewed 2026-11-02. Extracted pnm-viewer-bootstrap.zip into the sibling
 pnm-viewer-bootstrap/ directory without replacing project files. All seven
-manifest checksums match. The preserved files are review inputs.
+manifest checksums match. Those original files were review inputs; see consolidation below for current paths.
 
 ## Decisions adopted
 
@@ -48,6 +48,21 @@ scientific decoder validation or packaged-platform verification is claimed.
 At the user's request, architecture, requirements and checklist documents moved
 to ignored development/. BOOTSTRAP-PROMPT.txt and PYPNM-ARCHITECTURE.txt were
 moved there and converted to development-guide.md and pypnm-architecture.md.
-The original ZIP remains the checksum-verifiable source; the extracted checksum
-manifest describes original archive paths, not the converted working documents.
-These development files are local-only and will not be present in a fresh clone.
+The working development files are local-only and will not be present in a fresh clone.
+
+## Consolidation — 2026-11-03
+
+The root ZIP and extracted `pnm-viewer-bootstrap/` directory were removed after
+verifying all seven archive manifest entries. The four extracted OSSI skill files
+were byte-identical to their canonical copies under `skills/`; those canonical
+copies remain. Root `AGENTS.md` supersedes the old bootstrap instructions.
+
+The two original planning references are preserved as Markdown under
+[skills/pnm-viewer-development/references](../skills/pnm-viewer-development/references/).
+The new [skill entry point](../skills/pnm-viewer-development/SKILL.md) makes those
+references discoverable and distinguishes historical guidance from active policy.
+`source-provenance.json` records the original archive hash and manifest. Discovery
+links exist under both `.agents/skills/` and `.claude/skills/`.
+
+Existing working plans, generated JSON, local toolchains and Cargo cache were
+retained. No application source or parser behavior changed during consolidation.

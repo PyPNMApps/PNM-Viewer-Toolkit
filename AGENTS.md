@@ -26,15 +26,18 @@ The user adopted the bundle's Tauri/Rust stack on 2026-11-02, superseding the
 initial Java plan. The project remains in the dev phase; no desktop application exists. The core reader/header foundation is implemented.
 Use development/requirements.md, development/architecture.md, development/checklist.md and
 development/development-guide.md together. Maintain the docs as work lands.
-The bootstrap bundle is preserved reference material, not generated app source.
+Original bootstrap references live in skills/pnm-viewer-development/references/;
+they are historical guidance, not generated app source.
 
 Keep canonical skills under skills/ and relative links under both .agents/skills/
 and .claude/skills/. Use docsis-31-ossi and docsis-40-ossi for field-evidence work;
 existing versioned extraction skills are lookup aids, not proof of PDF validation.
-Validate changed skills and discovery links. The ZIP retains the original bundle.
+Validate changed skills and discovery links. The redundant root ZIP and extracted
+bootstrap directory have been consolidated into the canonical skills.
 Keep architecture, requirements, development guidance and checklists in ignored
 development/. These local working documents are not distributed by Git; use them
-when present, and request the bundle if needed in a fresh checkout.
+when present. In a fresh checkout, consult skills/pnm-viewer-development/SKILL.md
+for the preserved original guidance before creating new working plans.
 
 ## Git workflow
 
