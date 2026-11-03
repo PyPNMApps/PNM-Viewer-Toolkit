@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 //! Serializable output views; parser objects keep their binary data.
-pub mod cm_ds_ofdm_rx_mer;
 pub mod pnm_header;
 use serde::Serialize;
 use std::io::{self, Write};

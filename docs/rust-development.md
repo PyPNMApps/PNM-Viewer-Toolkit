@@ -140,16 +140,18 @@ file_type_version key holds the numeric file discriminator, not the format versi
 Missing capture time is null. `to_json(false, limit)` produces header-only JSON;
 `to_json(true, limit)` explicitly adds remaining bytes as hexadecimal `data`.
 
-RxMER `to_model()` returns a typed output view. The model has colon-separated MAC,
-spacing/frequency in Hz, dB values and null for unavailable samples. Its values
-serializer traverses original samples lazily, without allocating a decoded vector.
-`to_json(limit)` uses that model and Serde's bounded writer to produce pretty JSON.
+RxMER implements Serde Serialize directly on the parser object. The separate
+RxMER output model and to_model() method have been removed. Serialization keeps
+colon-separated MAC, spacing/frequency in Hz, dB values and null for unavailable
+samples. A private adapter streams values_db() without allocating a decoded vector.
+`to_json(limit)` uses the shared bounded writer to produce pretty JSON.
+
 The limit includes indentation; exceeding it returns an error and discards partial
 output. Payload hex allocation is separately checked before construction. The
 provided default budget is 16 MiB; callers may supply another limit.
 
-JSON is an output representation, never the handoff between parsing tiers. Model
-views and the original binary data remain independently accessible. Statistics and
+JSON is an output representation, never the handoff between parsing tiers. Typed
+parser fields and the original binary data remain independently accessible. Statistics and
 occupied bandwidth are not part of this decoder output, so it is not full PyPNM
 analysis JSON parity. No desktop/UI implementation is included in this change.
 

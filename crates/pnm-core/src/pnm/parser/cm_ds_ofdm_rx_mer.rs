@@ -13,6 +13,7 @@ use crate::pnm::data_type::{
     ChannelId, DataLengthBytes, FrequencyHz, MacAddress, RxMerDb, SampleCount, SubcarrierIdx,
     SubcarrierSpacingKhz,
 };
+use serde::{ser::SerializeStruct, Serialize, Serializer};
 
 const RXMER_ZERO_FREQUENCY_OFFSET: usize = 17;
 const RXMER_LENGTH_OFFSET: usize = 24;
@@ -136,31 +137,7 @@ impl<'input> CmDsOfdmRxMer<'input> {
         let _frequencies = capture.frequencies_hz()?;
         Ok(capture)
     }
-    /// Builds a PyPNM-aligned output view without copying sample arrays.
-    ///
-    /// # Returns
-    /// Header and RxMER fields, colon-separated MAC, Hz spacing and lazy dB values.
-    pub fn to_model(&self) -> super::model::cm_ds_ofdm_rx_mer::CmDsOfdmRxMerModel<'input> {
-        use super::model::cm_ds_ofdm_rx_mer::{CmDsOfdmRxMerModel, RxMerValues};
-        let mac_address = self
-            .mac_address
-            .iter()
-            .map(|byte| format!("{byte:02x}"))
-            .collect::<Vec<_>>()
-            .join(":");
-        CmDsOfdmRxMerModel {
-            pnm_header: self.header.to_model().pnm_header,
-            channel_id: self.channel_id,
-            mac_address,
-            subcarrier_zero_frequency: self.subcarrier_zero_frequency_hz,
-            first_active_subcarrier_index: self.first_active_subcarrier_index,
-            subcarrier_spacing: FrequencyHz::from(self.subcarrier_spacing_khz) * HZ_PER_KHZ,
-            data_length: self.raw_values.len(),
-            value_units: "dB",
-            values: RxMerValues(self.raw_values),
-        }
-    }
-    /// Serializes the decoded model to bounded pretty JSON.
+    /// Serializes this capture directly to bounded pretty JSON.
     ///
     /// # Arguments
     /// * `max_bytes` - Maximum output bytes including indentation.
@@ -169,7 +146,7 @@ impl<'input> CmDsOfdmRxMer<'input> {
     /// # Errors
     /// Reports serialization failures or an exceeded output limit.
     pub fn to_json(&self, max_bytes: usize) -> serde_json::Result<String> {
-        super::model::to_json(&self.to_model(), max_bytes)
+        super::model::to_json(self, max_bytes)
     }
     /// Borrows the unchanged encoded RxMER samples.
     ///
@@ -227,10 +204,66 @@ impl<'input> CmDsOfdmRxMer<'input> {
 /// * `raw_value` - Original quarter-dB byte, including the unavailable sentinel.
 /// # Returns
 /// A dB reading or None for unavailable data, without clamping the input.
-pub(crate) fn decode_rxmer_value(raw_value: u8) -> Option<RxMerDb> {
+fn decode_rxmer_value(raw_value: u8) -> Option<RxMerDb> {
     if raw_value == RXMER_UNAVAILABLE {
         None
     } else {
         Some(f64::from(raw_value) / QUARTER_DB_PER_DB)
+    }
+}
+
+impl Serialize for CmDsOfdmRxMer<'_> {
+    /// Serializes this capture using the existing PyPNM-aligned field names.
+    ///
+    /// # Arguments
+    /// * `serializer` - Destination serializer; byte limits belong to to_json().
+    /// # Returns
+    /// Header and RxMER fields with MAC text, Hz spacing and lazy dB samples.
+    /// # Errors
+    /// Propagates serialization failures without modifying the capture.
+    fn serialize<Output: Serializer>(
+        &self,
+        serializer: Output,
+    ) -> Result<Output::Ok, Output::Error> {
+        let mut output = serializer.serialize_struct("CmDsOfdmRxMer", 9)?;
+        output.serialize_field("pnm_header", &self.header.to_model().pnm_header)?;
+        output.serialize_field("channel_id", &self.channel_id)?;
+        let [first, second, third, fourth, fifth, sixth] = self.mac_address;
+        let mac_address =
+            format!("{first:02x}:{second:02x}:{third:02x}:{fourth:02x}:{fifth:02x}:{sixth:02x}");
+        output.serialize_field("mac_address", &mac_address)?;
+        output.serialize_field(
+            "subcarrier_zero_frequency",
+            &self.subcarrier_zero_frequency_hz,
+        )?;
+        output.serialize_field(
+            "first_active_subcarrier_index",
+            &self.first_active_subcarrier_index,
+        )?;
+        let spacing_hz = FrequencyHz::from(self.subcarrier_spacing_khz) * HZ_PER_KHZ;
+        output.serialize_field("subcarrier_spacing", &spacing_hz)?;
+        output.serialize_field("data_length", &self.raw_values.len())?;
+        output.serialize_field("value_units", "dB")?;
+        output.serialize_field("values", &RxMerValues(self))?;
+        output.end()
+    }
+}
+
+/// Private adapter that streams the capture's existing decoded-value iterator.
+struct RxMerValues<'capture, 'input>(&'capture CmDsOfdmRxMer<'input>);
+impl Serialize for RxMerValues<'_, '_> {
+    /// Serializes samples through the same conversion used by typed callers.
+    ///
+    /// # Arguments
+    /// * `serializer` - Destination serializer.
+    /// # Returns
+    /// A sequence of dB values and nulls without allocating a sample vector.
+    /// # Errors
+    /// Propagates destination serialization errors.
+    fn serialize<Output: Serializer>(
+        &self,
+        serializer: Output,
+    ) -> Result<Output::Ok, Output::Error> {
+        serializer.collect_seq(self.0.values_db())
     }
 }

@@ -176,6 +176,8 @@ fn json_matches_output_contract_and_enforces_limits() {
     let capture = CmDsOfdmRxMer::parse(&bytes, ParseLimits::default()).unwrap();
     let json = capture.to_json(DEFAULT_MAX_JSON_BYTES).unwrap();
     let model: serde_json::Value = serde_json::from_str(&json).unwrap();
+    assert_eq!(serde_json::to_value(&capture).unwrap(), model);
+    assert_eq!(model.as_object().unwrap().len(), 9);
     assert_eq!(model["values"], serde_json::json!([0.0, 23.75, 63.5, null]));
     assert_eq!(model["mac_address"], "a1:b2:c3:d4:e5:f6");
     assert_eq!(model["subcarrier_spacing"], 25000);

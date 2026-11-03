@@ -6,6 +6,23 @@
 use super::pnm_header::PnmFormatVersion;
 use crate::pnm::data_type::PnmFileType;
 
+// Binary signatures contain an ASCII family followed by a numeric type code.
+const PNN_PREFIX: &str = "PNN";
+const LLD_PREFIX: &str = "LLD";
+const FILE_PREFIX_BYTES: usize = 3;
+const FORMAT_VERSION_1_0: PnmFormatVersion = PnmFormatVersion { major: 1, minor: 0 };
+const SYMBOL_CAPTURE_CODE: u8 = 1;
+const CHANNEL_ESTIMATE_CODE: u8 = 2;
+const CONSTELLATION_DISPLAY_CODE: u8 = 3;
+const RXMER_CODE: u8 = 4;
+const HISTOGRAM_CODE: u8 = 5;
+const UPSTREAM_PRE_EQUALIZATION_CODE: u8 = 6;
+const UPSTREAM_PRE_EQUALIZATION_LAST_UPDATE_CODE: u8 = 7;
+const FEC_SUMMARY_CODE: u8 = 8;
+const SPECTRUM_ANALYSIS_CODE: u8 = 9;
+const MODULATION_PROFILE_CODE: u8 = 10;
+const LATENCY_REPORT_CODE: u8 = 1;
+
 /// Recognized PyPNM identities, independent of decoder availability.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PnmFileKind {
@@ -47,109 +64,100 @@ pub struct FileDescriptor {
     pub decoder: PnmDecoderKind,
 }
 
-/// PyPNM PNN identity vocabulary; recognition alone does not enable decoding.
+impl FileDescriptor {
+    // Build an identity with unsupported layout/decoder defaults. The prefix
+    // comes only from the three-byte family constants in this module.
+    const fn new(prefix: &'static str, code: u8, kind: PnmFileKind, tag: &'static str) -> Self {
+        let prefix_bytes = prefix.as_bytes();
+        Self {
+            signature: [prefix_bytes[0], prefix_bytes[1], prefix_bytes[2], code],
+            kind,
+            tag,
+            prefix,
+            header_version: None,
+            layout: None,
+            decoder: PnmDecoderKind::Unsupported,
+        }
+    }
+
+    // Enable only an evidenced header layout/version pair.
+    const fn with_header(mut self, version: PnmFormatVersion, layout: HeaderLayout) -> Self {
+        self.header_version = Some(version);
+        self.layout = Some(layout);
+        self
+    }
+
+    // Select a route independently of header support or decoder availability.
+    const fn with_decoder(mut self, decoder: PnmDecoderKind) -> Self {
+        self.decoder = decoder;
+        self
+    }
+}
+
+/// Central identity vocabulary; recognition alone does not enable decoding.
 /// RxMER: I27 Table 68 / I13 Table 101. FEC: I27 Table 71 / I13 Table 104.
 pub const FILE_TYPES: &[FileDescriptor] = &[
-    FileDescriptor {
-        signature: [0x50, 0x4e, 0x4e, 1],
-        kind: PnmFileKind::SymbolCapture,
-        tag: "PNN1",
-        prefix: "PNN",
-        header_version: None,
-        layout: None,
-        decoder: PnmDecoderKind::Unsupported,
-    },
-    FileDescriptor {
-        signature: [0x50, 0x4e, 0x4e, 2],
-        kind: PnmFileKind::ChannelEstimate,
-        tag: "PNN2",
-        prefix: "PNN",
-        header_version: None,
-        layout: None,
-        decoder: PnmDecoderKind::Unsupported,
-    },
-    FileDescriptor {
-        signature: [0x50, 0x4e, 0x4e, 3],
-        kind: PnmFileKind::ConstellationDisplay,
-        tag: "PNN3",
-        prefix: "PNN",
-        header_version: None,
-        layout: None,
-        decoder: PnmDecoderKind::Unsupported,
-    },
-    FileDescriptor {
-        signature: [0x50, 0x4e, 0x4e, 4],
-        kind: PnmFileKind::RxMer,
-        tag: "PNN4",
-        prefix: "PNN",
-        header_version: Some(PnmFormatVersion { major: 1, minor: 0 }),
-        layout: Some(HeaderLayout::WithCaptureTime),
-        decoder: PnmDecoderKind::RxMer,
-    },
-    FileDescriptor {
-        signature: [0x50, 0x4e, 0x4e, 5],
-        kind: PnmFileKind::Histogram,
-        tag: "PNN5",
-        prefix: "PNN",
-        header_version: None,
-        layout: None,
-        decoder: PnmDecoderKind::Unsupported,
-    },
-    FileDescriptor {
-        signature: [0x50, 0x4e, 0x4e, 6],
-        kind: PnmFileKind::UpstreamPreEqualization,
-        tag: "PNN6",
-        prefix: "PNN",
-        header_version: None,
-        layout: None,
-        decoder: PnmDecoderKind::UpstreamPreEqualization,
-    },
-    FileDescriptor {
-        signature: [0x50, 0x4e, 0x4e, 7],
-        kind: PnmFileKind::UpstreamPreEqualizationLastUpdate,
-        tag: "PNN7",
-        prefix: "PNN",
-        header_version: None,
-        layout: None,
-        decoder: PnmDecoderKind::UpstreamPreEqualization,
-    },
-    FileDescriptor {
-        signature: [0x50, 0x4e, 0x4e, 8],
-        kind: PnmFileKind::FecSummary,
-        tag: "PNN8",
-        prefix: "PNN",
-        header_version: Some(PnmFormatVersion { major: 1, minor: 0 }),
-        layout: Some(HeaderLayout::WithoutCaptureTime),
-        decoder: PnmDecoderKind::Unsupported,
-    },
-    FileDescriptor {
-        signature: [0x50, 0x4e, 0x4e, 9],
-        kind: PnmFileKind::SpectrumAnalysis,
-        tag: "PNN9",
-        prefix: "PNN",
-        header_version: None,
-        layout: None,
-        decoder: PnmDecoderKind::Unsupported,
-    },
-    FileDescriptor {
-        signature: [0x50, 0x4e, 0x4e, 10],
-        kind: PnmFileKind::ModulationProfile,
-        tag: "PNN10",
-        prefix: "PNN",
-        header_version: None,
-        layout: None,
-        decoder: PnmDecoderKind::Unsupported,
-    },
-    // I27 Table 83 identifies LLD01; its layout/payload are not enabled here.
-    FileDescriptor {
-        signature: [0x4c, 0x4c, 0x44, 1],
-        kind: PnmFileKind::LatencyReport,
-        tag: "LLD01",
-        prefix: "LLD",
-        header_version: None,
-        layout: None,
-        decoder: PnmDecoderKind::Unsupported,
-    },
+    FileDescriptor::new(
+        PNN_PREFIX,
+        SYMBOL_CAPTURE_CODE,
+        PnmFileKind::SymbolCapture,
+        "PNN1",
+    ),
+    FileDescriptor::new(
+        PNN_PREFIX,
+        CHANNEL_ESTIMATE_CODE,
+        PnmFileKind::ChannelEstimate,
+        "PNN2",
+    ),
+    FileDescriptor::new(
+        PNN_PREFIX,
+        CONSTELLATION_DISPLAY_CODE,
+        PnmFileKind::ConstellationDisplay,
+        "PNN3",
+    ),
+    FileDescriptor::new(PNN_PREFIX, RXMER_CODE, PnmFileKind::RxMer, "PNN4")
+        .with_header(FORMAT_VERSION_1_0, HeaderLayout::WithCaptureTime)
+        .with_decoder(PnmDecoderKind::RxMer),
+    FileDescriptor::new(PNN_PREFIX, HISTOGRAM_CODE, PnmFileKind::Histogram, "PNN5"),
+    FileDescriptor::new(
+        PNN_PREFIX,
+        UPSTREAM_PRE_EQUALIZATION_CODE,
+        PnmFileKind::UpstreamPreEqualization,
+        "PNN6",
+    )
+    .with_decoder(PnmDecoderKind::UpstreamPreEqualization),
+    FileDescriptor::new(
+        PNN_PREFIX,
+        UPSTREAM_PRE_EQUALIZATION_LAST_UPDATE_CODE,
+        PnmFileKind::UpstreamPreEqualizationLastUpdate,
+        "PNN7",
+    )
+    .with_decoder(PnmDecoderKind::UpstreamPreEqualization),
+    FileDescriptor::new(
+        PNN_PREFIX,
+        FEC_SUMMARY_CODE,
+        PnmFileKind::FecSummary,
+        "PNN8",
+    )
+    .with_header(FORMAT_VERSION_1_0, HeaderLayout::WithoutCaptureTime),
+    FileDescriptor::new(
+        PNN_PREFIX,
+        SPECTRUM_ANALYSIS_CODE,
+        PnmFileKind::SpectrumAnalysis,
+        "PNN9",
+    ),
+    FileDescriptor::new(
+        PNN_PREFIX,
+        MODULATION_PROFILE_CODE,
+        PnmFileKind::ModulationProfile,
+        "PNN10",
+    ),
+    FileDescriptor::new(
+        LLD_PREFIX,
+        LATENCY_REPORT_CODE,
+        PnmFileKind::LatencyReport,
+        "LLD01",
+    ),
 ];
 
 /// Resolves an exact binary signature without text normalization.
@@ -173,13 +181,14 @@ pub fn identify(signature: PnmFileType) -> Option<&'static FileDescriptor> {
 /// This normalization never applies to binary signatures.
 pub fn identify_tag(tag: &str) -> Option<&'static FileDescriptor> {
     let tag = tag.trim();
-    let prefix = tag.get(..3)?;
-    let suffix = tag.get(3..)?;
+    let prefix = tag.get(..FILE_PREFIX_BYTES)?;
+    let suffix = tag.get(FILE_PREFIX_BYTES..)?;
     if suffix.is_empty() || !suffix.bytes().all(|byte| byte.is_ascii_digit()) {
         return None;
     }
     let discriminator = suffix.parse::<u8>().ok()?;
     FILE_TYPES.iter().find(|descriptor| {
-        descriptor.prefix.eq_ignore_ascii_case(prefix) && descriptor.signature[3] == discriminator
+        descriptor.prefix.eq_ignore_ascii_case(prefix)
+            && descriptor.signature[FILE_PREFIX_BYTES] == discriminator
     })
 }
