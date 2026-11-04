@@ -4,7 +4,10 @@
  */
 //! Shared OFDM assignments from CM-OSSI 3.1 I27 / 4.0 I13, D.2.1.7.
 use super::{BitsPerSymbol, ModulationOrder};
+use crate::common::signal_processing::shannon::{minimum_snr_db, ShannonSnrDb};
 use serde::Serialize;
+
+const BPSK_BITS_PER_SYMBOL: BitsPerSymbol = 1;
 
 /// Application classification of the assignment roles identified by OSSI.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -17,6 +20,15 @@ pub enum CarrierType {
     Plc,
     Reserved,
     Unknown,
+}
+
+/// Physical modulation parameters, distinct from the OSSI assignment role.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+pub struct ModulationParameters {
+    pub constellation: &'static str,
+    pub bit_loading: BitsPerSymbol,
+    /// Ideal Shannon bound, not measured MER or a receiver operating threshold.
+    pub shannon_minimum_mer_db: ShannonSnrDb,
 }
 
 impl CarrierType {
@@ -36,7 +48,8 @@ impl CarrierType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ModulationAssignment {
     pub modulation_order: &'static str,
-    /// Data bits per symbol; special/unknown assignments have no inferred loading.
+    /// Constellation bits per symbol; PLC describes its data segment, not its preamble.
+    /// A nonzero value does not imply user-data capacity (pilots and PLC are overhead).
     pub bit_loading: Option<BitsPerSymbol>,
     pub carrier_type: CarrierType,
     /// Short desktop label, separate from the stable JSON name.
@@ -62,7 +75,7 @@ const ASSIGNMENTS: &[(
     (
         1,
         "continuous_pilot",
-        None,
+        Some(BPSK_BITS_PER_SYMBOL),
         CarrierType::ContinuousPilot,
         "Pilots",
     ),
@@ -80,7 +93,7 @@ const ASSIGNMENTS: &[(
     (13, "qam_8192", Some(13), CarrierType::Data, "8192-QAM"),
     (14, "qam_16384", Some(14), CarrierType::Data, "16384-QAM"),
     (16, "exclusion", None, CarrierType::Exclusion, "Excluded"),
-    (20, "plc", None, CarrierType::Plc, "PLC"),
+    (20, "plc", Some(4), CarrierType::Plc, "PLC"),
 ];
 
 impl ModulationAssignment {
@@ -90,8 +103,8 @@ impl ModulationAssignment {
     /// * `code` - Original one-byte modulation assignment from a profile scheme.
     /// # Returns
     /// Known modulation name and carrier role, or `unknown` with no bit loading.
-    /// Zero-bit-loaded carriers have Some(0); pilot, PLC, excluded and reserved
-    /// carriers do not acquire an inferred data modulation.
+    /// PHY 3.1 I20 sections 7.5.13 and 7.5.15.3 specify PLC data as
+    /// 16-QAM and continuous pilots as BPSK. Neither becomes a data carrier.
     pub fn from_code(code: ModulationOrder) -> Self {
         match ASSIGNMENTS.iter().find(|entry| entry.0 == code) {
             Some(&(_, modulation_order, bit_loading, carrier_type, display_label)) => Self {
@@ -107,5 +120,44 @@ impl ModulationAssignment {
                 display_label: "Reserved",
             },
         }
+    }
+}
+
+impl ModulationAssignment {
+    /// Returns the physical constellation for a known modulated assignment.
+    /// # Returns
+    /// PLC data is `qam_16`, pilots are `bpsk`, and data uses its QAM/QPSK name.
+    /// Unmodulated, zero-loaded and unknown assignments return None.
+    pub fn constellation(&self) -> Option<&'static str> {
+        match self.carrier_type {
+            CarrierType::Data => Some(self.modulation_order),
+            CarrierType::ContinuousPilot => Some("bpsk"),
+            CarrierType::Plc => Some("qam_16"),
+            _ => None,
+        }
+    }
+
+    /// Calculates the same ideal reference used by JSON and desktop charts.
+    /// # Returns
+    /// `10 log10(2^bits - 1)` for a known constellation, otherwise None.
+    /// This is not a DOCSIS receiver MER requirement or a pilot power adjustment.
+    pub fn shannon_minimum_mer_db(&self) -> Option<ShannonSnrDb> {
+        self.constellation()?;
+        minimum_snr_db(self.bit_loading?)
+    }
+
+    /// Describes the PLC preamble separately from its 16-QAM data segment.
+    /// # Returns
+    /// BPSK parameters for PLC (PHY 3.1 I20 section 7.5.13.3); otherwise None.
+    /// No symbol timing or instantaneous preamble position is inferred from a profile.
+    pub fn preamble(&self) -> Option<ModulationParameters> {
+        if self.carrier_type != CarrierType::Plc {
+            return None;
+        }
+        Some(ModulationParameters {
+            constellation: "bpsk",
+            bit_loading: BPSK_BITS_PER_SYMBOL,
+            shannon_minimum_mer_db: minimum_snr_db(BPSK_BITS_PER_SYMBOL)?,
+        })
     }
 }

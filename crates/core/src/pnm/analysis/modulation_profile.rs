@@ -37,7 +37,8 @@ impl ModulationProfileAnalysis {
     /// # Returns
     /// Data counts/bandwidth and ideal rate before overhead. Reserved/unknown
     /// assignments or zero spacing produce an incomplete analysis and null rate.
-    /// Known-data counts remain available; no special carrier is treated as QAM.
+    /// Known-data counts remain available; PLC and pilots contribute no data rate,
+    /// even when their physical constellations have nonzero bit loading.
     pub fn calculate(profile: &ModulationProfile, spacing_khz: SubcarrierSpacingKhz) -> Self {
         let spacing = FrequencyHz::from(spacing_khz) * HZ_PER_KHZ;
         let mut data_subcarrier_count = 0;

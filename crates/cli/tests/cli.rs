@@ -166,6 +166,38 @@ fn modulation_cli_exports_shared_profile_capacity() {
     );
     assert_eq!(output["profiles"][0]["bandwidth_bps"], 2_222_400_000_u64);
     assert_eq!(output["profiles"][3]["bandwidth_bps"], 1_481_600_000_u64);
+    let mut pilot_seen = false;
+    let mut plc_seen = false;
+    for scheme in output["profiles"][0]["schemes"].as_array().unwrap() {
+        for prefix in ["", "main_", "skip_"] {
+            let role = scheme[format!("{prefix}carrier_type")].as_str();
+            match role {
+                Some("continuous_pilot") => {
+                    pilot_seen = true;
+                    assert_eq!(scheme[format!("{prefix}constellation")], "bpsk");
+                    assert_eq!(scheme[format!("{prefix}bit_loading")], 1);
+                    assert_eq!(scheme[format!("{prefix}shannon_minimum_mer_db")], 0.0);
+                }
+                Some("plc") => {
+                    plc_seen = true;
+                    assert_eq!(scheme[format!("{prefix}constellation")], "qam_16");
+                    assert_eq!(scheme[format!("{prefix}bit_loading")], 4);
+                    assert!(
+                        (scheme[format!("{prefix}shannon_minimum_mer_db")]
+                            .as_f64()
+                            .unwrap()
+                            - 11.760912590556813)
+                            .abs()
+                            < 1e-10
+                    );
+                    assert_eq!(scheme[format!("{prefix}preamble")]["constellation"], "bpsk");
+                }
+                _ => {}
+            }
+        }
+    }
+    assert!(pilot_seen && plc_seen);
+
     for profile in output["profiles"].as_array().unwrap() {
         assert_eq!(
             profile["bandwidth_bps"],

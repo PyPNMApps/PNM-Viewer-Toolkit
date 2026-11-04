@@ -176,7 +176,8 @@ impl Serialize for ModulationScheme {
     /// # Arguments
     /// * `serializer` - Destination for the JSON-compatible scheme fields.
     /// # Returns
-    /// Serialized range or skip scheme, with nullable data bit loading.
+    /// Serialized range or skip scheme with nullable constellation bit loading
+    /// and an ideal Shannon reference.
     /// # Errors
     /// Propagates destination serialization errors.
     fn serialize<Destination: Serializer>(
@@ -189,11 +190,17 @@ impl Serialize for ModulationScheme {
                 num_subcarriers,
             } => {
                 let assignment = ModulationAssignment::from_code(modulation_order);
-                let mut fields = serializer.serialize_map(Some(6))?;
+                let mut fields = serializer.serialize_map(Some(9))?;
                 fields.serialize_entry("schema_type", "range")?;
                 fields.serialize_entry("modulation_order", assignment.modulation_order)?;
                 fields.serialize_entry("modulation_order_code", &modulation_order)?;
                 fields.serialize_entry("bit_loading", &assignment.bit_loading)?;
+                fields.serialize_entry("constellation", &assignment.constellation())?;
+                fields.serialize_entry(
+                    "shannon_minimum_mer_db",
+                    &assignment.shannon_minimum_mer_db(),
+                )?;
+                fields.serialize_entry("preamble", &assignment.preamble())?;
                 fields.serialize_entry("carrier_type", &assignment.carrier_type)?;
                 fields.serialize_entry("num_subcarriers", &num_subcarriers)?;
                 fields.end()
@@ -205,15 +212,27 @@ impl Serialize for ModulationScheme {
             } => {
                 let main = ModulationAssignment::from_code(main_modulation_order);
                 let skip = ModulationAssignment::from_code(skip_modulation_order);
-                let mut fields = serializer.serialize_map(Some(10))?;
+                let mut fields = serializer.serialize_map(Some(16))?;
                 fields.serialize_entry("schema_type", "skip")?;
                 fields.serialize_entry("main_modulation_order", main.modulation_order)?;
                 fields.serialize_entry("main_modulation_order_code", &main_modulation_order)?;
                 fields.serialize_entry("main_bit_loading", &main.bit_loading)?;
+                fields.serialize_entry("main_constellation", &main.constellation())?;
+                fields.serialize_entry(
+                    "main_shannon_minimum_mer_db",
+                    &main.shannon_minimum_mer_db(),
+                )?;
+                fields.serialize_entry("main_preamble", &main.preamble())?;
                 fields.serialize_entry("main_carrier_type", &main.carrier_type)?;
                 fields.serialize_entry("skip_modulation_order", skip.modulation_order)?;
                 fields.serialize_entry("skip_modulation_order_code", &skip_modulation_order)?;
                 fields.serialize_entry("skip_bit_loading", &skip.bit_loading)?;
+                fields.serialize_entry("skip_constellation", &skip.constellation())?;
+                fields.serialize_entry(
+                    "skip_shannon_minimum_mer_db",
+                    &skip.shannon_minimum_mer_db(),
+                )?;
+                fields.serialize_entry("skip_preamble", &skip.preamble())?;
                 fields.serialize_entry("skip_carrier_type", &skip.carrier_type)?;
                 fields.serialize_entry("num_subcarriers", &num_subcarriers)?;
                 fields.end()

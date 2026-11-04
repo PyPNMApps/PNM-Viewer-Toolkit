@@ -99,9 +99,9 @@ retained as `modulation_order_code`. This changes the former numeric
 | --- | --- |
 | `data` | 2 for QPSK, or 4 and 6–14 for the specified QAM orders |
 | `zero_bit_loaded` | 0 |
-| `continuous_pilot` | `null` |
+| `continuous_pilot` | 1 (BPSK) |
 | `exclusion` | `null` |
-| `plc` | `null` |
+| `plc` | 4 (16-QAM data segment; BPSK preamble is separate) |
 | `reserved` | `null` |
 | `unknown` | `null` |
 
@@ -109,13 +109,36 @@ The roles and assignments are identified in **CM-SP-CM-OSSIv3.1-I27-250219,
 D.2.1.7, PDF pages 153–154**, and independently in
 **CM-SP-CM-OSSIv4.0-I13-260429, D.2.1.7, PDF pages 192–193**, using the authorized
 text extracts. `carrier_type` is this application's classification of those
-roles, not an additional binary field. PLC is not inferred to be data QAM.
+roles, not an additional binary field. PLC remains overhead, not a data carrier.
+
+`constellation` identifies the physical modulation separately from the OSSI
+assignment name. `shannon_minimum_mer_db` is the Rust-calculated ideal reference
+`10 log10(2^bit_loading − 1)`, not measured MER or a receiver requirement.
+Continuous pilots export `bpsk`, 1 bit and **0 dB**; PLC exports `qam_16`, 4 bits
+and **11.760912590556813 dB** for its data segment. There is no arbitrary 2 dB
+floor. Pilot boosting is a transmit-power rule, not an additive MER threshold.
+These fields are null for unknown, reserved, excluded and zero-loaded assignments.
+Zero-loaded `bit_loading` remains 0.
+
+PLC also exports `preamble: {"constellation":"bpsk", "bit_loading":1,
+"shannon_minimum_mer_db":0.0}`; other assignments have null `preamble`.
+The profile does not identify the instantaneous preamble/data symbol. These
+parameters describe its structure, not observed timing or decoded PLC payload.
+
+Constellation evidence: **CM-SP-PHYv3.1-I20-230419, sections 7.5.13.1–3,
+PDF pages 148–151**, and **7.5.15.3–4, PDF page 171** (authorized text).
+The PLC has 8 preamble symbols followed by 120 data symbols. Continuous pilots
+are BPSK, boosted about 6 dB. DOCSIS 4.0 FDD delegates these definitions through
+**CM-SP-PHYv4.0-I07-250627, sections 7.3.5.13 and 7.3.5.15, PDF page 146**.
+This is text verification, not rendered-PDF validation.
 
 Skip schemes expose `main_modulation_order`, `main_modulation_order_code`,
 `main_bit_loading`, `main_carrier_type` and the corresponding `skip_` fields.
-They retain one `num_subcarriers` for the total alternating sequence, starting
+They also expose `main_constellation`, `main_shannon_minimum_mer_db`,
+`main_preamble` and corresponding `skip_` fields. They retain one
+`num_subcarriers` for the total alternating sequence, starting
 with the main assignment. Export keeps compressed schemes and all profiles;
-it does not substitute expanded chart data or theoretical Shannon values.
+it does not substitute expanded chart arrays for the original assignments.
 
 ### Per-profile ideal capacity analysis
 

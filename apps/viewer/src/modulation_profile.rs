@@ -8,19 +8,16 @@ use crate::{
     Diagnostic, MAX_VIEW_SAMPLES,
 };
 pub use pnm::pnm::data_type::modulation::CarrierType;
-use pnm::{
-    common::signal_processing::shannon::minimum_snr_db,
-    pnm::{
-        analysis::modulation_profile::ModulationProfileAnalysis,
-        data_type::{
-            modulation::ModulationAssignment,
-            units::{BITS_PER_MEGABIT, HZ_PER_KHZ},
-            BitRateBps, FrequencyHz, ModulationOrder, ProfileId,
-        },
-        parser::{
-            cm_ds_ofdm_modulation_profile::{CmDsOfdmModulationProfile, ModulationScheme},
-            parse_limits::ParseLimits,
-        },
+use pnm::pnm::{
+    analysis::modulation_profile::ModulationProfileAnalysis,
+    data_type::{
+        modulation::ModulationAssignment,
+        units::{BITS_PER_MEGABIT, HZ_PER_KHZ},
+        BitRateBps, FrequencyHz, ModulationOrder, ProfileId,
+    },
+    parser::{
+        cm_ds_ofdm_modulation_profile::{CmDsOfdmModulationProfile, ModulationScheme},
+        parse_limits::ParseLimits,
     },
 };
 use serde::Serialize;
@@ -29,7 +26,7 @@ use std::collections::BTreeMap;
 /// Shared budget for grouped special-carrier markers across every trace.
 pub const MAX_CARRIER_MARKERS: usize = 4096;
 
-/// Selects theoretical Shannon SNR or actual data bits per symbol.
+/// Selects theoretical Shannon SNR or physical constellation bits per symbol.
 #[derive(Clone, Copy, Default, PartialEq, Eq)]
 pub enum ModulationMetric {
     #[default]
@@ -360,13 +357,15 @@ pub(crate) fn metadata(
     })
 }
 
-/// Expands one profile into checked Hz coordinates and selected data values.
+/// Expands one profile into checked Hz coordinates and selected modulation values.
 /// # Arguments
 /// * `capture` - Decoded header/schemes; original bytes remain untouched.
 /// * `codes` - Expanded assignments for one selected profile.
-/// * `metric` - Shannon bound or data bits per symbol.
+/// * `metric` - Shannon bound or constellation bits per symbol.
+/// * `selected_carrier_types` - Roles allowed to contribute numeric points.
 /// # Returns
-/// Temporary bounded points. Non-data/reserved assignments are gaps; zero-loaded
+/// Temporary bounded points for selected data, pilot and PLC constellations.
+/// Unknown/excluded/reserved assignments are gaps; zero-loaded
 /// carriers retain zero bits in JSON and are displayed in a separate lane. Frequency alignment
 /// follows PyPNM: zero_hz + (first_active_index + ordinal) * spacing_hz.
 /// # Errors
@@ -375,6 +374,7 @@ fn points_for(
     capture: &CmDsOfdmModulationProfile<'_>,
     codes: &[ModulationOrder],
     metric: ModulationMetric,
+    selected_carrier_types: &[CarrierType],
 ) -> Result<Vec<ChartPoint>, Diagnostic> {
     codes
         .iter()
@@ -383,15 +383,16 @@ fn points_for(
         .map(|(sample_index, code)| {
             let frequency_hz = frequency(capture, sample_index)?;
             let assignment = ModulationAssignment::from_code(code);
-            let value = if assignment.carrier_type == CarrierType::Data {
-                assignment.bit_loading
+            let value = if selected_carrier_types.contains(&assignment.carrier_type)
+                && assignment.constellation().is_some()
+            {
+                match metric {
+                    ModulationMetric::Shannon => assignment.shannon_minimum_mer_db(),
+                    ModulationMetric::BitLoading => assignment.bit_loading.map(f64::from),
+                }
             } else {
                 None
-            }
-            .and_then(|bits| match metric {
-                ModulationMetric::Shannon => minimum_snr_db(bits),
-                ModulationMetric::BitLoading => Some(f64::from(bits)),
-            });
+            };
             Ok(ChartPoint {
                 sample_index,
                 frequency_hz,
@@ -465,8 +466,13 @@ pub(crate) fn viewport(
             marker.last_frequency_hz = frequency_hz;
         }
         markers.extend(grouped.into_values());
-        let points = if selected_carrier_types.contains(&CarrierType::Data) {
-            points_for(capture, &codes, metric)?
+        let points = if selected_carrier_types.iter().any(|kind| {
+            matches!(
+                kind,
+                CarrierType::Data | CarrierType::ContinuousPilot | CarrierType::Plc
+            )
+        }) {
+            points_for(capture, &codes, metric, &selected_carrier_types)?
         } else {
             vec![]
         };

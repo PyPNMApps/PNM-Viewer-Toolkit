@@ -25,3 +25,9 @@ Windows packages are unsigned; macOS apps use ad-hoc signing and are not
 notarized. Linux uses declared distribution prerequisites. These are development
 builds, not a release-readiness claim. Review the packaging and user guides in
 the tagged source before installation.
+
+PLC and continuous-pilot assignments now export physical constellation metadata:
+16-QAM PLC data (4 bits) and BPSK pilots (1 bit), with a separate BPSK PLC
+preamble. CLI and Qt share Rust-derived ideal Shannon references; both roles
+plot on the numeric axis without contributing to data-only profile bandwidth.
+See the [JSON contract](../reference/formats.md#modulation-profile-json-assignments).

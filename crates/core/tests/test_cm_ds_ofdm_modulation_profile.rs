@@ -32,6 +32,7 @@ fn golden_fixture() {
         profiles[0]["schemes"][0],
         json!({"schema_type":"range","modulation_order":"qam_4096",
             "modulation_order_code":12,"bit_loading":12,"carrier_type":"data",
+            "constellation":"qam_4096","shannon_minimum_mer_db":36.12253906096437,"preamble":null,
             "num_subcarriers":110})
     );
 }
@@ -57,7 +58,9 @@ fn synthetic_skip_modulation_preserves_unknown_assignments() {
         json!({"schema_type":"skip","main_modulation_order":"unknown",
             "main_modulation_order_code":255,"main_bit_loading":null,"main_carrier_type":"unknown",
             "skip_modulation_order":"qpsk","skip_modulation_order_code":2,
-            "skip_bit_loading":2,"skip_carrier_type":"data","num_subcarriers":9})
+            "skip_bit_loading":2,"skip_carrier_type":"data","num_subcarriers":9,
+            "main_constellation":null,"main_shannon_minimum_mer_db":null,"main_preamble":null,
+            "skip_constellation":"qpsk","skip_shannon_minimum_mer_db":4.771212547196624,"skip_preamble":null})
     );
     assert!(output["profiles"][0]["bandwidth_bps"].is_null());
     for end in 29..bytes.len() {
@@ -70,11 +73,11 @@ fn synthetic_skip_modulation_preserves_unknown_assignments() {
 #[test]
 fn assignment_json_covers_ossi_roles_and_all_wire_codes() {
     use pnm::pnm::parser::cm_ds_ofdm_modulation_profile::ModulationScheme;
-    // Independent expected assignments from I27 / I13 D.2.1.7. Nulls avoid
-    // inferring data bit loading for pilots, PLC or reserved assignments.
+    // Independent expected assignments from I27 / I13 D.2.1.7.
+    // PHY I20 7.5.13 / 7.5.15.3 supplies PLC/pilot constellation loading.
     let known = [
         (0, "zero_bit_loaded", Some(0), "zero_bit_loaded"),
-        (1, "continuous_pilot", None, "continuous_pilot"),
+        (1, "continuous_pilot", Some(1), "continuous_pilot"),
         (2, "qpsk", Some(2), "data"),
         (3, "reserved_3", None, "reserved"),
         (4, "qam_16", Some(4), "data"),
@@ -89,7 +92,7 @@ fn assignment_json_covers_ossi_roles_and_all_wire_codes() {
         (13, "qam_8192", Some(13), "data"),
         (14, "qam_16384", Some(14), "data"),
         (16, "exclusion", None, "exclusion"),
-        (20, "plc", None, "plc"),
+        (20, "plc", Some(4), "plc"),
     ];
     for code in u8::MIN..=u8::MAX {
         let (_, name, bits, carrier) = known
@@ -97,23 +100,54 @@ fn assignment_json_covers_ossi_roles_and_all_wire_codes() {
             .find(|entry| entry.0 == code)
             .copied()
             .unwrap_or((code, "unknown", None, "unknown"));
-        let range = serde_json::to_value(ModulationScheme::Range {
+        let mut range = serde_json::to_value(ModulationScheme::Range {
             modulation_order: code,
             num_subcarriers: 7,
         })
         .unwrap();
+        let expected_constellation = match code {
+            1 => Some("bpsk"),
+            20 => Some("qam_16"),
+            2 | 4 | 6..=14 => Some(name),
+            _ => None,
+        };
+        assert_eq!(range["constellation"], json!(expected_constellation));
+        assert_eq!(
+            range["shannon_minimum_mer_db"].is_number(),
+            expected_constellation.is_some()
+        );
+        assert_eq!(range["preamble"].is_object(), code == 20);
+        for field in ["constellation", "shannon_minimum_mer_db", "preamble"] {
+            range.as_object_mut().unwrap().remove(field);
+        }
         assert_eq!(
             range,
             json!({"schema_type":"range","modulation_order":name,
             "modulation_order_code":code,"bit_loading":bits,"carrier_type":carrier,
             "num_subcarriers":7})
         );
-        let skip = serde_json::to_value(ModulationScheme::Skip {
+        let mut skip = serde_json::to_value(ModulationScheme::Skip {
             main_modulation_order: code,
             skip_modulation_order: code,
             num_subcarriers: 7,
         })
         .unwrap();
+        for prefix in ["main_", "skip_"] {
+            assert_eq!(
+                skip[format!("{prefix}constellation")],
+                json!(expected_constellation)
+            );
+            assert_eq!(
+                skip[format!("{prefix}shannon_minimum_mer_db")].is_number(),
+                expected_constellation.is_some()
+            );
+            assert_eq!(skip[format!("{prefix}preamble")].is_object(), code == 20);
+            for field in ["constellation", "shannon_minimum_mer_db", "preamble"] {
+                skip.as_object_mut()
+                    .unwrap()
+                    .remove(&format!("{prefix}{field}"));
+            }
+        }
         assert_eq!(
             skip,
             json!({"schema_type":"skip","main_modulation_order":name,
@@ -205,4 +239,33 @@ fn compressed_capacity_handles_odd_skip_specials_and_unknowns() {
         ModulationProfileAnalysis::calculate(&empty, 50).theoretical_throughput_bps,
         Some(0)
     );
+}
+
+#[test]
+fn plc_and_continuous_pilots_export_physical_modulation_without_data_capacity() {
+    use pnm::pnm::parser::cm_ds_ofdm_modulation_profile::ModulationScheme;
+    // PHY I20 7.5.13: PLC 16-QAM data plus BPSK preamble;
+    // 7.5.15.3: continuous pilots are BPSK. Not measured/required MER.
+    let output = serde_json::to_value(ModulationScheme::Skip {
+        main_modulation_order: 20,
+        skip_modulation_order: 1,
+        num_subcarriers: 3,
+    })
+    .unwrap();
+    assert_eq!(output["main_modulation_order"], "plc");
+    assert_eq!(output["main_constellation"], "qam_16");
+    assert_eq!(output["main_bit_loading"], 4);
+    assert!(
+        (output["main_shannon_minimum_mer_db"].as_f64().unwrap() - 11.760912590556813).abs()
+            < 1e-10
+    );
+    assert_eq!(
+        output["main_preamble"],
+        json!({"constellation":"bpsk", "bit_loading":1, "shannon_minimum_mer_db":0.0})
+    );
+    assert_eq!(output["skip_carrier_type"], "continuous_pilot");
+    assert_eq!(output["skip_constellation"], "bpsk");
+    assert_eq!(output["skip_bit_loading"], 1);
+    assert_eq!(output["skip_shannon_minimum_mer_db"], 0.0);
+    assert!(output["skip_preamble"].is_null());
 }

@@ -94,7 +94,7 @@ fn fixture_profiles_grid_counts_and_raw_export() {
             .unwrap();
     assert_eq!(
         serde_json::from_str::<serde_json::Value>(&capture.json().unwrap()).unwrap(),
-        serde_json::to_value(parsed).unwrap()
+        serde_json::from_str::<serde_json::Value>(&parsed.to_json(4_000_000).unwrap()).unwrap()
     );
     assert!(capture
         .chart_metadata_for(view(4, ModulationMetric::Shannon))
@@ -150,8 +150,8 @@ fn special_reserved_and_zero_assignments_are_not_data_modulation() {
             .map(|point| point.value)
             .collect::<Vec<_>>(),
         [
-            None, // Zero-loaded is now displayed in its own carrier lane.
-            None,
+            None, // Zero-loaded is displayed in its own carrier lane.
+            Some(1.0),
             Some(2.0),
             None,
             Some(4.0),
@@ -159,12 +159,14 @@ fn special_reserved_and_zero_assignments_are_not_data_modulation() {
             Some(6.0),
             Some(14.0),
             None,
-            None,
+            Some(4.0),
             None
         ]
     );
     let shannon = trace(capture.chart_range(0, 11).unwrap());
     assert!(shannon.points[0].value.is_none());
+    assert_eq!(shannon.points[1].value, Some(0.0));
+    assert!((shannon.points[9].value.unwrap() - 11.760912590556813).abs() < 1e-10);
     assert!((shannon.points[2].value.unwrap() - 4.771212547196624).abs() < 1e-10);
     assert!((shannon.points[7].value.unwrap() - 42.14393431255206).abs() < 1e-10);
     let metadata = capture
@@ -405,7 +407,20 @@ fn every_carrier_type_has_a_filterable_lane_and_exact_marker() {
             assert!(viewport.markers.is_empty());
             assert_eq!(viewport.series[0].points[2].value, Some(2.0));
         } else {
-            assert!(viewport.series[0].points.is_empty());
+            if matches!(kind, CarrierType::ContinuousPilot | CarrierType::Plc) {
+                let expected = if kind == CarrierType::Plc { 4.0 } else { 1.0 };
+                assert_eq!(viewport.series[0].points[index].value, Some(expected));
+                assert_eq!(
+                    viewport.series[0]
+                        .points
+                        .iter()
+                        .filter(|point| point.value.is_some())
+                        .count(),
+                    1
+                );
+            } else {
+                assert!(viewport.series[0].points.is_empty());
+            }
             assert_eq!(viewport.carrier_lanes, [kind]);
             assert_eq!(viewport.markers.len(), 1);
             assert_eq!(viewport.markers[0].carrier_type, kind);
@@ -485,4 +500,59 @@ fn grouped_carrier_markers_are_bounded_and_preserve_counts() {
         .markers
         .iter()
         .all(|marker| marker.count == 1 && marker.first_frequency_hz == marker.last_frequency_hz));
+}
+
+#[test]
+fn physical_constellation_filters_preserve_values_and_data_only_bandwidth() {
+    use viewer::modulation_profile::CarrierType;
+    let capture = synthetic(&[0, 2, 0, 1, 0, 1, 0, 1, 0, 20, 0, 1], 0, 0, 25);
+    let roles = [
+        CarrierType::Data,
+        CarrierType::ContinuousPilot,
+        CarrierType::Plc,
+    ];
+    for mask in 0..8 {
+        for metric in [ModulationMetric::Shannon, ModulationMetric::BitLoading] {
+            let selected = MeasurementView::ModulationProfile {
+                indices: Some(vec![0]),
+                carrier_types: Some(
+                    roles
+                        .into_iter()
+                        .enumerate()
+                        .filter_map(|(index, role)| {
+                            if mask & (1 << index) != 0 {
+                                Some(role)
+                            } else {
+                                None
+                            }
+                        })
+                        .collect(),
+                ),
+                metric,
+            };
+            let metadata = capture.chart_metadata_for(selected.clone()).unwrap();
+            assert_eq!(
+                metadata.modulation_profile.unwrap().profiles[0].bandwidth_bps,
+                Some(50_000)
+            );
+            let points = trace(capture.chart_range_for(selected, 0, 3).unwrap()).points;
+            if mask == 0 {
+                assert!(points.is_empty());
+                continue;
+            }
+            for (index, point) in points.iter().enumerate() {
+                if mask & (1 << index) == 0 {
+                    assert!(point.value.is_none());
+                    continue;
+                }
+                let expected = match metric {
+                    ModulationMetric::Shannon => {
+                        [4.771212547196624, 0.0, 11.760912590556813][index]
+                    }
+                    ModulationMetric::BitLoading => [2.0, 1.0, 4.0][index],
+                };
+                assert!((point.value.unwrap() - expected).abs() < 1e-10);
+            }
+        }
+    }
 }

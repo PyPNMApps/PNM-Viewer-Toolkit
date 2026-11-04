@@ -89,6 +89,18 @@ Every profile retains its compressed schemes. Assignments include textual
 `modulation_order_code`, `bit_loading` and `carrier_type`. Skip schemes use the
 corresponding `main_` and `skip_` fields.
 
+
+Modulation-profile JSON keeps OSSI carrier roles and original assignment codes.
+It also exports the PHY `constellation`, `bit_loading` and
+`shannon_minimum_mer_db`: PLC data is 16-QAM (4 bits, approximately 11.76 dB
+ideal bound); continuous pilots are BPSK (1 bit, 0 dB ideal bound). PLC's BPSK
+preamble has its own `preamble` object. Skip schemes use `main_` / `skip_` prefixes.
+These calculated bounds are not measured MER or receiver thresholds. PLC and
+pilots remain excluded from `bandwidth_bps`. No extra CLI option is needed.
+See the [field contract](../reference/formats.md#modulation-profile-json-assignments)
+and [complete example](examples/modulation-profile.json).
+
+
 Each `profiles[]` entry has `bandwidth_bps` directly beside its ID and schemes:
 
 ```json
