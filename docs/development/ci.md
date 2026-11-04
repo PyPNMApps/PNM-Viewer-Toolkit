@@ -10,9 +10,10 @@ requests, manual dispatch, and reusable calls from the tag workflow.
 ```text
 CodeQL + code checks
          │ both pass
-         ├── Rust tests on every OS
-         ├── CLI release build + JSON smoke on every OS
-         └── Qt checks on every OS
+         └── One native job on each OS:
+               Rust tests + tooling tests
+               CLI release build + JSON smoke
+               Qt tests + Clippy + build + QML tests
                           │ all pass
                     Required checks
 ```
@@ -41,15 +42,49 @@ versions also run mocked installer and push-tool tests. Desktop checks run Qt Ru
 Clippy/build and QML presentation tests. Every matrix uses `fail-fast: false`
 so one failure does not hide results from other platforms.
 
-`tests.yml`, `cli-build.yml` and `desktop.yml` are reusable children; they have no
-independent push triggers. Their jobs start only after CodeQL and code checks
-pass. A failed, canceled or skipped stage makes **Required checks** fail.
+`native-checks.yml` is a reusable child with no independent push trigger.
+Its six jobs start only after CodeQL and code checks pass. Tests, release CLI
+build/smoke and desktop checks share one runner per platform. This replaces the
+three separate six-platform matrices, reducing hosted runner allocations from
+18 to six while retaining every check on every platform. A failed, canceled or skipped stage makes **Required checks** fail.
 
 In GitHub repository settings, protect `master` with the **Required checks**
 status and require the branch to be current before merging. Workflow files
 provide the check; repository branch protection must be configured separately.
 Direct pushes can trigger CI after upload; the local
 [push gate](git.md) checks the current host before upload.
+
+## Caching and runtime
+
+Native validation and package builds cache the pinned Qt SDK under `local/qt`.
+Keys include the exact runner image label, architecture and SDK setup-script
+hash. Setup still checks the SDK version and presentation-test executable on
+cache hits; a hit never skips the build or tests. The Python installer virtual
+environment is not cached.
+
+[Swatinem/rust-cache](https://github.com/Swatinem/rust-cache) caches Cargo downloads
+and compiled dependencies for both workspaces. The additional key isolates
+runner image labels and Qt setup revisions; the action also keys by Rust host,
+compiler and Cargo manifests/lockfiles. Workspace application crates remain
+subject to normal Cargo rebuilds, and installed tools under Cargo's bin directory
+are excluded. Validation and packaging use separate Rust cache scopes so packaging can save
+its own release-profile dependencies instead of competing with an immutable
+validation cache. The Qt SDK cache is shared. Release binaries and all tests
+still run for the current commit.
+
+Cold runs and cache evictions still require full downloads/builds. CodeQL remains
+before the matrix. No fixed runtime is promised: GitHub runner queue time and
+macOS availability are outside this repository's control. The Required checks
+job continues to reject failures, skipped jobs and cancellations.
+
+The [v0.1.1 run](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/41914986990)
+failed because its macOS ARM desktop job never acquired a hosted runner. GitHub
+reported capacity constraints. The completed matrix jobs passed. The Intel macOS
+Qt job spent 4m10s in SDK setup and 16m29s in checks; CodeQL took 4m34s before the
+matrix. Those are observed uncached timings, not estimates for future runs.
+Re-running failed jobs on that old tag can recover from transient runner
+capacity, but it does not pick up workflow changes committed later. Do not move
+an existing release tag to apply these optimizations.
 
 ## Tags
 
@@ -75,7 +110,10 @@ signing or notarization. Failed packages, missing targets and packages above
 README CI and package badges show actual workflow state. Platform badges describe
 the required matrix, not passing results. A configured runner is not evidence of
 a successful hosted run; inspect the first run after pushing these changes.
-Native Windows/macOS and Ubuntu 24.04/26.04 results remain pending until hosted CI.
+The linked run completed native build/test checks on all three Ubuntu versions,
+Windows x64 and macOS Intel. Its macOS ARM job never acquired a runner, and
+package/lifecycle jobs did not run. This revised matrix and its cache timings
+still require validation in a new hosted run.
 
 The local pre-push gate checks versions, tooling, Rust and Linux Qt without
 installing dependencies. Native package installation is restricted to disposable

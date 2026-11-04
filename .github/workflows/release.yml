@@ -64,6 +64,20 @@ jobs:
         run: choco install nsis --version=3.11 --yes --no-progress
       - name: Load pinned Rust toolchain
         run: rustup show
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: native-package
+          key: ${{ matrix.os }}-qt-${{ hashFiles('scripts/qt-sdk.py') }}
+          workspaces: |
+            . -> target
+            apps/qt -> target
+          cache-bin: false
+      - name: Cache pinned native Qt SDK
+        uses: actions/cache@v4
+        with:
+          path: local/qt
+          key: qt-sdk-${{ matrix.os }}-${{ runner.arch }}-${{ hashFiles('scripts/qt-sdk.py') }}
       - name: Prepare pinned native Qt SDK
         run: python scripts/qt-sdk.py setup
       - name: Build native packages and enforce size budget

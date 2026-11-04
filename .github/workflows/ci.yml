@@ -49,19 +49,13 @@ jobs:
           bash -n install.sh
           for script in scripts/*.sh tools/git/*.sh tools/bump-version.sh; do bash -n "$script"; done
           shellcheck install.sh scripts/*.sh tools/git/*.sh tools/bump-version.sh
-  tests:
+  native:
     needs: [codeql, quality]
-    uses: ./.github/workflows/tests.yml
-  cli:
-    needs: [codeql, quality]
-    uses: ./.github/workflows/cli-build.yml
-  desktop:
-    needs: [codeql, quality]
-    uses: ./.github/workflows/desktop.yml
+    uses: ./.github/workflows/native-checks.yml
   required:
     name: Required checks
     if: always()
-    needs: [codeql, quality, tests, cli, desktop]
+    needs: [codeql, quality, native]
     runs-on: ubuntu-24.04
     steps:
       - name: Require every stage to succeed

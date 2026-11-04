@@ -1,13 +1,13 @@
 # Copyright 2026 PNM Viewer contributors
 # SPDX-License-Identifier: Apache-2.0
-name: Desktop checks
+name: Native checks
 on:
   workflow_call:
 permissions:
   contents: read
 jobs:
-  desktop:
-    name: Qt / ${{ matrix.os }}
+  native:
+    name: Native / ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -38,6 +38,41 @@ jobs:
           sudo apt-get install -y build-essential cmake python3-venv libgl1-mesa-dev libegl1 libopengl0 libdbus-1-3 libfontconfig1 libfreetype6 libx11-xcb1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-randr0 libxcb-xfixes0 libxcb-sync1 libxcb-render0 libsm6 libice6 libgtk-3-0 libb2-1
       - name: Load pinned Rust toolchain
         run: rustup show
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: native
+          key: ${{ matrix.os }}-qt-${{ hashFiles('scripts/qt-sdk.py') }}
+          workspaces: |
+            . -> target
+            apps/qt -> target
+          cache-bin: false
+      - name: Test workspace and CLI
+        run: cargo test --workspace --locked
+      - name: Test version and packaging tools
+        run: python -m unittest discover -s tools/release -p 'test_*.py'
+      - name: Test Linux installer and push tooling
+        if: runner.os == 'Linux'
+        run: |
+          python -m unittest discover -s tools/git/tests -p 'test_*.py'
+          python -m unittest discover -s scripts/tests -p 'test_*.py'
+      - name: Build release decoder
+        run: cargo build --release --locked -p pnm-decode
+      - name: Smoke-test release decoder
+        run: |
+          binary=target/release/pnm-decode
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            binary="${binary}.exe"
+          fi
+          "$binary" --version
+          "$binary" --help
+          "$binary" tests/fixtures/pypnm/tests/files/rxmer.bin --output "$RUNNER_TEMP/rxmer.json"
+          test -s "$RUNNER_TEMP/rxmer.json"
+      - name: Cache pinned native Qt SDK
+        uses: actions/cache@v4
+        with:
+          path: local/qt
+          key: qt-sdk-${{ matrix.os }}-${{ runner.arch }}-${{ hashFiles('scripts/qt-sdk.py') }}
       - name: Prepare pinned native Qt SDK
         run: python scripts/qt-sdk.py setup
       - name: Check Qt adapter and presentation
