@@ -20,7 +20,7 @@ versioned OSSI text extracts. Do not claim rendered-PDF or latest-issue verifica
 
 Use the canonical coding-style, docsis-cm-ossi-3-1-i27 and docsis-cm-ossi-4-0-i13 skills for their
 respective work; their guidance is not duplicated here. Track current support in
-docs/format-support.md and APIs in docs/rust-development.md. Keep evolving local
+docs/reference/formats.md and APIs in docs/development/rust.md. Keep evolving local
 plans in ignored development/; the references here remain available in fresh clones.
 
 Archive checksums and consolidation provenance are in

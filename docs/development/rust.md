@@ -16,7 +16,7 @@ Rust 1.85.1 is pinned. Serde and serde_json provide output serialization;
 exact direct dependency versions and Cargo.lock are committed. The locally installed
 toolchain lives in ignored local/cargo and local/rustup; no shell profile was
 changed. Run `./install.sh --development` to prepare the local toolchain and native
-prerequisites; see [development setup](development-setup.md). The wrapper
+prerequisites; see [development setup](../install/development.md). The wrapper
 requires that local installation; it does not auto-install.
 
 ```bash
@@ -32,9 +32,9 @@ scripts/cargo-local.sh clippy --workspace --all-targets --locked -- -D warnings
 
 With an existing Rust installation, standard cargo commands can be run from the
 repository root using rust-toolchain.toml. Cargo.lock is committed with source.
-Validation: three reader unit tests and thirteen integration tests passed on Linux,
-including every truncated fixture prefix. Formatting and Clippy passed. No
-application build or other platform validation is claimed.
+Validation is organized by parser, shared header/dispatch, numeric helpers and
+CLI behavior. See the test organization below. Native Windows/macOS validation
+is pending.
 
 ## RxMER behavior and evidence
 
@@ -165,7 +165,7 @@ two version bytes and then channel ID; there is no capture-time field. Both use
 six-byte split. This does not imply a byte order for multi-byte FEC payload fields.
 Central identities are from the file-format tables and pinned PyPNM vocabulary;
 PNN10 is the display tag for a fourth byte of 0x0a. LLD01 is recognized as
-4c4c4401 but its layout remains disabled. PXX9 is internal PyPNM SNMP data and is
+4c4c4401 with decoding enabled and synthetic test coverage only. PXX9 is internal PyPNM SNMP data and is
 not recognized as an on-disk DOCSIS format here.
 
 ### Generate JSON from the RxMER fixture
@@ -214,14 +214,14 @@ crates. See the [tracing subscriber documentation](https://docs.rs/tracing-subsc
 
 ## Public API examples
 
-See [the examples guide](../crates/core/examples/README.md) for one runnable
+See [the examples guide](../../crates/core/examples/README.md) for one runnable
 example per file type, concrete parser imports, fixture defaults, and direct
 typed sample access. `pnm_json` demonstrates automatic file dispatch.
 Latency requires an input path; symbol capture exports header metadata only.
 
 ## Additional measurement decoders
 
-See [format support](format-support.md) for the full matrix and JSON differences.
+See [format support](../reference/formats.md) for the full matrix and JSON differences.
 The same RxMER flow applies to every implemented family:
 `PnmFile -> PnmHeader -> from_header -> typed capture -> bounded JSON`.
 `parse_limits::ParseLimits` is shared; the old RxMER import remains available.
@@ -237,7 +237,8 @@ scripts/cargo-local.sh run --quiet --locked -p pnm --example pnm_json --   tests
 
 The example caps input at 16 MiB and uses the existing bounded JSON writer.
 It writes JSON to stdout and diagnostics to stderr. Core parsers perform no I/O.
-Validation on Linux: 24 Rust tests, formatting and Clippy with warnings denied.
+Historical parser validation: 24 Rust tests before the per-parser test split,
+formatting and Clippy with warnings denied.
 Nine real fixture JSON exports passed; eight additional fixtures were compared
 value-by-value with independent `struct` decoding. Latency has synthetic tests
 only. No GUI, packaging or other-OS runtime validation is implied.
@@ -292,7 +293,7 @@ remain re-exports of the single implementations in `common`. New general-purpose
 code should use `common::reader` and `common::json` directly. Concrete parser
 APIs and JSON contracts are unchanged.
 
-Validation: all 24 tests, rustfmt and Clippy passed. JSON exports from all nine
+Historical reorganization validation: all 24 tests, rustfmt and Clippy passed. JSON exports from all nine
 real fixtures were byte-for-byte identical before and after the reorganization.
 
 Complex captures expose `iq()` and `raw_iq()` in Rust and `iq` in JSON.
@@ -311,7 +312,7 @@ tests remain beside their implementation.
 `test_fixed_point_decoder.rs` verifies s2.13 and s1.14 known values, signed
 boundaries, I/Q ordering, and all 65,536 signed input words for each format.
 Parser tests independently verify on-wire scale selection and exclusion rules.
-See the [testing skill](../skills/pnm-testing/SKILL.md) for maintenance rules.
+See the [testing skill](../../skills/pnm-testing/SKILL.md) for maintenance rules.
 
 Run a single parser's suite with:
 

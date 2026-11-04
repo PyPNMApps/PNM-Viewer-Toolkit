@@ -75,6 +75,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "pnm-decode"
+version = "0.1.0"
+dependencies = [
+ "pnm",
+ "pnm-fixtures",
+ "serde_json",
+]
+
+[[package]]
 name = "pnm-fixtures"
 version = "0.1.0"
 

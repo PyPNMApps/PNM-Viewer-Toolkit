@@ -1,13 +1,14 @@
-# PNM Viewer
+# PNM Viewer Toolkit
 
 An offline desktop viewer for DOCSIS Proactive Network Maintenance (PNM) capture
 files, with a Rust backend and a planned Tauri 2 + React/TypeScript interface.
+The repository remains `pnm-viewer`; the standalone CLI is `pnm-decode`.
 The parser design follows PyPNM, with shared file headers, typed measurement
 objects, and human-readable JSON exports.
 
 **In the dev phase:** the Rust parsing libraries and development tools are
-implemented. The desktop interface and installable application are not yet
-available. You can run the parsers and export JSON today.
+implemented, including the standalone CLI and Linux source installer. The
+desktop interface is not yet available.
 
 ## What works today
 
@@ -22,61 +23,34 @@ available. You can run the parsers and export JSON today.
   and boundary cases.
 
 Latency decoding currently has **synthetic tests only**. Symbol capture is a
-**header-only stub**. See [format support](docs/format-support.md) for the exact
+**header-only stub**. See [format support](docs/reference/formats.md) for the exact
 coverage and JSON differences from PyPNM. This is not a claim of blanket
 DOCSIS 3.1 or 4.0 compliance.
 
 ## Get started
 
-Clone this repository using GitHub's **Code** button, then open a terminal in the
-checkout. The development installer targets Ubuntu 22.04/24.04 on x86_64 or ARM64;
-see [setup and platform limitations](docs/development-setup.md) for validation scope.
+The standalone decoder builds with standard Cargo from the repository root:
 
 ```bash
-cd pnm-viewer
-./install.sh --development --dry-run
-./install.sh --development
-./install.sh --development --check
+cargo build --release --locked -p pnm-decode
 ```
 
-Run as your normal user. Installation uses `sudo` for missing OS packages and
-network access for missing dependencies. Pinned Rust and Node.js tools are kept
-in ignored `local/`; the wrappers below use those tools.
-
-### Export a capture to JSON
-
-From the repository root:
+Run `target/release/pnm-decode` on Linux/macOS or
+`target\release\pnm-decode.exe` on Windows. For example:
 
 ```bash
-mkdir -p local/pnm-json
-scripts/cargo-local.sh run --quiet --locked -p pnm --example pnm_json -- \
-  tests/fixtures/pypnm/tests/files/rxmer.bin > local/pnm-json/rxmer.json
+./target/release/pnm-decode capture.bin --output capture.json
 ```
 
-Replace the input path with another supported capture. For example, export
-channel-estimate I/Q coefficients:
+Only Ubuntu 22.04 x86_64 has been built and tested so far. Prebuilt Windows,
+macOS and Linux downloads are planned; they are not published yet.
+See [installation options](docs/install/README.md),
+[source builds](docs/install/source.md) and [CLI usage](docs/cli/usage.md).
 
-```bash
-scripts/cargo-local.sh run --quiet --locked -p pnm --example pnm_json -- \
-  tests/fixtures/pypnm/tests/files/channel_estimation.bin \
-  > local/pnm-json/channel_estimation.json
-```
-
-JSON goes to stdout; diagnostics go to stderr. Generated files under `local/`
-are ignored by Git. Parsing local captures requires no PyPNM server or modem
-connection. See [fixture provenance](tests/fixtures/pypnm/README.md) for the
-included inputs and their licenses.
-
-See [public parser examples](crates/core/examples/README.md) for a runnable
-example of each parser and direct access to typed data.
-
-### Run development checks
-
-```bash
-scripts/cargo-local.sh test --workspace --locked
-scripts/cargo-local.sh fmt --all -- --check
-scripts/cargo-local.sh clippy --workspace --all-targets --locked -- -D warnings
-```
+Contributors can follow [development setup](docs/install/development.md),
+[Rust APIs and tests](docs/development/rust.md), and
+[parser examples](crates/core/examples/README.md).
+The desktop UI remains [planned work](docs/development/ui.md).
 
 ## Design direction
 
@@ -90,6 +64,7 @@ sidecars, and remote analysis are outside the viewer's scope.
 
 | Path | Purpose |
 | --- | --- |
+| `crates/cli/` | Standalone `pnm-decode` command and man page |
 | `crates/core/` | Rust `pnm` package: parsers, shared types, Q-format math and utilities |
 | `crates/logging/` | Application logging setup |
 | `tests/fixtures/` | PyPNM binary examples, licenses and provenance |
@@ -106,20 +81,11 @@ not included in GitHub clones. The tracked
 [development reference skill](skills/pnm-viewer-development/SKILL.md) preserves
 the original bootstrap guidance and PyPNM source map.
 
-## Documentation and Git workflow
+## Documentation
 
-- [Development setup](docs/development-setup.md)
-- [Rust APIs, numeric helpers and validation](docs/rust-development.md)
-- [Supported formats and limitations](docs/format-support.md)
-- [API and IPC design](docs/api-contract.md)
-- [Packaging requirements](docs/packaging.md)
-- [Git save and push helpers](docs/git-workflow.md)
-- [MAJOR.MINOR.PATCH versioning](docs/release.md)
-- [Bootstrap decisions](docs/bootstrap-review.md)
-
-Use the project Git helpers described above to save and push changes. Version
-bumps are separate from commits, tags, and publication. See
-[AGENTS.md](AGENTS.md) for repository conventions when using a coding agent.
+Start with the [documentation index](docs/README.md) for installation, CLI usage,
+format support, contributor guides, the UI roadmap, release procedures and history.
+See [AGENTS.md](AGENTS.md) for repository conventions when using a coding agent.
 
 ## License and acknowledgment
 

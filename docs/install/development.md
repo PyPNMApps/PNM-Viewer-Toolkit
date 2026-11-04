@@ -84,3 +84,8 @@ binaries, real apt installation or GUI execution.
 
 The design follows PyPNM's explicit development mode and OSCAR-UI's prerequisite
 checks and project-local dependency ownership, adapted to this Rust/Tauri stack.
+
+## CLI-only installation
+
+After preparing the Rust toolchain, use `./install.sh --cli --prefix DIRECTORY`.
+This builds the decoder without UI dependencies. See [CLI usage](../cli/usage.md).

@@ -58,8 +58,8 @@ were byte-identical to their canonical copies under `skills/`; those canonical
 copies remain. Root `AGENTS.md` supersedes the old bootstrap instructions.
 
 The two original planning references are preserved as Markdown under
-[skills/pnm-viewer-development/references](../skills/pnm-viewer-development/references/).
-The new [skill entry point](../skills/pnm-viewer-development/SKILL.md) makes those
+[skills/pnm-viewer-development/references](../../skills/pnm-viewer-development/references).
+The new [skill entry point](../../skills/pnm-viewer-development/SKILL.md) makes those
 references discoverable and distinguishes historical guidance from active policy.
 `source-provenance.json` records the original archive hash and manifest. Discovery
 links exist under both `.agents/skills/` and `.claude/skills/`.

@@ -1,0 +1,72 @@
+.\" Copyright 2026 PNM Viewer contributors
+.\" SPDX-License-Identifier: Apache-2.0
+.TH PNM-DECODE 1 "November 2026" "PNM Viewer Toolkit" "User Commands"
+.SH NAME
+pnm-decode \- decode a DOCSIS PNM capture to JSON
+.SH SYNOPSIS
+.B pnm-decode
+.RI [ OPTIONS ] " INPUT"
+.SH DESCRIPTION
+Read one local binary capture, identify its signature and version, and select
+its parser automatically. No GUI or network connection is required.
+By default, write formatted JSON beside INPUT with its extension replaced by .json.
+Existing destinations, including symbolic links, are never replaced.
+.SH OPTIONS
+.TP
+.BR \-o ", " \-\-output " PATH"
+Choose the destination JSON file. Its parent directory must exist.
+.TP
+.B \-\-stdout
+Write JSON to standard output instead of a file. Conflicts with --output.
+.TP
+.B \-\-header-only
+Export common header metadata without measurement decoding or payload bytes.
+.TP
+.BR \-h ", " \-\-help
+Show command help.
+.TP
+.BR \-V ", " \-\-version
+Show the executable version.
+.TP
+.B \-\-
+End options; use before an input filename starting with a dash.
+.SH FORMATS AND LIMITS
+Supported measurement families include RxMER, channel estimate, constellation,
+histogram, upstream pre-equalization and last update, FEC summary, spectrum,
+modulation profiles, and latency. Enabled file-format version is 1.0.
+Symbol capture supports header-only output; full decoding fails explicitly.
+Latency is validated with synthetic inputs only.
+Input and serialized JSON are limited to 16 MiB each (excluding the final output
+newline). Decode budget is 65536 items. These are application policies.
+.SH OUTPUT
+JSON uses the core parser representation, including null for missing values
+and iq pairs ordered as in-phase then quadrature. Diagnostics use standard error.
+File output is published using a hard link from a complete temporary sibling.
+Filesystems without hard-link support fail safely; use --stdout or another
+filesystem. Normal failures clean up temporary files; forced termination may
+leave a .pnm-decode-*.tmp file. No overwrite option is provided.
+.SH EXIT STATUS
+.TP
+.B 0
+Success, help, or version.
+.TP
+.B 1
+File or stream I/O failure, including an existing destination.
+.TP
+.B 2
+Invalid command usage.
+.TP
+.B 3
+Unknown or unsupported file identity, version, layout, or decoder.
+.TP
+.B 4
+Malformed capture or resource/output limit exceeded.
+.SH EXAMPLES
+.nf
+pnm-decode capture.bin
+pnm-decode capture.bin --output results.json
+pnm-decode capture.bin --stdout
+pnm-decode capture.bin --header-only
+.fi
+.SH LICENSE
+Apache-2.0. Distributed notices identify third-party material.

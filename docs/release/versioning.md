@@ -29,7 +29,7 @@ helper, so invoking it from another directory still targets this repository.
 
 ## Commit and release
 
-Review all changes and use the [Git workflow](git-workflow.md) to save and push.
+Review all changes and use the [Git workflow](../development/git.md) to save and push.
 Commit messages must cover everything staged, not just the version change.
 A release tag uses `vMAJOR.MINOR.PATCH` at the reviewed version commit.
 Before creating it, verify a clean main/master branch, that committed VERSION

@@ -52,4 +52,4 @@ tools/git/git-save.sh --help &&
 tools/git/git-push.sh --help
 ```
 
-For MAJOR.MINOR.PATCH bumps and release tags, see [release workflow](release.md).
+For MAJOR.MINOR.PATCH bumps and release tags, see [release workflow](../release/versioning.md).

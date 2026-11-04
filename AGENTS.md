@@ -1,6 +1,6 @@
 # Permanent project guidance
 
-Build PNM Viewer with Tauri 2, React/TypeScript presentation and Rust backend behavior.
+Build PNM Viewer Toolkit with Tauri 2, React/TypeScript presentation and Rust backend behavior.
 
 - Work only in this viewer repository. PyPNM is read-only reference material. Do not change its files, configuration, dependencies or services, or run capture/startup code.
 - No SNMP, TFTP, modem controls, capture initiation, Python sidecars, Node production runtime or remote analysis. Optional PyPNM HTTP retrieval runs in Rust and retrieves existing files only.
@@ -19,6 +19,12 @@ Build PNM Viewer with Tauri 2, React/TypeScript presentation and Rust backend be
 - Each primary architecture-specific distributable must be at most 50,000,000 bytes, counting bundled prerequisites and assets. Fail the release gate when exceeded. Report installer bytes, installed footprint and external prerequisites separately.
 - Offline viewing after setup and offline installation on a pristine OS are different promises. Do not claim both fit the budget without measurement.
 - Produce local artifacts and checksums. Publishing, external signing/notarization and system-wide installation require user authorization. Keep credentials, private PDFs and customer captures out of Git and release bundles.
+
+## Project naming
+
+Display name: PNM Viewer Toolkit. Repository/directory: `pnm-viewer`.
+Standalone CLI: `pnm-decode` (`pnm-decode.exe` on Windows); manual: `pnm-decode.1`.
+Existing Cargo library names and copyright notices retain their current identities.
 
 ## Project status and guidance
 
@@ -53,13 +59,13 @@ for the preserved original guidance before creating new working plans.
   then `- ` detail lines including validation. Keep each message line at most
   60 characters. Pass multiline messages as one double-quoted argument.
 - Push requires a clean main/master branch and origin; never force-push.
-- See docs/git-workflow.md for commands and helper behavior.
+- See docs/development/git.md for commands and helper behavior.
 
 ## Versioning
 
 - Use the `pnm-viewer-release` skill for version bumps and release work.
 - Keep VERSION in MAJOR.MINOR.PATCH format; use tools/bump-version.sh.
-- See docs/release.md. Version bumps do not authorize commits, tags, or pushes.
+- See docs/release/versioning.md. Version bumps do not authorize commits, tags, or pushes.
 
 ## Coding style
 
@@ -87,3 +93,11 @@ when needed; do not assume those local records are distributed with the project.
 
 Apply `skills/pnm-testing/SKILL.md` for Rust parser and numeric work. Keep one
 integration-test file per concrete parser and independent math/Q-format tests.
+
+## Documentation layout
+
+Use docs/README.md as the index. Group user setup under docs/install/, CLI usage
+under docs/cli/, format contracts under docs/reference/, contributor and UI
+plans under docs/development/, packaging/versioning under docs/release/, and
+historical investigations under docs/history/. Keep root development/ ignored
+for working plans. Update relative links whenever documents move.

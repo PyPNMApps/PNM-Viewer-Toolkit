@@ -35,14 +35,14 @@ not a claim that vendor minor versions are invalid.
 
 Layouts were reviewed in the authorized text extracts of
 CM-SP-CM-OSSIv3.1-I27-250219 and CM-SP-CM-OSSIv4.0-I13-260429. See
-[coverage](../development/specs/coverage.csv), [field provenance](../development/specs/field-provenance.csv)
-and [format evidence](../development/specs/measurement-formats.md). These evidence
+[coverage](../../development/specs/coverage.csv), [field provenance](../../development/specs/field-provenance.csv)
+and [format evidence](../../development/specs/measurement-formats.md). These evidence
 files are local-only under ignored `development/` and are absent from fresh clones.
 No rendered-PDF validation,
 latest-issue verification or blanket DOCSIS compliance is claimed.
 
 PyPNM is pinned at `82bbf79fe04a0b5e766dc3eb4d5ca2004008bca9`.
-[Unmodified fixtures and licensing](../tests/fixtures/pypnm/README.md) are retained.
+[Unmodified fixtures and licensing](../../tests/fixtures/pypnm/README.md) are retained.
 PyPNM's latency implementation is a stub; its symbol parser is not used.
 Internal SNMP spectrum `PXX9` remains excluded from this offline file viewer.
 
@@ -68,4 +68,4 @@ JSON follows PyPNM vocabulary where practical, with these deliberate differences
   JSON emits exact u64 bin counts; future JavaScript IPC must avoid narrowing them
   to JavaScript Number when they exceed its safe integer range.
 
-See [Rust development](rust-development.md) for export commands.
+See [Rust development](../development/rust.md) for export commands.

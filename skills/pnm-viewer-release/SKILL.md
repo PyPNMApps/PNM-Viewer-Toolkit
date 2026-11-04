@@ -5,7 +5,7 @@ description: Prepare PNM Viewer three-component version bumps and release comman
 
 # PNM Viewer release workflow
 
-Read `docs/release.md`, `VERSION`, and the repository's helpers before preparing
+Read `docs/release/versioning.md`, `VERSION`, and the repository's helpers before preparing
 commands. Resolve those paths from the repository root (two levels above this
 canonical skill directory). VERSION is the only version source until Cargo/Tauri/UI manifests exist; integrate the future build before claiming artifact versions
 are synchronized.

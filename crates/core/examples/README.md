@@ -45,7 +45,7 @@ scripts/cargo-local.sh run --quiet --locked -p pnm \
 Examples accept at most one path and cap external input at 16 MiB. They use
 `ParseLimits::default()` and the bounded 16 MiB JSON writer. These are application
 budgets, not DOCSIS limits. Parse errors terminate the example with a nonzero
-exit status. See [format support](../../../docs/format-support.md) for limitations.
+exit status. See [format support](../../../docs/reference/formats.md) for limitations.
 
 ## Use typed data before exporting
 
