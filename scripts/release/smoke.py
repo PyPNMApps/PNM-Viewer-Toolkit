@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-FIXTURES = ('rxmer.bin', 'spectrum_analyzer.bin', 'channel_estimation.bin', 'histogram.bin')
+FIXTURES = ('rxmer.bin', 'spectrum_analyzer.bin', 'channel_estimation.bin', 'histogram.bin', 'fec_summary.bin')
 
 
 def clean_environment():

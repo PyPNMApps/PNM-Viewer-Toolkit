@@ -49,6 +49,9 @@ keeps the current capture. Unsupported measurements can still be decoded with
 - Drag across the plot to select and zoom into a frequency or bin range.
 - Use the mouse wheel to zoom around the pointer; double-click to reset.
 - Read the selected range at the bottom left. Histogram also shows its hit total.
+- FEC Summary has a profile selector and Total/Corrected/Uncorrectable CW toggles.
+  Its left axis shows total codewords and its right axis shows error codewords.
+  Drag selects UTC time; window sums and the last interval update with the range.
 - The I/Q density view always shows the full capture and does not use range zoom.
 - For channel estimation, choose **Magnitude**, **Group delay**, or **I/Q scatter**.
   Switching tabs resets the range.

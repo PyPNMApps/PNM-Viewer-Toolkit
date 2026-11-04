@@ -2,7 +2,7 @@ PNM Viewer Toolkit is under development.
 
 This draft contains native Qt viewer packages and standalone `pnm-decode`
 archives. The viewer supports RxMER, Spectrum Analyzer, downstream channel
-estimation and histogram files, with JSON export and System/Dark/Light themes.
+estimation, histogram and FEC summary files, with JSON export and System/Dark/Light themes.
 
 Packages are built only after CodeQL, code checks and the complete native CI
 matrix pass. Installed-package checks cover Ubuntu 22.04/24.04/26.04, Windows

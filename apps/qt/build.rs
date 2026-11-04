@@ -24,6 +24,7 @@ fn main() {
                 "qml/MeasurementChart.qml",
                 "qml/IqScatterChart.qml",
                 "qml/HistogramChart.qml",
+                "qml/FecSummaryChart.qml",
                 "qml/PanelToggle.qml",
                 "qml/SmokeTest.qml",
             ],

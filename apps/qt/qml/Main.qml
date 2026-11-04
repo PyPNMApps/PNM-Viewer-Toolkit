@@ -310,8 +310,19 @@ ApplicationWindow {
                             Layout.fillHeight: true
                             onRangeRequested: (start, count) => backend.show_range(start, count)
                         }
+                        FecSummaryChart {
+                            visible: window.metadata.fec_summary !== undefined
+                            theme: appTheme
+                            metadata: window.metadata.fec_summary || ({profiles: [], profile_index: 0})
+                            viewport: window.viewport
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            onProfileRequested: index => backend.select_fec_profile(index)
+                            onTimeRangeRequested: (first, last) => backend.show_fec_time_range(first, last)
+                            onRangeRequested: (start, count) => backend.show_range(start, count)
+                        }
                         MeasurementChart {
-                            visible: window.metadata.view_index !== 2 && window.metadata.histogram !== true
+                            visible: window.metadata.view_index !== 2 && window.metadata.histogram !== true && window.metadata.fec_summary === undefined
                             unit: window.metadata.unit || "dB"
                             axisLabel: window.metadata.axis_label || "Amplitude"
                             minimum: window.metadata.minimum === undefined ? 0 : window.metadata.minimum

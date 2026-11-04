@@ -300,3 +300,17 @@ See [CI](ci.md) for all required runners and
 `--smoke-test INPUT_FILE_URL NEW_OUTPUT_FILE_URL` mode opens, renders and exports
 one capture, logs `UI_SMOKE_OK` and exits. It uses the same Rust adapter and does
 not overwrite existing outputs. Normal launches do not activate this mode.
+
+## FEC Summary
+
+The viewer routes FEC summary files through the existing core parser. The Rust
+presentation module (`apps/viewer/src/fec_summary.rs`) supplies one selected
+profile, at most 1024 extrema-preserving chronological points, exact window sums
+and last-interval counts. QML renders explicit total/error axes, UTC labels and
+series visibility. Profile changes reset the range; UTC selection maps to record
+indices in Rust. Known interval gaps are preserved conservatively in overviews.
+
+Display ordering is stable chronological order; original bytes and JSON ordering
+remain unchanged. Counters are interval counts. Summary type 2 uses one-second
+intervals and type 3 uses one-minute intervals; other values retain their numeric
+label and do not infer missing samples. No error rates are calculated.

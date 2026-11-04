@@ -5,7 +5,7 @@
 //! Measurement-neutral chart data; binary interpretation stays in the core parsers.
 use crate::{spectrum_analysis::SpectrumAnalysis, Capture, Diagnostic, MAX_VIEW_SAMPLES};
 use pnm::pnm::{
-    data_type::{units::HZ_PER_KHZ, FrequencyHz},
+    data_type::{units::HZ_PER_KHZ, CaptureTime, FrequencyHz},
     parser::pnm_file::DecodedPnm,
 };
 use serde::Serialize;
@@ -14,9 +14,10 @@ use serde::Serialize;
 #[derive(Clone, Copy, Default, PartialEq, Eq)]
 pub enum MeasurementView {
     #[default]
-    Default = 0,
-    GroupDelay = 1,
-    IqScatter = 2,
+    Default,
+    GroupDelay,
+    IqScatter,
+    FecProfile(usize),
 }
 
 /// Display label and formatted value for one metadata pill.
@@ -42,6 +43,8 @@ impl Chip {
 /// Small chart configuration; vertical bounds use the declared measurement unit.
 #[derive(Serialize)]
 pub struct ChartMetadata {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fec_summary: Option<crate::fec_summary::FecMetadata>,
     pub histogram: bool,
     pub views: Vec<&'static str>,
     pub view_index: u32,
@@ -66,6 +69,8 @@ pub struct ChartPoint {
 #[derive(Serialize)]
 pub struct ChartViewport {
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub fec_summary: Option<crate::fec_summary::FecViewport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub histogram: Option<crate::histogram::HistogramView>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub iq_density: Option<crate::channel_estimation::IqDensity>,
@@ -75,6 +80,28 @@ pub struct ChartViewport {
     pub points: Vec<ChartPoint>,
 }
 impl Capture {
+    /// Selects FEC records by inclusive UTC epoch seconds in Rust.
+    /// # Arguments
+    /// * `view` - Default or explicitly selected FEC profile.
+    /// * `first`, `last` - Inclusive epoch-second bounds; reversed bounds are accepted.
+    /// # Returns
+    /// Bounded points and exact window statistics; empty selections stay empty.
+    /// # Errors
+    /// Rejects non-FEC captures, invalid profiles and decoder failures.
+    pub fn fec_time_range(
+        &self,
+        view: MeasurementView,
+        first: CaptureTime,
+        last: CaptureTime,
+    ) -> Result<ChartViewport, Diagnostic> {
+        if let DecodedPnm::FecSummary(capture) = self.decoded()? {
+            return crate::fec_summary::time_range(&capture, view, first, last);
+        }
+        Err(Diagnostic::new(
+            "UnsupportedView",
+            "UTC selection requires FEC Summary.",
+        ))
+    }
     /// Builds measurement-specific labels, units and full-capture vertical bounds.
     ///
     /// # Returns
@@ -95,6 +122,7 @@ impl Capture {
         let decoded = self.decoded()?;
         validate_view(&decoded, view)?;
         match decoded {
+            DecodedPnm::FecSummary(capture) => crate::fec_summary::metadata(&capture, view),
             DecodedPnm::Histogram(capture) => Ok(crate::histogram::metadata(&capture)),
             DecodedPnm::ChannelEstimate(capture) => {
                 crate::channel_estimation::metadata(&capture, view)
@@ -102,6 +130,7 @@ impl Capture {
             DecodedPnm::RxMer(_) => {
                 let metadata = self.metadata()?;
                 Ok(ChartMetadata {
+                    fec_summary: None,
                     histogram: false,
                     views: vec![],
                     view_index: 0,
@@ -138,6 +167,7 @@ impl Capture {
                     .collect::<Vec<_>>()
                     .join(":");
                 Ok(ChartMetadata {
+                    fec_summary: None,
                     histogram: false,
                     views: vec![],
                     view_index: 0,
@@ -280,6 +310,9 @@ impl Capture {
         start: usize,
         count: usize,
     ) -> Result<ChartViewport, Diagnostic> {
+        if let DecodedPnm::FecSummary(capture) = self.decoded()? {
+            return crate::fec_summary::viewport(&capture, view, start, count);
+        }
         if let DecodedPnm::Histogram(capture) = self.decoded()? {
             if view != MeasurementView::Default {
                 return Err(Diagnostic::new(
@@ -301,6 +334,7 @@ impl Capture {
                     ));
                 }
                 return Ok(ChartViewport {
+                    fec_summary: None,
                     histogram: None,
                     start,
                     count,
@@ -320,6 +354,7 @@ impl Capture {
             })?;
         let points = overview(&samples[start..end]);
         Ok(ChartViewport {
+            fec_summary: None,
             histogram: None,
             iq_density: None,
             start,
@@ -360,10 +395,18 @@ fn overview(samples: &[ChartPoint]) -> Vec<ChartPoint> {
 }
 
 fn validate_view(decoded: &DecodedPnm<'_>, view: MeasurementView) -> Result<(), Diagnostic> {
-    if view != MeasurementView::Default && !matches!(decoded, DecodedPnm::ChannelEstimate(_)) {
+    let supported = match decoded {
+        DecodedPnm::FecSummary(_) => matches!(
+            view,
+            MeasurementView::Default | MeasurementView::FecProfile(_)
+        ),
+        DecodedPnm::ChannelEstimate(_) => !matches!(view, MeasurementView::FecProfile(_)),
+        _ => view == MeasurementView::Default,
+    };
+    if !supported {
         return Err(Diagnostic::new(
             "UnsupportedView",
-            "This capture does not support that view.",
+            "This measurement has no such view.",
         ));
     }
     Ok(())

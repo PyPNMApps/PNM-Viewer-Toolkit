@@ -30,6 +30,61 @@ TestCase {
         width: 850
         height: 400
     }
+    FecSummaryChart {
+        id: fecChart
+        theme: appearance
+        width: 900
+        height: 430
+        visible: false
+        property real selectedFirst: -1
+        property real selectedLast: -1
+        property int selectedProfile: -1
+        property int requestedCount: -1
+        onTimeRangeRequested: (first, last) => { selectedFirst = first; selectedLast = last }
+        onProfileRequested: index => selectedProfile = index
+        onRangeRequested: (start, count) => requestedCount = count
+    }
+    function test_fec_profiles_utc_selection_toggles_and_empty() {
+        chart.visible = false
+        fecChart.visible = true
+        fecChart.metadata = {profiles: [{profile_id: 255}, {profile_id: 0}], profile_index: 1, summary_type: 2}
+        fecChart.viewport = {start: 0, count: 3, total: 3, fec_summary: {
+            first_timestamp: 100, last_timestamp: 200, total_maximum: 100, error_maximum: 5,
+            total_codewords: 200, corrected: 4, uncorrectable: 1,
+            last: {timestamp: 200, total_codewords: 100, corrected: 3, uncorrectable: 1},
+            points: [{timestamp: 100, total_codewords: 100, corrected: 1, uncorrectable: 0},
+                     {timestamp: 200, total_codewords: 100, corrected: 3, uncorrectable: 1, break_before: true}]}}
+        compare(findChild(fecChart, "fecProfileSelector").currentIndex, 1)
+        compare(fecChart.utc(0), "1970-01-01 00:00:00 UTC")
+        compare(fecChart.countLabel(17592186040321), "17592186040321")
+        const plot = findChild(fecChart, "fecPlot")
+        const usableWidth = plot.width - plot.leftMargin - plot.rightMargin
+        const left = plot.leftMargin + usableWidth * 0.25
+        const right = plot.leftMargin + usableWidth * 0.75
+        mousePress(plot, left, 100)
+        mouseMove(plot, right, 100)
+        mouseRelease(plot, right, 100)
+        fuzzyCompare(fecChart.selectedFirst, 125, 1)
+        fuzzyCompare(fecChart.selectedLast, 175, 1)
+        fecChart.resetZoom()
+        compare(fecChart.requestedCount, 3)
+        const toggle = findChild(fecChart, "fecCorrectedToggle")
+        mouseClick(toggle)
+        compare(toggle.checked, false)
+        mouseClick(toggle)
+        compare(toggle.checked, true)
+        const selector = findChild(fecChart, "fecProfileSelector")
+        selector.forceActiveFocus()
+        keyClick(Qt.Key_Home)
+        keyClick(Qt.Key_Return)
+        tryCompare(fecChart, "selectedProfile", 0)
+        appearance.preference = 2
+        wait(50)
+        fecChart.viewport = {start: 0, count: 0, total: 0, fec_summary: {points: [], last: null, first_timestamp: null, last_timestamp: null}}
+        wait(50)
+        fecChart.visible = false
+        appearance.preference = 1
+    }
     function test_channel_delay_and_density_presentation() {
         chart.unit = "µs"
         chart.axisLabel = "Group delay"

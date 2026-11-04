@@ -51,6 +51,16 @@ mod bridge {
         #[qinvokable]
         fn select_view(self: Pin<&mut ViewerBackend>, index: u32);
 
+        /// Selects one source FEC profile and resets its displayed interval range.
+        /// Invalid indices leave the previous view intact.
+        #[qinvokable]
+        fn select_fec_profile(self: Pin<&mut ViewerBackend>, index: u32);
+
+        /// Queries an inclusive UTC time range for the selected FEC profile.
+        /// Epoch-second bounds are normalized and processed in Rust.
+        #[qinvokable]
+        fn show_fec_time_range(self: Pin<&mut ViewerBackend>, first: u32, last: u32);
+
         /// Releases the active capture when no file operation is running.
         /// Busy calls do nothing; native dialog cancellation never calls this.
         #[qinvokable]
@@ -263,13 +273,10 @@ impl bridge::ViewerBackend {
     /// # Returns
     /// Updates metadata and a bounded full-range viewport. Invalid or busy calls
     /// preserve the current view; errors appear in the existing diagnostic area.
-    pub fn select_view(mut self: Pin<&mut Self>, index: u32) {
+    pub fn select_view(self: Pin<&mut Self>, index: u32) {
         if *self.busy() {
             return;
         }
-        let Some(capture) = self.rust().capture.clone() else {
-            return;
-        };
         let view = match index {
             0 => MeasurementView::Default,
             1 => MeasurementView::GroupDelay,
@@ -281,6 +288,51 @@ impl bridge::ViewerBackend {
                 ));
                 return;
             }
+        };
+        self.change_view(view);
+    }
+
+    /// Selects a FEC profile by its source index, preserving state on failure.
+    /// # Arguments
+    /// * `index` - Zero-based position in the capture's profile list.
+    /// # Returns
+    /// Updates small metadata and the profile's full-range bounded viewport.
+    pub fn select_fec_profile(self: Pin<&mut Self>, index: u32) {
+        self.change_view(MeasurementView::FecProfile(index as usize));
+    }
+
+    /// Displays a selected UTC window through the shared Rust FEC mapper.
+    /// # Arguments
+    /// * `first`, `last` - Inclusive epoch seconds; reverse drags are accepted.
+    /// # Returns
+    /// Updates only bounded viewport JSON; invalid calls retain the prior view.
+    pub fn show_fec_time_range(mut self: Pin<&mut Self>, first: u32, last: u32) {
+        if *self.busy() {
+            return;
+        }
+        let Some(capture) = self.rust().capture.clone() else {
+            return;
+        };
+        let result = capture
+            .fec_time_range(self.rust().view, first, last)
+            .and_then(|viewport| {
+                serde_json::to_string(&viewport).map_err(|error| Diagnostic::new("Json", error))
+            });
+        match result {
+            Ok(json) => {
+                self.as_mut().set_viewport_json(QString::from(&json));
+                self.as_mut().set_error_message(QString::default());
+            }
+            Err(error) => self.fail(error),
+        }
+    }
+
+    fn change_view(mut self: Pin<&mut Self>, view: MeasurementView) {
+        if *self.busy() {
+            return;
+        }
+        let Some(capture) = self.rust().capture.clone() else {
+            return;
         };
         let result = (|| {
             let metadata = capture.chart_metadata_for(view)?;

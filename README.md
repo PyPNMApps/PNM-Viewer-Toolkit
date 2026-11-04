@@ -38,6 +38,7 @@ The current viewer supports:
 | Spectrum Analyzer | Amplitude by frequency and calculated RBW |
 | DS Channel Estimation | Magnitude, group delay and I/Q density |
 | Histogram | Hit counts by bin index |
+| FEC Summary | Per-profile interval codewords over UTC time |
 
 Choose System, Dark or Light appearance. Drag across a graph to zoom and
 double-click to reset; the I/Q density view shows the full capture.

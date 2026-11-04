@@ -216,6 +216,7 @@ pub(crate) fn metadata(
         .collect::<Vec<_>>()
         .join(":");
     Ok(ChartMetadata {
+        fec_summary: None,
         histogram: false,
         title: "Downstream Channel Estimation",
         unit,
@@ -229,6 +230,10 @@ pub(crate) fn metadata(
         ],
         spectrum_analysis: None,
         views: vec!["Magnitude", "Group delay", "I/Q scatter"],
-        view_index: view as u32,
+        view_index: match view {
+            MeasurementView::GroupDelay => 1,
+            MeasurementView::IqScatter => 2,
+            _ => 0,
+        },
     })
 }
