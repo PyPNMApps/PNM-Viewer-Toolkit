@@ -31,6 +31,7 @@ ApplicationWindow {
     palette.highlightedText: appTheme.background
     Theme { id: appTheme }
     ViewerBackend { id: backend }
+    SmokeTest { viewerBackend: backend; applicationWindow: window; surface: captureSurface }
     Component.onCompleted: backend.set_dark_icon(appTheme.dark)
     Connections {
         target: appTheme
@@ -128,6 +129,7 @@ ApplicationWindow {
         }
     }
     RowLayout {
+        id: captureSurface
         anchors.fill: parent
         spacing: 0
         Rectangle {

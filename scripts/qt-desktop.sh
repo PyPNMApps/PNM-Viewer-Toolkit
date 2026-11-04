@@ -64,11 +64,7 @@ case "${ACTION}" in
     ;;
   build) exec "${CARGO_COMMAND[@]}" build --manifest-path "${MANIFEST}" --locked "$@" ;;
   check)
-    "${CARGO_COMMAND[@]}" fmt --manifest-path "${MANIFEST}" -- --check
-    "${CARGO_COMMAND[@]}" test --manifest-path "${MANIFEST}" --locked
-    "${CARGO_COMMAND[@]}" clippy --manifest-path "${MANIFEST}" --all-targets --locked -- -D warnings
-    "${CARGO_COMMAND[@]}" build --manifest-path "${MANIFEST}" --locked
-    QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software "${QT_SDK_DIR}/bin/qmltestrunner" -input "${PROJECT_DIR}/apps/qt/tests" -import "${PROJECT_DIR}/apps/qt/qml"
+    python3 "${SCRIPT_DIR}/qt-sdk.py" check
     ;;
   *) printf 'Usage: %s [run|build|check]\n' "$0" >&2; exit 2 ;;
 esac

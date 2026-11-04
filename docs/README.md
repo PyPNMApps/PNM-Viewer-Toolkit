@@ -1,7 +1,8 @@
 # PNM Viewer Toolkit documentation
 
 The Qt viewer, CLI and Rust parsers are available from source. The project is
-under development; desktop installers and prebuilt downloads are not available.
+under development. Tag automation prepares draft native packages; public
+downloads are not available yet.
 
 ## Use the toolkit
 

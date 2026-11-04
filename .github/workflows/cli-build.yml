@@ -3,17 +3,10 @@
 name: CLI build
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-  workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
-
-concurrency:
-  group: rust-ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -27,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-2022, macos-15, macos-15-intel]
+        os: [ubuntu-22.04, ubuntu-24.04, ubuntu-26.04, windows-2022, macos-15, macos-15-intel]
     defaults:
       run:
         shell: bash

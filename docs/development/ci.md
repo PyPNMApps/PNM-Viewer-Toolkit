@@ -1,57 +1,83 @@
 # Continuous integration
 
-Three focused workflows run on pushes to main/master, pull requests and manual
-dispatch, with separate README badges:
+[Documentation index](../README.md) · [Native packaging](../release/packaging.md)
 
-| Badge | Workflow | Checks |
-| --- | --- | --- |
-| CLI build | [cli-build.yml](../../.github/workflows/cli-build.yml) | Release decoder build, help/version and RxMER export smoke test |
-| Tests | [tests.yml](../../.github/workflows/tests.yml) | All Rust workspace tests, release-tool tests, Linux mocked installer tests |
-| Code checks | [ci.yml](../../.github/workflows/ci.yml) | Rustfmt, Clippy with warnings denied, installer Bash syntax and ShellCheck |
+## Master and pull requests
 
-Tests include every parser, shared headers/dispatch, Q-format math and CLI
-integration cases. Preserved upstream Python fixture/reference files are not a
-runnable PyPNM application test suite here. Installer tests use fake host tools
-on Linux and do not provision the runner.
+[CI](../../.github/workflows/ci.yml) runs on pushes to `master`/`main`, pull
+requests, manual dispatch, and reusable calls from the tag workflow.
 
-Builds and tests run on these native runners; code checks run once on Linux:
+```text
+CodeQL + code checks
+         │ both pass
+         ├── Rust tests on every OS
+         ├── CLI release build + JSON smoke on every OS
+         └── Qt + retained Tauri checks on every OS
+                          │ all pass
+                    Required checks
+```
 
-- Ubuntu 22.04 x64
-- Windows Server 2022 x64
-- macOS 15 Apple Silicon
-- macOS 15 Intel
+CodeQL scans Rust, TypeScript/JavaScript, Python tooling and GitHub Actions. Code checks run
+Rustfmt for all three Cargo workspaces, core Clippy with warnings denied,
+version consistency, Bash syntax and ShellCheck. Completing
+CodeQL analysis uploads findings to code scanning; it does not by itself mean
+there are no alerts. Configure repository code-scanning rules to block findings
+at the desired severity.
 
-Rust and components come from `rust-toolchain.toml`; dependencies use Cargo.lock.
-CI uses the runner's Rustup/Cargo directly, not the local development installer.
-No UI, Node.js, Tauri setup, signing or publication is included. No artifacts or
-caches are uploaded initially; add these when a concrete distribution need arises.
+All native matrices require:
 
-Each README badge reports its workflow result across all its jobs. Runner configuration
-is not proof of a passing platform test: inspect the first hosted run after push.
-The Rust badge reflects the toolchain pin; update it when the pin changes. The
-license badge links to component-specific terms, not a choice of licenses for
-every file. No release/download badge is shown while binaries are unpublished.
+| Runner | Architecture |
+| --- | --- |
+| Ubuntu 22.04 | x64 |
+| Ubuntu 24.04 | x64 |
+| Ubuntu 26.04 | x64 |
+| Windows Server 2022 | x64 |
+| macOS 15 | Apple Silicon |
+| macOS 15 Intel | x64 |
 
-GitHub's [runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
-documents the selected native labels. The
-[checkout action](https://github.com/actions/checkout) is used with persisted
-credentials disabled. Extend this workflow with UI checks only when the desktop
-application manifests and tests exist.
+Each OS runs all workspace parser/math/header/CLI tests, version/packaging-tool
+unit tests, a release CLI build and RxMER JSON smoke test. All three Ubuntu
+versions also run mocked installer and push-tool tests. Desktop checks run the retained Tauri typecheck, lint,
+frontend tests/build and Rust adapter checks, followed by Qt Rust tests,
+Clippy/build and QML presentation tests. Every matrix uses `fail-fast: false`
+so one failure does not hide results from other platforms.
 
-The [push helper](git.md) also runs a mandatory local validation gate before
-pushing main/master. CI tests the gate with fake Git, including failure and
-checkout-change cases; it does not perform real test pushes.
+`tests.yml`, `cli-build.yml` and `desktop.yml` are reusable children; they have no
+independent push triggers. Their jobs start only after CodeQL and code checks
+pass. A failed, canceled or skipped stage makes **Required checks** fail.
 
-## Desktop checks
+In GitHub repository settings, protect `master` with the **Required checks**
+status and require the branch to be current before merging. Workflow files
+provide the check; repository branch protection must be configured separately.
+Direct pushes can trigger CI after upload; the local
+[push gate](git.md) checks the current host before upload.
 
-`desktop.yml` runs `scripts/check-desktop.sh` on Linux, Windows and both macOS
-architectures. Linux installs native GTK/WebKit development prerequisites. The
-local pre-push gate now also requires the desktop dependencies (`npm ci` in
-`apps/desktop`) and all desktop checks. These are build/test jobs, not installer
-or interactive GUI validation. CLI-only build commands remain independent.
+## Tags
 
-The desktop workflow also checks the parallel Qt prototype on Ubuntu 22.04:
-pinned local Qt SDK setup, Rust tests/Clippy/build and offscreen QML tests.
-Qt Windows/macOS native CI and distribution jobs remain future work; the
-existing Tauri platform matrix is retained. The local pre-push gate requires
-both desktop toolchains and runs both checks without installing dependencies.
+[Native packages](../../.github/workflows/release.yml) runs only for pushed `v*`
+tags. It first requires exact `vMAJOR.MINOR.PATCH` agreement with VERSION and every
+manifest/lockfile, plus tag-commit ancestry in `origin/master`. It calls the same
+CI workflow on that exact tagged commit, then builds packages on native runners.
+
+The Ubuntu 22.04-built DEBs are downloaded unchanged and installed/tested on
+**22.04, 24.04 and 26.04**. Windows and each macOS architecture test their own
+native installers/images. Every test checks package hashes, GUI open/render/JSON
+export for all four current measurements, CLI operation, manual installation and
+removal. Linux also verifies that removing the viewer preserves the CLI package.
+
+Only after every lifecycle job succeeds does one job assemble the complete
+artifact set and attach it to a **draft** GitHub release. It refuses to modify an
+already public release. There is no automatic public publication, external
+signing or notarization. Failed packages, missing targets and packages above
+50,000,000 bytes block the draft. See [packaging](../release/packaging.md).
+
+## Evidence and badges
+
+README CI and package badges show actual workflow state. Platform badges describe
+the required matrix, not passing results. A configured runner is not evidence of
+a successful hosted run; inspect the first run after pushing these changes.
+Native Windows/macOS and Ubuntu 24.04/26.04 results remain pending until hosted CI.
+
+The local pre-push gate checks versions, tooling, Rust, Tauri and Linux Qt without
+installing dependencies. Native package installation is restricted to disposable
+GitHub runners. Local package builds do not install or publish anything.

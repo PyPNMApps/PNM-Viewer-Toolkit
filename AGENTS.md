@@ -108,5 +108,11 @@ plans under docs/development/, packaging/versioning under docs/release/, and
 historical investigations under docs/history/. Keep root development/ ignored
 for working plans. Update relative links whenever documents move.
 
+Native CI/release ordering: docs/development/ci.md. Keep master and tag validation
+shared; require Ubuntu 22.04/24.04/26.04, Windows x64 and macOS arm64/x64 checks.
+Tag packaging targets Qt and includes the same-version CLI/manual. Preserve Tauri
+regression checks. Native package lifecycle tests run on disposable CI runners;
+local builds do not authorize system installation or publication.
+
 Qt setup and validation: docs/development/qt.md. Run scripts/qt-desktop.sh check
 for Qt changes and shared capture changes; preserve Tauri regression checks.

@@ -7,9 +7,13 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 SCRIPT = Path(__file__).with_name("bump-version.py")
+sys.path.insert(0, str(SCRIPT.parent))
+from versions import MANIFESTS, LOCKS, JSON_FILES
+
 SPEC = importlib.util.spec_from_file_location("bump_version", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
@@ -44,15 +48,21 @@ class BumpVersionTests(unittest.TestCase):
             script = root / "tools/release/bump-version.py"
             script.parent.mkdir(parents=True)
             shutil.copy2(SCRIPT, script)
+            shutil.copy2(SCRIPT.with_name("versions.py"), script.with_name("versions.py"))
+            repository = SCRIPT.parents[2]
+            for name in MANIFESTS + LOCKS + JSON_FILES:
+                target = root / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(repository / name, target)
             version = root / "VERSION"
             version.write_text("0.1.0\n")
-            command = ["python3", str(script), "--bump", "minor"]
-            subprocess.run(command + ["--dry-run"], cwd="/", check=True, capture_output=True)
+            command = [sys.executable, str(script), "--bump", "minor"]
+            subprocess.run(command + ["--dry-run"], cwd=directory, check=True, capture_output=True)
             self.assertEqual(version.read_text(), "0.1.0\n")
-            subprocess.run(command, cwd="/", check=True, capture_output=True)
+            subprocess.run(command, cwd=directory, check=True, capture_output=True)
             self.assertEqual(version.read_text(), "0.2.0\n")
             version.write_text("1.2.3.4\n")
-            result = subprocess.run(command, cwd="/", capture_output=True)
+            result = subprocess.run(command, cwd=directory, capture_output=True)
             self.assertNotEqual(result.returncode, 0)
             self.assertEqual(version.read_text(), "1.2.3.4\n")
 

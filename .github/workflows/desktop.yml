@@ -1,50 +1,50 @@
+# Copyright 2026 PNM Viewer contributors
+# SPDX-License-Identifier: Apache-2.0
 name: Desktop checks
 on:
-  push:
-  pull_request:
+  workflow_call:
 permissions:
   contents: read
-concurrency:
-  group: desktop-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 jobs:
   desktop:
+    name: Qt and Tauri / ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-2022, macos-15, macos-15-intel]
+        os: [ubuntu-22.04, ubuntu-24.04, ubuntu-26.04, windows-2022, macos-15, macos-15-intel]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 40
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-      - name: Install Linux WebView development packages
+      - name: Enable MSVC compiler
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Install Linux desktop prerequisites
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libssl-dev libayatana-appindicator3-dev librsvg2-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libssl-dev libayatana-appindicator3-dev librsvg2-dev cmake python3-venv libgl1-mesa-dev
       - name: Load pinned Rust toolchain
         run: rustup show
       - name: Install locked frontend dependencies
         working-directory: apps/desktop
         run: npm ci
-      - name: Check frontend and native desktop
-        shell: bash
+      - name: Check retained Tauri desktop
         run: bash scripts/check-desktop.sh
-  qt-linux:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-      - name: Install Qt build prerequisites
-        run: sudo apt-get update && sudo apt-get install -y build-essential cmake python3-venv libgl1-mesa-dev
-      - name: Load pinned Rust toolchain
-        run: rustup show
-      - name: Prepare repository-local Qt SDK
-        run: scripts/setup-qt.sh
+      - name: Prepare pinned native Qt SDK
+        run: python scripts/qt-sdk.py setup
       - name: Check Qt adapter and presentation
-        run: scripts/qt-desktop.sh check
+        run: python scripts/qt-sdk.py check

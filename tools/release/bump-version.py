@@ -3,10 +3,11 @@
 # Copyright 2026 PNM Viewer contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-"""Bump the repository's three-component VERSION without Git mutations."""
+"""Bump the repository's three-component project version without Git mutations."""
 import argparse
 from pathlib import Path
 import re
+from versions import synchronize
 
 
 def bumped(version: str, part: str) -> str:
@@ -32,7 +33,7 @@ def bumped(version: str, part: str) -> str:
 
 
 def main() -> None:
-    """Parse CLI options and update VERSION unless dry-run is requested.
+    """Parse CLI options and update project versions unless dry-run is requested.
 
     Uses paths relative to this script; prints the old/new versions.
     Returns None on success. Argument failures exit with status 2; read,
@@ -47,7 +48,7 @@ def main() -> None:
         current = version_file.read_text(encoding="utf-8").strip()
         new = bumped(current, args.bump)
         if not args.dry_run:
-            version_file.write_text(new + "\n", encoding="utf-8")
+            synchronize(version_file.parent, new, write=True)
     except (OSError, ValueError) as error:
         parser.exit(1, f"ERROR: {error}\n")
     print(f"{current} -> {new}" + (" (dry run)" if args.dry_run else ""))

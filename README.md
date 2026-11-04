@@ -8,10 +8,11 @@
   </picture>
 </p>
 
-[![CLI build](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/cli-build.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/cli-build.yml)
-[![Tests](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/tests.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/tests.yml)
-[![Code checks](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ci.yml)
-[![Desktop checks: pending](https://img.shields.io/badge/Desktop_checks-pending-lightgrey)](.github/workflows/desktop.yml)
+[![CI](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ci.yml)
+[![Native packages](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/release.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/release.yml)
+[![Ubuntu matrix](https://img.shields.io/badge/Ubuntu-22.04%20%7C%2024.04%20%7C%2026.04-E95420?logo=ubuntu)](docs/development/ci.md)
+[![Windows matrix](https://img.shields.io/badge/Windows-x64-0078D4)](docs/development/ci.md)
+[![macOS matrix](https://img.shields.io/badge/macOS-Apple%20Silicon%20%7C%20Intel-555555?logo=apple)](docs/development/ci.md)
 [![Component licenses](https://img.shields.io/badge/license-Apache--2.0%20%2F%20GPL--3.0--only-blue)](LICENSE)
 
 An offline desktop viewer for DOCSIS PNM capture files. Open a capture, explore
@@ -41,9 +42,10 @@ The current viewer supports:
 Choose System, Dark or Light appearance. Drag across a graph to zoom and
 double-click to reset; the I/Q density view shows the full capture.
 
-Desktop installers and prebuilt downloads are not available yet. Development
-builds have been exercised on Ubuntu 22.04 x86_64; Windows/macOS runtime
-validation remains pending.
+Tag builds prepare [native packages](docs/release/packaging.md) for a draft release
+after all required checks pass. Public downloads are not available yet. Local
+builds have been exercised on Ubuntu 22.04 x86_64; hosted results for the full
+platform matrix remain pending.
 
 ## CLI and development
 

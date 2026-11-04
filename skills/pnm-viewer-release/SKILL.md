@@ -7,8 +7,10 @@ description: Prepare PNM Viewer three-component version bumps and release comman
 
 Read `docs/release/versioning.md`, `VERSION`, and the repository's helpers before preparing
 commands. Resolve those paths from the repository root (two levels above this
-canonical skill directory). VERSION is the only version source until Cargo/Tauri/UI manifests exist; integrate the future build before claiming artifact versions
-are synchronized.
+canonical skill directory). VERSION is the canonical source. The bump helper synchronizes local Cargo
+manifests/lockfiles, the frontend package/lockfile and Tauri configuration. Run
+`python3 tools/release/versions.py` to reject drift; never override a version from
+a tag or edit consumer manifests independently.
 
 Use `tools/bump-version.sh --bump major|minor|patch`, with `--dry-run` to preview.
 Require exactly MAJOR.MINOR.PATCH. Major resets minor and patch; minor resets
@@ -29,3 +31,25 @@ do not bump again automatically or delete published refs.
 
 The project is in the dev phase. A version or tag alone is not evidence of a
 working application, tested platform, packaged artifact, or published release.
+
+## Native CI and packages
+
+Read `docs/development/ci.md` and `docs/release/packaging.md` for tag automation.
+A pushed stable tag must match VERSION and belong to master. The tag workflow
+calls the same ordered CI as master before packaging; all Ubuntu 22.04/24.04/26.04,
+Windows x64 and macOS arm64/x64 checks are required. Do not skip a platform to
+make a release pass. Missing, skipped and canceled jobs block the aggregate.
+
+Build locally with `python3 scripts/release/build.py --output dist/release`
+(`python` on Windows) only after native prerequisites are present. Preserve
+existing outputs; the builder refuses reuse. Verify artifact versions, hashes
+and the 50,000,000-byte budget with `scripts/release/verify.py`.
+
+Installed lifecycle checks belong on disposable GitHub runners; do not set
+GITHUB_ACTIONS locally to bypass their guard. Report local relocated-binary smoke
+checks separately from native install/remove checks. Ubuntu installs the same
+22.04-built DEBs on all three versions, and removing the UI must preserve the CLI.
+
+Only a complete validated artifact set produces a draft release. The workflow
+refuses to mutate a public release and does not publish, externally sign or
+notarize. A workflow file or local build is not proof of hosted platform success.

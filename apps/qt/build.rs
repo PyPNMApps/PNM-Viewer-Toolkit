@@ -25,6 +25,7 @@ fn main() {
                 "qml/IqScatterChart.qml",
                 "qml/HistogramChart.qml",
                 "qml/PanelToggle.qml",
+                "qml/SmokeTest.qml",
             ],
             ..Default::default()
         })

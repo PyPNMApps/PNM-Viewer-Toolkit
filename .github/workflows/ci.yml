@@ -1,42 +1,74 @@
 # Copyright 2026 PNM Viewer contributors
 # SPDX-License-Identifier: Apache-2.0
-name: Code checks
-
+name: CI
 on:
   push:
     branches: [main, master]
   pull_request:
   workflow_dispatch:
-
+  workflow_call:
 permissions:
   contents: read
-
+  security-events: write
 concurrency:
-  group: rust-ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
-env:
-  CARGO_TERM_COLOR: always
-  RUST_BACKTRACE: '1'
-
 jobs:
-  check:
-    name: Format and lint
-    runs-on: ubuntu-22.04
-    timeout-minutes: 15
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - name: Load pinned toolchain
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: rust,javascript-typescript,python,actions
+          build-mode: none
+      - uses: github/codeql-action/analyze@v4
+  quality:
+    name: Code checks
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Load pinned Rust toolchain
         run: rustup show
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-      - name: Check Clippy
-        run: cargo clippy --workspace --all-targets --locked -- -D warnings
-      - name: Check shell scripts
+      - name: Check workspace and desktop formatting
         run: |
-          for script in install.sh scripts/install-cli.sh scripts/check-before-push.sh tools/git/git-save.sh tools/git/git-push.sh; do
-            bash -n "$script"
+          cargo fmt --all -- --check
+          cargo fmt --manifest-path apps/qt/Cargo.toml -- --check
+          cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml -- --check
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Check scripts and versions
+        run: |
+          python3 tools/release/versions.py
+          bash -n install.sh
+          for script in scripts/*.sh tools/git/*.sh tools/bump-version.sh; do bash -n "$script"; done
+          shellcheck install.sh scripts/*.sh tools/git/*.sh tools/bump-version.sh
+  tests:
+    needs: [codeql, quality]
+    uses: ./.github/workflows/tests.yml
+  cli:
+    needs: [codeql, quality]
+    uses: ./.github/workflows/cli-build.yml
+  desktop:
+    needs: [codeql, quality]
+    uses: ./.github/workflows/desktop.yml
+  required:
+    name: Required checks
+    if: always()
+    needs: [codeql, quality, tests, cli, desktop]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every stage to succeed
+        env:
+          RESULTS: ${{ join(needs.*.result, ',') }}
+        run: |
+          for result in ${RESULTS//,/ }; do
+            test "$result" = success || exit 1
           done
-          shellcheck install.sh scripts/install-cli.sh scripts/check-before-push.sh tools/git/git-save.sh tools/git/git-push.sh

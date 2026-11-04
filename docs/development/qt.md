@@ -19,7 +19,8 @@ scripts/qt-desktop.sh
 ```
 
 The setup helper downloads Qt 6.8.3 and aqtinstall 3.3.0 into ignored `local/`;
-it installs no system packages and currently supports Linux x86_64 only.
+it installs no system packages. The shared Python helper also supports native
+Windows x64 and macOS arm64/x64 SDK setup (see below).
 `QT_SDK_DIR` can select an existing Qt 6.8.3 SDK. CXX-Qt is pinned to 0.7.3,
 with matching CXX runtime/generator versions and committed Cargo lockfiles.
 
@@ -62,8 +63,9 @@ cargo run --locked --manifest-path apps/qt/Cargo.toml
 ```
 
 These source-build instructions do not establish native runtime verification.
-Windows/macOS installers, signing, CLI bundling and the 50 MB distribution gate
-remain pending. The development binary requires Qt runtime dependencies.
+Native package builders now cover Windows/macOS, CLI bundling and the size
+gate; their hosted results remain pending. External signing/notarization remains
+separate. The development binary requires Qt runtime dependencies.
 
 ## Validation
 
@@ -278,3 +280,23 @@ zero; empty captures show an empty-state label. Qt only renders the supplied bar
 Export retains the parser's full `hit_count_values`, `dwell_count_values` and
 encoded `symmetry` fields. No probability normalization, symmetry reconstruction
 or amplitude calibration is inferred. This UI adds no derived JSON section.
+
+## Cross-platform CI and native release builds
+
+`python3 scripts/qt-sdk.py setup` installs Qt 6.8.3 through the pinned aqt helper
+in ignored `local/` storage on Linux x64, Windows x64, and macOS arm64/x64.
+Use `python` on Windows from an x64 MSVC developer shell. The macOS SDK is
+universal; Cargo builds for the native runner architecture. Explicit
+`QT_SDK_DIR` overrides must already contain a complete SDK.
+
+`python3 scripts/qt-sdk.py check` runs Qt formatting, Rust tests/Clippy/build and
+offscreen QML tests on the native host. The existing Linux shell entry points
+delegate setup/check behavior to this shared helper. Running the viewer on
+Windows/macOS is possible from a configured developer shell with Cargo and Qt;
+native hosted results remain pending until CI runs.
+
+See [CI](ci.md) for all required runners and
+[packaging](../release/packaging.md) for DEB, NSIS and DMG artifacts. The explicit
+`--smoke-test INPUT_FILE_URL NEW_OUTPUT_FILE_URL` mode opens, renders and exports
+one capture, logs `UI_SMOKE_OK` and exits. It uses the same Rust adapter and does
+not overwrite existing outputs. Normal launches do not activate this mode.

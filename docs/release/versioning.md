@@ -22,8 +22,8 @@ cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
 tools/bump-version.sh --bump patch
 ```
 
-Replace `patch` with `minor` or `major` as appropriate. The helper only writes
-VERSION. It does not stage, commit, tag, push, or publish. It rejects malformed
+Replace `patch` with `minor` or `major` as appropriate. The helper updates VERSION, local Cargo package manifests and lockfiles,
+the frontend package/lockfile and Tauri configuration together. It does not stage, commit, tag, push, or publish. It rejects malformed
 versions, including four components and leading zeros. Paths resolve from the
 helper, so invoking it from another directory still targets this repository.
 
@@ -39,8 +39,11 @@ only the intended tag with an explicit tag ref. Never overwrite tags.
 
 Tag creation and publication are explicit release actions; the bump helper does
 not perform them. The project skill `pnm-viewer-release` guides this workflow.
-There is no application packaging or hosted-release automation yet. When the Cargo/Tauri/UI build is added, consume VERSION or add tested
-synchronization across package manifests before release.
+The [tag workflow](../development/ci.md#tags) checks the exact tag/version and
+master ancestry, repeats CI, builds native packages and tests their installed
+behavior before creating a draft. It never publishes publicly automatically.
+Use `python3 tools/release/versions.py` to detect version drift; do not edit
+individual application versions independently.
 
 ## Tool validation
 

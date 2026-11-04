@@ -19,6 +19,7 @@ command -v shellcheck >/dev/null
 "${CARGO_COMMAND[@]}" fmt --all -- --check
 "${CARGO_COMMAND[@]}" clippy --workspace --all-targets --locked -- -D warnings
 "${CARGO_COMMAND[@]}" test --workspace --locked
+python3 tools/release/versions.py
 python3 -m unittest discover -s tools/release -p 'test_*.py'
 python3 -m unittest discover -s tools/git/tests -p 'test_*.py'
 if [[ "$(uname -s)" == Linux ]]; then
