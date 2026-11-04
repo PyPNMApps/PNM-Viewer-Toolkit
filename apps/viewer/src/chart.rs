@@ -141,6 +141,9 @@ impl Capture {
             }
             DecodedPnm::FecSummary(capture) => crate::fec_summary::metadata(&capture, view),
             DecodedPnm::Histogram(capture) => Ok(crate::histogram::metadata(&capture)),
+            DecodedPnm::UpstreamPreEqualization(capture) => {
+                crate::upstream_pre_equalization::metadata(&capture, view)
+            }
             DecodedPnm::ChannelEstimate(capture) => {
                 crate::channel_estimation::metadata(&capture, view)
             }
@@ -219,6 +222,23 @@ impl Capture {
         let decoded = self.decoded()?;
         validate_view(&decoded, &view)?;
         match decoded {
+            DecodedPnm::UpstreamPreEqualization(capture) => {
+                let analysis = pnm::pnm::analysis::upstream_pre_equalization::PreEqualizationAnalysis::from_capture(&capture)?;
+                let values = if view == MeasurementView::GroupDelay {
+                    analysis
+                        .group_delay
+                        .into_iter()
+                        .map(|point| {
+                            point.delay_s.map(|delay| {
+                                delay * pnm::pnm::data_type::units::MICROSECONDS_PER_SECOND
+                            })
+                        })
+                        .collect()
+                } else {
+                    analysis.magnitude_db
+                };
+                Ok(response_points(analysis.frequencies_hz, values))
+            }
             DecodedPnm::ChannelEstimate(capture) => {
                 let analysis =
                     crate::channel_estimation::ChannelEstimationAnalysis::from_capture(&capture)?;
@@ -227,17 +247,7 @@ impl Capture {
                 } else {
                     analysis.magnitude_db
                 };
-                Ok(analysis
-                    .frequencies_hz
-                    .into_iter()
-                    .zip(values)
-                    .enumerate()
-                    .map(|(sample_index, (frequency_hz, value))| ChartPoint {
-                        sample_index,
-                        frequency_hz,
-                        value,
-                    })
-                    .collect())
+                Ok(response_points(analysis.frequencies_hz, values))
             }
             DecodedPnm::RxMer(capture) => Ok(capture
                 .frequencies_hz()?
@@ -362,26 +372,33 @@ impl Capture {
         if view == MeasurementView::IqScatter {
             let decoded = self.decoded()?;
             validate_view(&decoded, &view)?;
-            if let DecodedPnm::ChannelEstimate(capture) = decoded {
-                let samples: Vec<_> = capture.iq().collect();
-                if start != 0 || count != samples.len() {
+            let samples: Vec<_> = match decoded {
+                DecodedPnm::ChannelEstimate(capture) => capture.iq().collect(),
+                DecodedPnm::UpstreamPreEqualization(capture) => capture.iq().collect(),
+                _ => {
                     return Err(Diagnostic::new(
-                        "InvalidRange",
-                        "I/Q overview requires the full capture.",
-                    ));
+                        "UnsupportedView",
+                        "This measurement has no I/Q density view.",
+                    ))
                 }
-                return Ok(ChartViewport {
-                    constellation: None,
-                    modulation_profiles: None,
-                    fec_summary: None,
-                    histogram: None,
-                    start,
-                    count,
-                    total: samples.len(),
-                    points: vec![],
-                    iq_density: Some(crate::channel_estimation::IqDensity::from_samples(&samples)),
-                });
+            };
+            if start != 0 || count != samples.len() {
+                return Err(Diagnostic::new(
+                    "InvalidRange",
+                    "I/Q overview requires the full capture.",
+                ));
             }
+            return Ok(ChartViewport {
+                constellation: None,
+                modulation_profiles: None,
+                fec_summary: None,
+                histogram: None,
+                start,
+                count,
+                total: samples.len(),
+                points: vec![],
+                iq_density: Some(crate::channel_estimation::IqDensity::from_samples(&samples)),
+            });
         }
         let samples = self.chart_points(view)?;
         let total = samples.len();
@@ -453,7 +470,7 @@ fn validate_view(decoded: &DecodedPnm<'_>, view: &MeasurementView) -> Result<(),
             view,
             MeasurementView::Default | MeasurementView::FecProfile(_)
         ),
-        DecodedPnm::ChannelEstimate(_) => matches!(
+        DecodedPnm::ChannelEstimate(_) | DecodedPnm::UpstreamPreEqualization(_) => matches!(
             view,
             MeasurementView::Default | MeasurementView::GroupDelay | MeasurementView::IqScatter
         ),
@@ -470,4 +487,17 @@ fn validate_view(decoded: &DecodedPnm<'_>, view: &MeasurementView) -> Result<(),
         ));
     }
     Ok(())
+}
+
+fn response_points(frequencies: Vec<FrequencyHz>, values: Vec<Option<f64>>) -> Vec<ChartPoint> {
+    frequencies
+        .into_iter()
+        .zip(values)
+        .enumerate()
+        .map(|(sample_index, (frequency_hz, value))| ChartPoint {
+            sample_index,
+            frequency_hz,
+            value,
+        })
+        .collect()
 }

@@ -37,6 +37,7 @@ The current viewer supports:
 | RxMER | MER by frequency |
 | Spectrum Analyzer | Amplitude by frequency and calculated RBW |
 | DS Channel Estimation | Magnitude, group delay and I/Q density |
+| US Pre-EQ (current) | Coefficient magnitude, group delay and I/Q density |
 | Histogram | Hit counts by bin index |
 | FEC Summary | Per-profile interval codewords over UTC time |
 | Constellation Display | Soft/hard decisions and symbol boundaries |

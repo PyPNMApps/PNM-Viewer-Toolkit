@@ -233,3 +233,21 @@ fn constellation_cli_exports_shared_reference_without_rescaling_samples() {
     assert_eq!(output["iq"][0], serde_json::json!([0.376953125, -1.15625]));
     assert_eq!(output["iq"].as_array().unwrap().len(), 8192);
 }
+
+#[test]
+fn upstream_current_cli_includes_shared_response_analysis() {
+    let workspace = Workspace::new();
+    fs::write(
+        workspace.0.join("current.bin"),
+        pnm_fixtures::UPSTREAM_PRE_EQ,
+    )
+    .unwrap();
+    let output = workspace.run(&["current.bin", "--stdout"]);
+    assert!(output.status.success());
+    let json: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let analysis = &json["pre_equalization_analysis"];
+    assert_eq!(analysis["frequencies_hz"][0], 39_900_000);
+    assert_eq!(analysis["magnitude_db"].as_array().unwrap().len(), 1776);
+    assert_eq!(analysis["group_delay"].as_array().unwrap().len(), 1776);
+    assert_eq!(json["iq"].as_array().unwrap().len(), 1776);
+}

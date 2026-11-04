@@ -70,3 +70,19 @@ fn current_and_last_update_select_distinct_scales() {
         assert_eq!(json_capture(&bytes)["iq"], expected);
     }
 }
+
+#[test]
+fn current_json_analysis_preserves_iq_and_last_update_contract() {
+    let output = json_capture(UPSTREAM);
+    let analysis = &output["pre_equalization_analysis"];
+    assert_eq!(analysis["frequencies_hz"].as_array().unwrap().len(), 1776);
+    assert_eq!(analysis["frequencies_hz"][0], 39_900_000);
+    assert_eq!(analysis["frequencies_hz"][1775], 84_275_000);
+    assert_eq!(analysis["group_delay"][0]["frequency_hz"], 39_900_000);
+    // Independently computed from the first preserved fixture pair.
+    let magnitude = analysis["magnitude_db"][0].as_f64().unwrap();
+    assert!((magnitude - (-1.0545710123224268)).abs() < 1e-10);
+    assert!(json_capture(LAST_UPDATE)
+        .get("pre_equalization_analysis")
+        .is_none());
+}

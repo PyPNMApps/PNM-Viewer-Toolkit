@@ -5,3 +5,4 @@
 //! Derived PNM analysis, separate from binary decoding.
 pub mod constellation;
 pub mod modulation_profile;
+pub mod upstream_pre_equalization;

@@ -54,7 +54,7 @@ JSON follows PyPNM vocabulary where practical, with these deliberate differences
 
 - Channel-estimate `(0x8000, 0x8000)` pairs become `null`; raw bytes remain intact.
 - Complex fixed-point values retain exact binary fractions rather than rounding
-  to six decimals. No derived bandwidth, statistics or analysis is added.
+  to six decimals. Derived sections are identified separately from raw fields.
 - Complex capture byte lengths use `data_length`, including constellation and
   upstream coefficients. Constellation samples and coefficient pairs use `iq`, ordered
   `[I, Q]` (in-phase/real then quadrature/imaginary). RxMER retains `values` in dB.
@@ -259,3 +259,40 @@ replace these descriptors in CLI/desktop capture JSON. Unknown modulation keeps
 `reference: null`. Raw captured `iq` remains unchanged. See the
 [calculation design](../development/qam-resources.md) and the regenerated
 [complete example](../cli/examples/constellation.json).
+
+## Current upstream pre-equalization analysis
+
+PNN6 JSON adds `pre_equalization_analysis` through the shared Rust parser
+serializer and `pnm::analysis::upstream_pre_equalization` helper. CLI and desktop
+exports are identical. PNN7 last-update JSON is unchanged in this implementation.
+The existing borrowed parser and original fields/IQ remain available; requesting
+analysis or serializing PNN6 rejects zero spacing and frequency overflow.
+
+```text
+pre_equalization_analysis: {
+  frequencies_hz: [u32, ...],
+  magnitude_db: [number | null, ...],
+  group_delay: [{frequency_hz: u32, delay_s: number | null}, ...]
+}
+```
+
+All arrays align with raw `iq` (ordered `[I, Q]`) and retain full resolution.
+Frequency is `zero_frequency + (first_active_subcarrier_index + ordinal) × spacing_hz`,
+using checked u32 arithmetic. Magnitude is `20 log10(hypot(I, Q))`; no per-file
+renormalization is applied. Group delay is `−d(unwrap(arg(I+jQ)))/df / (2π)` in
+seconds. Interior differences are central; runs of at least three use
+second-order one-sided edges, and two-point runs use their single slope. Isolated
+or zero coefficients have null delay. Zero coefficients also have null magnitude.
+Phase unwrapping restarts after undefined coefficients. No smoothing, absolute
+delay recovery, inferred plant response or echo distance is implied.
+
+Coefficient format and metadata evidence: CM-OSSI 3.1 I27, D.2.13,
+Table 78 and D.2.13.14.1 (pp. 191–192); CM-OSSI 4.0 I13, D.2.13,
+Table 111 and D.2.13.14.1. Current values use s2.13, while last-update values use
+s1.14. The frequency grid follows the pinned PyPNM parser convention. Magnitude,
+group-delay calculation and JSON structure are application analysis choices,
+not fields stored in the OSSI file. Evidence was checked against versioned text
+extracts, without rendered-PDF verification.
+
+[Full output](../cli/examples/upstream-pre-eq.json) ·
+[Viewer controls](../ui/measurements.md#upstream-pre-eq-current)

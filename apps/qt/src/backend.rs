@@ -337,7 +337,7 @@ impl bridge::ViewerBackend {
         }
     }
 
-    /// Changes a channel-estimation tab only after both payloads validate.
+    /// Changes a channel-response tab only after both payloads validate.
     /// # Arguments
     /// * `index` - Zero for the default chart, one for delay, two for I/Q.
     /// # Returns

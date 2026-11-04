@@ -14,24 +14,20 @@ use super::{
     },
 };
 use crate::common::reader::Reader;
+use crate::pnm::analysis::upstream_pre_equalization::PreEqualizationAnalysis;
 use crate::pnm::lib::fixed_point_decoder::QFormat;
 use crate::{diagnostic::ParseError, pnm::data_type::*};
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 /// Decoded measurement retaining its common header and original payload.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CmUsOfdmaPreEq<'input> {
-    #[serde(rename = "pnm_header", serialize_with = "serialize_header")]
     header: PnmHeader<'input>,
     pub channel_id: ChannelId,
-    #[serde(serialize_with = "serialize_mac")]
     pub mac_address: MacAddress,
-    #[serde(serialize_with = "serialize_mac")]
     pub cmts_mac_address: MacAddress,
-    #[serde(rename = "subcarrier_zero_frequency")]
     pub subcarrier_zero_frequency_hz: FrequencyHz,
     pub first_active_subcarrier_index: SubcarrierIdx,
-    #[serde(rename = "subcarrier_spacing", serialize_with = "serialize_spacing")]
     pub subcarrier_spacing_khz: SubcarrierSpacingKhz,
     pub data_length: DataLengthBytes,
     iq: IqSamples<'input>,
@@ -124,8 +120,62 @@ impl<'input> CmUsOfdmaPreEq<'input> {
     /// Lazily decodes fixed-point I/Q pairs.
     ///
     /// # Returns
-    /// [I, Q] pairs (in-phase/real, quadrature/imaginary); channel-estimate exclusion pairs become None.
+    /// [I, Q] pairs (in-phase/real, quadrature/imaginary). All encoded pairs are valid;
+    /// downstream channel-estimate exclusion markers do not apply here.
     pub fn iq(&self) -> impl Iterator<Item = Option<IqPair>> + '_ {
         self.iq.iq()
+    }
+}
+
+impl Serialize for CmUsOfdmaPreEq<'_> {
+    /// Exports original fields and current coefficient-response analysis for CLI and UI.
+    /// # Arguments
+    /// * `serializer` - Destination shared by all callers.
+    /// # Returns
+    /// Unchanged I/Q samples plus derived current analysis; last-update JSON is unchanged.
+    /// # Errors
+    /// Reports invalid frequency grids, serialization and destination failures.
+    fn serialize<Output: Serializer>(
+        &self,
+        serializer: Output,
+    ) -> Result<Output::Ok, Output::Error> {
+        #[derive(Serialize)]
+        struct CaptureJson<'capture, 'input> {
+            #[serde(serialize_with = "serialize_header")]
+            pnm_header: &'capture PnmHeader<'input>,
+            channel_id: ChannelId,
+            #[serde(serialize_with = "serialize_mac")]
+            mac_address: &'capture MacAddress,
+            #[serde(serialize_with = "serialize_mac")]
+            cmts_mac_address: &'capture MacAddress,
+            subcarrier_zero_frequency: FrequencyHz,
+            first_active_subcarrier_index: SubcarrierIdx,
+            #[serde(serialize_with = "serialize_spacing")]
+            subcarrier_spacing: SubcarrierSpacingKhz,
+            data_length: DataLengthBytes,
+            iq: &'capture IqSamples<'input>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            pre_equalization_analysis: Option<PreEqualizationAnalysis>,
+        }
+        let analysis = if self.header.descriptor().kind
+            == super::pnm_file_type::PnmFileKind::UpstreamPreEqualization
+        {
+            Some(PreEqualizationAnalysis::from_capture(self).map_err(serde::ser::Error::custom)?)
+        } else {
+            None
+        };
+        CaptureJson {
+            pnm_header: &self.header,
+            channel_id: self.channel_id,
+            mac_address: &self.mac_address,
+            cmts_mac_address: &self.cmts_mac_address,
+            subcarrier_zero_frequency: self.subcarrier_zero_frequency_hz,
+            first_active_subcarrier_index: self.first_active_subcarrier_index,
+            subcarrier_spacing: self.subcarrier_spacing_khz,
+            data_length: self.data_length,
+            iq: &self.iq,
+            pre_equalization_analysis: analysis,
+        }
+        .serialize(serializer)
     }
 }

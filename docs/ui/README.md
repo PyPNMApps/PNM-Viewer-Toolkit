@@ -70,7 +70,9 @@ keeps the current capture. Unsupported measurements can still be decoded with
   decision boundaries, with independent toggles and drag/wheel zoom. See the
   [measurement guide](measurements.md#constellation-display).
 - The I/Q density view always shows the full capture and does not use range zoom.
-- For channel estimation, choose **Magnitude**, **Group delay**, or **I/Q scatter**.
+- For channel estimation and current upstream pre-EQ, choose **Magnitude**,
+  **Group delay**, or **I/Q scatter**. The upstream plot describes correction
+  coefficients, not a measured plant response. See [US pre-EQ](measurements.md#upstream-pre-eq-current).
   Switching tabs resets the range.
 
 Large datasets use bounded overviews calculated in Rust. Frequency plots preserve

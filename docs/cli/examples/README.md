@@ -2,7 +2,7 @@
 
 These are complete outputs from `pnm-decode --stdout`, including every sample
 and profile. Arrays have not been shortened or rounded for documentation.
-Together the JSON files occupy about 2 MB. The
+Together the JSON files occupy a few MB. The
 [CLI user guide](../usage.md#json-examples-by-file-type) lists all supported types.
 
 ## Preserved capture sources

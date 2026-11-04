@@ -10,11 +10,13 @@ pub mod fec_summary;
 pub mod histogram;
 pub mod modulation_profile;
 pub mod spectrum_analysis;
+pub mod upstream_pre_equalization;
 use pnm::pnm::data_type::{ChannelId, FrequencyHz, RxMerDb, SubcarrierSpacingKhz};
 use pnm::pnm::parser::{
     cm_ds_ofdm_rx_mer::{CmDsOfdmRxMer, ParseLimits},
     pnm_file::{DecodedPnm, PnmFile},
 };
+use pnm::pnm::parser::{pnm_file_type::PnmFileKind, pnm_header::HasPnmHeader};
 use serde::Serialize;
 use std::{
     fs::File,
@@ -157,8 +159,10 @@ impl Capture {
     fn decoded(&self) -> Result<DecodedPnm<'_>, Diagnostic> {
         let decoded = PnmFile::from_bytes(&self.bytes).decode(ParseLimits::default())?;
         match decoded {
+            DecodedPnm::UpstreamPreEqualization(ref capture) if capture.pnm_header().descriptor().kind == PnmFileKind::UpstreamPreEqualization => Ok(decoded),
+            DecodedPnm::UpstreamPreEqualization(_) => Err(Diagnostic::new("UnsupportedViewer", "Last-update upstream pre-equalization is not yet supported in the viewer. Use pnm-decode for this file.")),
             DecodedPnm::ConstellationDisplay(_) | DecodedPnm::RxMer(_) | DecodedPnm::SpectrumAnalysis(_) | DecodedPnm::ChannelEstimate(_) | DecodedPnm::Histogram(_) | DecodedPnm::FecSummary(_) | DecodedPnm::ModulationProfile(_) => Ok(decoded),
-            _ => Err(Diagnostic::new("UnsupportedViewer", "This viewer supports RxMER, Spectrum Analyzer, DS Channel Estimation, Histogram, FEC Summary, Modulation Profile and Constellation Display captures. Other formats remain available in pnm-decode.")),
+            _ => Err(Diagnostic::new("UnsupportedViewer", "This viewer supports RxMER, Spectrum Analyzer, DS Channel Estimation, Histogram, FEC Summary, Modulation Profile, Constellation Display and current Upstream Pre-EQ captures. Other formats remain available in pnm-decode.")),
         }
     }
     fn parsed(&self) -> Result<CmDsOfdmRxMer<'_>, Diagnostic> {
@@ -379,9 +383,11 @@ mod tests {
     #[test]
     fn reject_invalid_and_other_measurements() {
         assert!(Capture::from_bytes(vec![0; 4], "bad".into()).is_err());
-        assert!(
-            Capture::from_bytes(pnm_fixtures::UPSTREAM_PRE_EQ.to_vec(), "upstream".into()).is_err()
-        );
+        assert!(Capture::from_bytes(
+            pnm_fixtures::UPSTREAM_PRE_EQ_LAST.to_vec(),
+            "last-update".into()
+        )
+        .is_err());
         assert!(Capture::from_bytes(vec![0; MAX_INPUT_BYTES + 1], "large".into()).is_err());
     }
 }
