@@ -1,37 +1,46 @@
 # Installation
 
-Choose the standalone decoder or, once available, the full desktop toolkit.
+PNM Viewer Toolkit is **under development**. Open the
+[GitHub Releases page](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases)
+and choose a published release with installer assets. Each release page has
+version-specific downloads, installation/removal commands and checksums.
+Tag CI prepares drafts for review; drafts are not public downloads. If no
+published installer is available, use the [source build](source.md) for the CLI
+or the [Qt development setup](../development/qt.md) for the desktop.
 
-| Component | Current availability |
-| --- | --- |
-| CLI from source | Implemented; built and tested on Ubuntu 22.04 x86_64 |
-| Prebuilt CLI downloads | Planned; no published downloads claimed |
-| Desktop UI/full toolkit | Planned; not implemented |
+## Choose a component
 
-## Prebuilt binaries (planned)
+| Platform | Desktop viewer | CLI only |
+| --- | --- | --- |
+| Ubuntu 22.04 / 24.04 / 26.04 x64 | Viewer DEB plus same-version CLI DEB; install both with APT | CLI DEB or Linux `.tar.gz` |
+| Windows x64 | Per-user EXE installer with private Qt, Microsoft runtime DLLs and bundled CLI | ZIP containing `pnm-decode.exe` |
+| macOS Apple Silicon | arm64 DMG; drag the app into Applications | Darwin arm64 `.tar.gz` |
+| macOS Intel | x64 DMG; drag the app into Applications | Darwin x64 `.tar.gz` |
 
-Most users should eventually download a binary without installing Rust:
+Desktop packages provide the same-version decoder and manual. The viewer uses
+shared Rust code directly. Rust, Python and a separate Qt SDK are not needed to
+run packaged binaries. Ubuntu uses declared system display libraries; APT may
+need network access. Source builds have separate development prerequisites.
+GitHub's automatically generated **Source code** archives are not installers.
 
-| Platform | Planned CLI artifact |
-| --- | --- |
-| Windows x64 | ZIP with `pnm-decode.exe` |
-| macOS Apple Silicon | ARM64 archive with `pnm-decode` |
-| macOS Intel | x64 archive with `pnm-decode` |
-| Linux x64 | Archive with `pnm-decode`; optional distribution packages later |
+Windows installers are unsigned and do not modify PATH. macOS applications use
+ad-hoc signing and are not notarized; their deployment target is macOS 13 or
+newer, while CI runs on macOS 15. Use the release page's download/checksum and
+OS approval instructions. Keep captures outside installation directories.
 
-Artifacts will include documentation, licenses and checksums. Native platform
-build-and-run verification is required before declaring support. Only the Linux
-executable has been built and run so far; download links will be added when
-artifacts are published.
+## Update and remove
 
-## CLI only versus full toolkit
+Quit the viewer before updating. On Ubuntu, install both new-version DEBs using
+APT. On Windows, run the new EXE with the same installation directory. On macOS,
+replace the application using the matching architecture's new DMG.
 
-CLI-only installs the decoder and its documentation without a UI or WebView.
-Future UI installers must include the same-version CLI. Both use the shared Rust
-core directly. Removing the UI must preserve a separately installed CLI through
-explicit package/component ownership rules; those installers are not built yet.
+Remove the Ubuntu viewer with `sudo apt remove pnm-viewer-toolkit`; the separate
+CLI remains installed until you remove `pnm-decode`. On Windows, uninstall through
+Installed apps or the installation directory's `uninstall.exe`. On macOS, move
+the application to Trash. Independently extracted CLI archives are separate from
+the Windows/macOS desktop installations and can be removed independently.
 
-For today's CLI, see [source build](source.md), then [usage](../cli/usage.md).
-UI contributors can read [development setup](development.md) and the
-[Qt developer guide](../development/qt.md). Packaging requirements live in
-[release documentation](../release/packaging.md).
+See the [desktop guide](../ui/README.md), [CLI guide](../cli/usage.md),
+[measurement gallery](../ui/measurements.md) and
+[packaging/validation details](../release/packaging.md). Build contributors should
+start with the [development environment](development.md).

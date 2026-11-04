@@ -122,3 +122,17 @@ The [tag workflow](ci.md#tags) validates version/master ancestry, repeats all
 required OS checks, builds native packages and tests installed behavior. Only a
 complete passing artifact set produces a **draft** release. Review artifacts and
 checksums before separate public publication; the project remains in development.
+
+
+## Review the draft page
+
+Maintain [the installation-focused release template](../release/release-notes.md)
+with package/runtime changes. It supplies package selection, per-OS install,
+update/removal steps, CLI-only options, first use and checksum instructions.
+
+The final workflow job renders version-specific download links from the verified
+collected release index, with source-guide links pinned to the tag. Review the
+rendered draft text and attached assets together before manually publishing.
+See [release-page generation](../release/packaging.md#release-page) for a local
+preview command. Retrying a draft refreshes its instructions; the workflow
+refuses to edit a public release.

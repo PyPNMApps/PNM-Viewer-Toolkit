@@ -26,6 +26,8 @@ its graph, and export decoded JSON. The native Qt interface uses a Rust backend.
 
 ## Start here
 
+[Downloads](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases) ·
+[Installation](docs/install/README.md) ·
 [Launch the viewer](docs/ui/README.md#launch) ·
 [User guide](docs/ui/README.md) ·
 [Screenshots and measurements](docs/ui/measurements.md)

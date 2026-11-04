@@ -1,66 +1,136 @@
-PNM Viewer Toolkit is under development.
+# PNM Viewer Toolkit {{TAG}}
 
-This draft contains native Qt viewer packages and standalone `pnm-decode`
-archives. The viewer supports RxMER, Spectrum Analyzer, downstream channel
-estimation, histogram, FEC summary, modulation profile and constellation files,
-with JSON export and System/Dark/Light themes.
+**Under development.** Download the package for your system under **Assets**.
+The native Qt viewer includes the same-version `pnm-decode` CLI and manual;
+Ubuntu installs the CLI as a separate package dependency. Rust, Python and a
+separate Qt SDK are not needed to run the packaged application. APT installs
+required Ubuntu system libraries and may need network access.
 
-Modulation-profile JSON now uses textual modulation names and adds data
-`bit_loading`, carrier roles and retained numeric assignment codes. JSON consumers
-should read the former numeric value from `modulation_order_code`; skip schemes
-use the same fields with `main_` and `skip_` prefixes.
+## Choose your download
 
-Modulation controls now use equal-sized profile/carrier toggles and categorical
-carrier lanes with hover details. Core and CLI JSON include ideal per-profile
-data bandwidth and gross useful-symbol rate with explicit overhead exclusions.
+{{ASSET_TABLE}}
 
-Profiles now expose bandwidth_bps directly, shared by CLI/UI exports. A compact
-Profile BW chip opens a per-profile bandwidth grid using Rust-supplied values.
+Sizes above are compressed download bytes expressed in decimal MB, not installed
+sizes. `SHA256SUMS`, `release-index.json` and platform inventories accompany the
+packages. GitHub's **Source code** ZIP/tar archives contain source, not installers.
+CLI archives install no desktop UI.
 
-Packages are built only after CodeQL, code checks and the complete native CI
-matrix pass. Installed-package checks cover Ubuntu 22.04/24.04/26.04, Windows
-x64, and macOS Apple Silicon/Intel. Inspect the workflow logs for this tag's
-results. Checksums and package-size/dependency metadata accompany the assets.
+## Ubuntu 22.04 / 24.04 / 26.04 — x64
 
-Windows packages are unsigned; macOS apps use ad-hoc signing and are not
-notarized. Linux uses declared distribution prerequisites. These are development
-builds, not a release-readiness claim. Review the packaging and user guides in
-the tagged source before installation.
+Download both same-version DEBs from the Ubuntu row. In the download directory:
 
-PLC and continuous-pilot assignments now export physical constellation metadata:
-16-QAM PLC data (4 bits) and BPSK pilots (1 bit), with a separate BPSK PLC
-preamble. CLI and Qt share Rust-derived ideal Shannon references; both roles
-plot on the numeric axis without contributing to data-only profile bandwidth.
-See the [JSON contract](../reference/formats.md#modulation-profile-json-assignments).
+```bash
+sudo apt install ./pnm-decode_{{VERSION}}_amd64.deb ./pnm-viewer-toolkit_{{VERSION}}_amd64.deb
+```
 
-Constellation Display is available in the Qt viewer with soft/hard decision overlays,
-layer toggles and coordinate zoom. Preserved PyPNM QAM resources compile into
-static Rust lookup tables; runtime viewing needs no table files or database.
-Core/CLI JSON now includes shared reference analysis while preserving measured I/Q.
+Launch **PNM Viewer Toolkit** from the application menu, or run `pnm-viewer`
+inside your graphical desktop session. The CLI is available as `pnm-decode`;
+read its manual with `man pnm-decode`.
 
-The constellation viewer now labels the layers Soft decisions and Hard decisions,
-adds independently controlled nearest-symbol boundaries, and removes numeric
-axis scales. Rust compiles square-QAM midpoint grids and cross-QAM diagonal
-boundaries into the same reference data shared by CLI and desktop JSON.
+**CLI only:** install just `pnm-decode_{{VERSION}}_amd64.deb` using APT.
+The Linux CLI archive is also available for manual extraction.
 
-Release preparation keeps root `VERSION` as the shared three-component version
-source. Bump previews validate metadata and list affected files. Developer guides
-now separate Qt setup from measurement internals and include first-tag and
-screenshot checklists. The dark/light gallery includes FEC Summary and the
-constellation view without its sample-count footer.
+**Update:** quit the viewer, then install both new-version DEBs with APT.
 
-Qt Quick is now the sole desktop UI. The Tauri/React prototype, Node tooling,
-WebKit prerequisites and associated CI checks have been removed. CLI/parser
-behavior and the Qt packaging matrix are unchanged. Version helpers synchronize
-only the Rust workspace and standalone Qt manifests/lockfiles.
+**Uninstall the viewer:**
 
-The Git push helper now supports OSCAR-UI-style --tag-patch, --tag-minor and
---tag-major releases: synchronize VERSION/Cargo, validate the bumped candidate,
-commit, annotate and atomically push master plus the selected tag. Existing-tag
-mode supports first-tag/retry workflows without another bump. Plain push remains
-branch-only and tag CI still creates draft releases rather than publishing.
+```bash
+sudo apt remove pnm-viewer-toolkit
+```
 
-Windows Qt checks and package builds now select the x64 MSVC linker explicitly,
-preventing Git Bash link.exe from shadowing Microsoft tools. Regression tests
-cover PATH precedence, uppercase environment keys and caller overrides; actual
-Windows compilation still requires a passing hosted run of the corrected commit.
+This leaves the separately owned CLI installed. To remove it too, run
+`sudo apt remove pnm-decode`.
+
+[Installation guide]({{SOURCE_URL}}/docs/install/README.md)
+
+## Windows — x64
+
+1. Download and run the **Windows x64 EXE installer** from the table.
+2. Select an installation folder and launch **PNM Viewer Toolkit** from Start.
+
+The default per-user location is `%LOCALAPPDATA%\Programs\PNM Viewer Toolkit`.
+Qt and Microsoft runtime DLLs are app-local. The bundled CLI is in that folder;
+the installer does not add it to PATH. From PowerShell at the default location:
+
+```powershell
+& "$env:LOCALAPPDATA\Programs\PNM Viewer Toolkit\pnm-decode.exe" --help
+```
+
+**CLI only:** extract the Windows CLI ZIP and run `pnm-decode.exe` from its
+versioned folder. Add that folder to your user PATH only if desired.
+
+The installer is unsigned. If Windows displays a reputation or publisher prompt,
+verify the project download and checksum before approving it; do not disable
+Windows protections globally.
+
+**Update:** quit the viewer and run the new EXE using the same installation folder.
+
+**Uninstall:** Settings → Apps → Installed apps → PNM Viewer Toolkit → Uninstall,
+or run `uninstall.exe` in its installation directory. A separately extracted CLI
+is independent of the desktop installation.
+
+## macOS — Apple Silicon or Intel
+
+1. Choose **arm64** for an Apple M-series Mac or **x64** for an Intel Mac.
+2. Open the matching DMG and drag **PNM Viewer Toolkit** onto **Applications**.
+3. Eject the disk image and open the app from Applications.
+
+The deployment target is macOS 13 or newer; native CI uses macOS 15 runners.
+The app includes Qt and the CLI. It is ad-hoc signed, without Developer ID
+signing or Apple notarization. If macOS blocks opening it, verify the download
+source and checksum, then use the operating system's application-approval controls.
+
+The bundled CLI can be run from a terminal:
+
+```bash
+"/Applications/PNM Viewer Toolkit.app/Contents/MacOS/pnm-decode" --help
+```
+
+**CLI only:** extract the matching Darwin CLI `.tar.gz`; run `pnm-decode`
+from its versioned folder. The archive includes the manual and license notices.
+
+**Update:** quit the viewer and replace the app in Applications from the new DMG.
+
+**Uninstall:** quit the app and move it from Applications to Trash. Any separately
+extracted CLI remains independent.
+
+## First use
+
+Choose **Open capture**, **Open**, Ctrl+O (Cmd+O on macOS), or drop one local PNM file onto the
+window. The viewer detects its type from its contents. It supports RxMER,
+Spectrum Analyzer, DS Channel Estimation, Histogram, FEC Summary, Modulation
+Profile, Constellation Display, current US pre-EQ and last-update US pre-EQ.
+Inspect the graph and use the export icon to save full-resolution JSON to a new
+file. Choose System, Dark or Light under Settings → System → Appearance.
+Viewing local captures works offline after setup; no modem connection is needed.
+
+[Desktop guide and screenshots]({{SOURCE_URL}}/docs/ui/README.md) ·
+[Measurement gallery]({{SOURCE_URL}}/docs/ui/measurements.md) ·
+[CLI guide]({{SOURCE_URL}}/docs/cli/usage.md) ·
+[Complete JSON examples]({{SOURCE_URL}}/docs/cli/examples/README.md)
+
+## Checksums and validation
+
+Download `SHA256SUMS` with your chosen package and compare its matching entry
+against your local SHA-256 result. Examples from the download directory:
+
+```bash
+# Ubuntu
+sha256sum pnm-viewer-toolkit_{{VERSION}}_amd64.deb
+# macOS Apple Silicon; substitute macos-x64 for an Intel package
+shasum -a 256 PNM-Viewer-Toolkit-{{VERSION}}-macos-arm64.dmg
+```
+
+```powershell
+Get-FileHash .\PNM-Viewer-Toolkit-{{VERSION}}-windows-x64.exe -Algorithm SHA256
+```
+
+These packages are assembled only after CodeQL, code checks, the complete native
+matrix, package integrity/size checks and installed-package lifecycle tests pass
+for this tag. Lifecycle tests cover install, open/render/export and removal on
+all three Ubuntu versions, Windows x64, macOS arm64 and macOS x64. See
+[this tag's workflow runs]({{RUNS_URL}}) for results. These development builds
+are not a release-readiness claim. Public publication remains a manual review.
+
+[Packaging, licenses and prerequisites]({{SOURCE_URL}}/docs/release/packaging.md) ·
+[JSON field contracts]({{SOURCE_URL}}/docs/reference/formats.md)

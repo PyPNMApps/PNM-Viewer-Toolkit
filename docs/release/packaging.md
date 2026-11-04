@@ -79,8 +79,8 @@ promise pristine-host offline installation or claim external prerequisites fit
 inside the artifact budget. Report those prerequisites separately.
 
 Native lifecycle tests validate artifact hashes before installation. They open,
-render and export RxMER, Spectrum Analyzer, DS Channel Estimation Histogram, FEC Summary and Modulation Profile
-through the actual Qt backend, comparing raw fields against the CLI. Development
+render and export every current measurement (including constellation and both
+upstream pre-EQ variants) through the actual Qt backend, comparing raw fields against the CLI. Development
 Qt environment paths are removed. Linux uses Xvfb/XCB. Native test logs are
 retained even on failure. Offscreen QML tests alone do not establish installed
 runtime support.
@@ -92,3 +92,33 @@ PATH` runs without installing; it requires a functioning display.
 
 The first hosted tag run must establish Windows/macOS and newer Ubuntu results.
 No configured matrix should be described as a passing platform before that run.
+
+## Release page
+
+[The release-page template](release-notes.md) follows OSCAR-UI's installation-first
+layout, adapted to this project's actual NSIS/DEB/DMG and CLI packages. Keep its
+platform instructions consistent with `linux.py` and `native.py`; do not copy
+OSCAR-UI's MSI, Java runtime, engine or update-system claims.
+
+After `collect.py` verifies all platform assets, `scripts/release/notes.py` renders
+an installation page from `release-index.json` and root VERSION. It requires a
+matching tag and complete target set, uses actual asset names/download sizes,
+and rejects mixed versions, unsafe/duplicate names and unresolved placeholders.
+The rendered page links source documentation at the exact release tag, so guides
+and screenshots do not drift with master. SHA256SUMS and inventory metadata stay
+attached alongside the installers.
+
+The workflow supplies this generated page when creating a draft and refreshes
+its text when retrying an existing draft. Existing public releases remain
+protected by the draft check. Release publication stays manual. Tests for the
+renderer run in the standard release-tool suite and local pre-push gate.
+
+To preview using a complete, verified collected asset directory:
+
+```bash
+python3 scripts/release/notes.py --assets release-assets --tag "v$(cat VERSION)" --output local/release-page.md
+```
+
+Output must be absent; the renderer never replaces an existing page or contacts
+GitHub. The template contains `{{VERSION}}`, `{{TAG}}`, `{{SOURCE_URL}}`,
+`{{RUNS_URL}}` and `{{ASSET_TABLE}}` tokens, resolved by that command.

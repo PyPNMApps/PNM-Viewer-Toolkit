@@ -8,8 +8,12 @@ PyPNM example captures; appearance can vary with the operating system.
 
 ## Launch
 
-There are no published desktop installers yet. On the supported Linux development
-host, follow [development setup](../install/development.md) and
+For a packaged application, follow the release page or
+[installation guide](../install/README.md), then launch PNM Viewer Toolkit from
+the application menu (Ubuntu), Start (Windows), or Applications (macOS).
+
+To run from source on the supported Linux development host, follow
+[development setup](../install/development.md) and
 [Qt prerequisites](../development/qt.md#linux-development), then run from the
 repository root:
 
@@ -32,7 +36,7 @@ and packaged installation remain unverified.
 </picture>
 
 1. Drop one local capture file anywhere on the window, or choose **Open capture**,
-   **Open** in the toolbar, or Ctrl+O.
+   **Open** in the toolbar, or Ctrl+O (Cmd+O on macOS).
 2. Select a local PNM file in the operating system's file picker. Detection uses
    the contents, not the filename extension.
 3. Inspect the matching graph. See the [measurement gallery](measurements.md)

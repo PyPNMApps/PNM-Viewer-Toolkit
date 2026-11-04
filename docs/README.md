@@ -1,8 +1,8 @@
 # PNM Viewer Toolkit documentation
 
 The Qt viewer, CLI and Rust parsers are available from source. The project is
-under development. Tag automation prepares draft native packages; public
-downloads are not available yet.
+under development. Tag automation prepares draft native packages; see the
+[Releases page](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases) for published downloads.
 
 ## Use the toolkit
 
@@ -35,6 +35,7 @@ downloads are not available yet.
 
 - [Versioning](release/versioning.md)
 - [Packaging and platform validation](release/packaging.md)
+- [Release-page template](release/release-notes.md)
 - [Bootstrap decisions](history/bootstrap-review.md)
 - [Original source investigation](history/source-review.md)
 

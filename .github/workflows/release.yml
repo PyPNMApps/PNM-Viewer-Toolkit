@@ -182,6 +182,13 @@ jobs:
           path: artifacts
       - name: Verify complete asset set
         run: python3 scripts/release/collect.py --source artifacts --output release-assets
+      - name: Render release page with installation instructions
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 scripts/release/notes.py --assets release-assets \
+            --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY" --output release-page.md
       - name: Attach verified assets to a draft only
         env:
           GH_TOKEN: ${{ github.token }}
@@ -191,9 +198,10 @@ jobs:
           set -euo pipefail
           if gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft' > draft-state; then
             test "$(cat draft-state)" = true || { echo 'Refusing to modify a public release'; exit 1; }
+            gh release edit "$RELEASE_TAG" --notes-file release-page.md
           else
             gh release create "$RELEASE_TAG" --verify-tag --draft \
               --title "PNM Viewer Toolkit $RELEASE_TAG — Development build" \
-              --notes-file docs/release/release-notes.md
+              --notes-file release-page.md
           fi
           gh release upload "$RELEASE_TAG" release-assets/* --clobber
