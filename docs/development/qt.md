@@ -314,3 +314,13 @@ Display ordering is stable chronological order; original bytes and JSON ordering
 remain unchanged. Counters are interval counts. Summary type 2 uses one-second
 intervals and type 3 uses one-minute intervals; other values retain their numeric
 label and do not infer missing samples. No error rates are calculated.
+
+## Drag-and-drop opening
+
+`CaptureDropArea.qml` covers the window overlay, including the toolbar, and
+routes one local file URL to the same Rust `open_file` worker as the picker.
+File type/limits/readability validation remain in Rust. The drag target explicitly
+accepts CopyAction, never MoveAction, to preserve the source file. Busy operations,
+dialogs and the settings menu disable drops. Rejected inputs retain the capture.
+QML tests cover routing, copy semantics, URL/cardinality filters and blocked state.
+Native file-manager drag integration still requires verification on each OS.

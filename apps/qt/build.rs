@@ -27,6 +27,7 @@ fn main() {
                 "qml/FecSummaryChart.qml",
                 "qml/PanelToggle.qml",
                 "qml/SmokeTest.qml",
+                "qml/CaptureDropArea.qml",
             ],
             ..Default::default()
         })

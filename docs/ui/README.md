@@ -31,13 +31,20 @@ and packaged installation remain unverified.
   <img alt="Starting screen with left navigation pane open and the Open, Settings and About toolbar" src="../images/user-guide/home-dark.png" width="1000">
 </picture>
 
-1. Choose **Open capture**, **Open** in the toolbar, or Ctrl+O.
+1. Drop one local capture file anywhere on the window, or choose **Open capture**,
+   **Open** in the toolbar, or Ctrl+O.
 2. Select a local PNM file in the operating system's file picker. Detection uses
    the contents, not the filename extension.
 3. Inspect the matching graph. See the [measurement gallery](measurements.md)
    for each supported view and its example file.
 4. Use **⇩ Export JSON** to save the full decoded capture to a new destination.
 5. Use **× Close capture** to return to Home.
+
+Drops are available on Home and while viewing a capture. Drop one file at a
+time; web links and multiple-file drops are ignored. The window highlights an
+accepted drag in either theme. Dropping opens the capture in place and leaves
+the source file unchanged. Drops pause during loading and while a dialog is open.
+Invalid captures keep the current view.
 
 Export includes the whole capture, even while zoomed. Existing destinations and
 input files are never overwritten. Canceling a picker or opening an invalid file

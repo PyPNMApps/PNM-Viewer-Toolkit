@@ -42,6 +42,15 @@ ApplicationWindow {
     property bool navigationVisible: false
     readonly property bool blocked: backend.busy || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible
 
+    CaptureDropArea {
+        parent: Overlay.overlay
+        anchors.fill: parent
+        z: 1
+        theme: appTheme
+        blocked: window.blocked || settingsMenu.visible
+        onFileDropped: captureUrl => backend.open_file(captureUrl)
+    }
+
     FileDialog {
         id: openDialog
         title: "Open PNM capture"
