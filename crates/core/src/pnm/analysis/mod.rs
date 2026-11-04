@@ -3,4 +3,5 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 //! Derived PNM analysis, separate from binary decoding.
+pub mod constellation;
 pub mod modulation_profile;

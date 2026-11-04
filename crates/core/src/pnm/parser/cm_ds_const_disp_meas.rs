@@ -34,6 +34,7 @@ pub struct CmDsConstDispMeas<'input> {
     pub subcarrier_spacing_khz: SubcarrierSpacingKhz,
     pub data_length: DataLengthBytes,
     iq: IqSamples<'input>,
+    pub constellation_analysis: crate::pnm::analysis::constellation::ConstellationAnalysis,
 }
 impl<'input> CmDsConstDispMeas<'input> {
     /// Parses a complete capture, borrowing its original bytes.
@@ -85,6 +86,10 @@ impl<'input> CmDsConstDispMeas<'input> {
             subcarrier_spacing_khz,
             data_length,
             iq,
+            constellation_analysis:
+                crate::pnm::analysis::constellation::ConstellationAnalysis::from_modulation_type(
+                    actual_modulation_order,
+                ),
         })
     }
     /// Serializes the capture directly into bounded pretty JSON.
@@ -119,7 +124,8 @@ impl<'input> CmDsConstDispMeas<'input> {
     /// Lazily decodes fixed-point I/Q pairs.
     ///
     /// # Returns
-    /// [I, Q] pairs (in-phase/real, quadrature/imaginary); channel-estimate exclusion pairs become None.
+    /// [I, Q] s2.13 pairs, already normalized by the CM. All encoded pairs
+    /// remain valid here, including the channel-estimate exclusion bit pattern.
     pub fn iq(&self) -> impl Iterator<Item = Option<IqPair>> + '_ {
         self.iq.iq()
     }

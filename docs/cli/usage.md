@@ -133,6 +133,15 @@ that rate unavailable (`null`). See the
 The CLI and desktop export the same core representation. Desktop profile,
 metric and carrier visibility selections do not remove profiles from JSON.
 
+### Constellation Display output
+
+`const_display.bin` is detected automatically. Its normal JSON output includes
+all measured `iq` pairs unchanged and `constellation_analysis.reference` with
+the normalized ideal QAM points, bit loading and scaling multiplier. Unknown
+modulation retains the samples and exports a null reference. No extra CLI flag
+is needed. See the [complete JSON example](examples/constellation.json) and
+[reference contract](../reference/formats.md#constellation-display-reference-analysis).
+
 ## Limits and errors
 
 Input and serialized JSON are limited to **16 MiB each**, excluding the final

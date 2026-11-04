@@ -46,6 +46,16 @@ mod bridge {
         #[qinvokable]
         fn show_range(self: Pin<&mut ViewerBackend>, start: u32, count: u32);
 
+        /// Queries a square I/Q window; invalid requests preserve the prior view.
+        #[qinvokable]
+        fn zoom_constellation(
+            self: Pin<&mut ViewerBackend>,
+            first_i: f64,
+            last_i: f64,
+            first_q: f64,
+            last_q: f64,
+        );
+
         /// Selects a supported measurement tab and resets its displayed range.
         /// Invalid tabs leave the prior presentation intact.
         #[qinvokable]
@@ -291,6 +301,42 @@ impl bridge::ViewerBackend {
             Err(error) => self.fail(error),
         }
     }
+    /// Selects a constellation coordinate window through the shared Rust viewer.
+    /// # Arguments
+    /// * `first_i`, `last_i` - Requested in-phase bounds, in normalized amplitude.
+    /// * `first_q`, `last_q` - Requested quadrature bounds in the same units.
+    /// # Returns
+    /// Bounded measured/reference points; busy or failed calls retain the prior view.
+    pub fn zoom_constellation(
+        mut self: Pin<&mut Self>,
+        first_i: f64,
+        last_i: f64,
+        first_q: f64,
+        last_q: f64,
+    ) {
+        if *self.busy() {
+            return;
+        }
+        let Some(capture) = self.rust().capture.clone() else {
+            return;
+        };
+        let bounds = viewer::constellation::IqBounds {
+            minimum_i: first_i,
+            maximum_i: last_i,
+            minimum_q: first_q,
+            maximum_q: last_q,
+        };
+        match capture.constellation_range(bounds).and_then(|viewport| {
+            serde_json::to_string(&viewport).map_err(|error| Diagnostic::new("Json", error))
+        }) {
+            Ok(viewport) => {
+                self.as_mut().set_viewport_json(QString::from(&viewport));
+                self.as_mut().set_error_message(QString::default());
+            }
+            Err(error) => self.fail(error),
+        }
+    }
+
     /// Changes a channel-estimation tab only after both payloads validate.
     /// # Arguments
     /// * `index` - Zero for the default chart, one for delay, two for I/Q.

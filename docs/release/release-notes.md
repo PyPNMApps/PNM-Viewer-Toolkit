@@ -31,3 +31,8 @@ PLC and continuous-pilot assignments now export physical constellation metadata:
 preamble. CLI and Qt share Rust-derived ideal Shannon references; both roles
 plot on the numeric axis without contributing to data-only profile bandwidth.
 See the [JSON contract](../reference/formats.md#modulation-profile-json-assignments).
+
+Constellation Display is available in the Qt viewer with measured/ideal overlays,
+layer toggles and coordinate zoom. Preserved PyPNM QAM resources compile into
+static Rust lookup tables; runtime viewing needs no table files or database.
+Core/CLI JSON now includes shared reference analysis while preserving measured I/Q.

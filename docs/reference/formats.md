@@ -185,3 +185,49 @@ assignments cited above; they are not additional fields specified by OSSI.
 The pinned PyPNM modulation parser supplies textual assignment vocabulary;
 no PyPNM net-throughput calculation is assumed. Capture exports retain every
 profile regardless of the UI's selected profiles or carrier filters.
+
+
+## Constellation Display reference analysis
+
+The original `actual_modulation_order` is an OSSI `DsOfdmModulationType` enum,
+not a literal QAM size or a modulation-profile assignment code. For example, 7
+means 256-QAM; 3 means QPSK. Raw s2.13 `iq` pairs remain unchanged.
+
+`constellation_analysis` is emitted by the core parser for CLI and desktop:
+
+```json
+{
+  "normalization": "unit_average_symbol_power",
+  "soft_samples_rescaled": false,
+  "reference": {
+    "order": 256,
+    "bit_loading": 8,
+    "scale_factor": 0.07669649888473704,
+    "iq": [[1.1504474832710556, 1.1504474832710556]]
+  }
+}
+```
+
+This excerpt shows only the first ideal point. Full exports contain every ideal
+point (256 here), plus every original measured pair in the top-level `iq` array.
+`reference` is null for other, zero-valued or unknown modulation codes. The
+viewer still displays their measured points; it does not infer a QAM order.
+
+The copied [resources](../../crates/core/resources/qam-table/README.md) retain
+PyPNM hashes and licensing. Rust validates supported point counts, uniqueness
+and scaling energy during compilation, then embeds normalized static tables.
+References use `1/sqrt(Es)`. Captured samples are already normalized by the CM
+and are never rescaled. No database or runtime resource-file access is needed.
+The preserved 8-QAM resource has inconsistent energy/scaling and is excluded;
+8-QAM is not one of the downstream `DsOfdmModulationType` capture choices.
+
+Evidence, using authorized text extracts:
+
+- CM-SP-CM-OSSIv3.1-I27-250219, D.2.7.7.1.11, PDF 172:
+  s2.13 measured samples with approximately unit constellation average power.
+- CM-SP-CM-OSSIv4.0-I13-260429, D.2.7, PDF 209: s2.13 and unit-power scaling.
+- The independent enums appear in F.3.2, PDF 231 (I27) and PDF 276 (I13).
+- PyPNM `analysis.py` and `auto_gen_qam_lut.py` provide the compatibility
+  pattern: normalize the hard-reference table, preserve measured soft samples.
+
+This does not establish rendered-PDF verification, decode codewords or estimate MER.

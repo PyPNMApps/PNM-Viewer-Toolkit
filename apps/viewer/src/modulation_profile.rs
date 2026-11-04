@@ -497,6 +497,7 @@ pub(crate) fn viewport(
         }
     }
     Ok(ChartViewport {
+        constellation: None,
         modulation_profiles: Some(ModulationViewport {
             series,
             markers,

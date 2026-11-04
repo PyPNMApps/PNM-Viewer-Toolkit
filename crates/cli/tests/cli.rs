@@ -205,3 +205,27 @@ fn modulation_cli_exports_shared_profile_capacity() {
         );
     }
 }
+
+#[test]
+fn constellation_cli_exports_shared_reference_without_rescaling_samples() {
+    let workspace = Workspace::new();
+    fs::write(
+        workspace.0.join("constellation.bin"),
+        pnm_fixtures::CONSTELLATION,
+    )
+    .unwrap();
+    let result = workspace.run(&["constellation.bin", "--stdout"]);
+    assert!(result.status.success());
+    let output: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    let reference = &output["constellation_analysis"]["reference"];
+    assert_eq!(reference["order"], 256);
+    assert_eq!(reference["bit_loading"], 8);
+    assert_eq!(reference["iq"].as_array().unwrap().len(), 256);
+    assert!((reference["scale_factor"].as_f64().unwrap() - 0.07669649888473704).abs() < 1e-14);
+    assert_eq!(
+        output["constellation_analysis"]["soft_samples_rescaled"],
+        false
+    );
+    assert_eq!(output["iq"][0], serde_json::json!([0.376953125, -1.15625]));
+    assert_eq!(output["iq"].as_array().unwrap().len(), 8192);
+}

@@ -47,3 +47,25 @@ fn signed_boundaries_and_iq_order() {
     bytes[26..30].copy_from_slice(&11_u32.to_be_bytes());
     assert_eq!(failure(&bytes), ErrorCode::LengthMismatch);
 }
+
+#[test]
+fn shared_reference_json_preserves_unscaled_received_samples() {
+    let output = json_capture(CONSTELLATION);
+    let analysis = &output["constellation_analysis"];
+    assert_eq!(analysis["normalization"], "unit_average_symbol_power");
+    assert_eq!(analysis["soft_samples_rescaled"], false);
+    assert_eq!(analysis["reference"]["order"], 256);
+    assert_eq!(analysis["reference"]["bit_loading"], 8);
+    assert_eq!(analysis["reference"]["iq"].as_array().unwrap().len(), 256);
+    assert!(
+        (analysis["reference"]["scale_factor"].as_f64().unwrap() - 0.07669649888473704).abs()
+            < 1e-14
+    );
+    assert_eq!(output["iq"][0], json!([0.376953125, -1.15625]));
+    assert_eq!(output["iq"][8191], json!([1.146484375, 0.0859375]));
+    let mut unknown = CONSTELLATION.to_vec();
+    unknown[21..23].copy_from_slice(&u16::MAX.to_be_bytes());
+    let unknown = json_capture(&unknown);
+    assert!(unknown["constellation_analysis"]["reference"].is_null());
+    assert_eq!(unknown["iq"], output["iq"]);
+}

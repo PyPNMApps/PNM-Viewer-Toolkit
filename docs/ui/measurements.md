@@ -179,3 +179,33 @@ Example: `modulation_profile.bin` (four profiles, 7,480 assignments each).
   <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/profile-bandwidth-light.png">
   <img alt="Profile BW chip and popup grid listing the Rust-calculated data-only bandwidth for each profile" src="../images/user-guide/profile-bandwidth-dark.png" width="1000">
 </picture>
+
+
+## Constellation Display
+
+Open or drop `const_display.bin`. Channel/MAC, QAM and sample chips identify
+one captured constellation. The square I/Q chart overlays measured soft
+samples in teal and normalized ideal reference points as contrasting crosses,
+following [PyPNM’s constellation view](https://github.com/PyPNMApps/PyPNM-CMTS-WebUI/blob/25f40bda432f3c72df1e606bb229ffc5ba4eacf8/src/pw/features/operations/ConstellationGridChart.tsx). **Measured** and **Ideal** toggle each
+layer independently. Unknown modulation disables the ideal layer while keeping
+measured samples visible.
+
+Drag a rectangle to zoom into a region; the Rust viewer expands it to equal
+I/Q scales. Mouse-wheel zoom follows the pointer. Double-click restores the
+whole constellation. A bounded display samples at most 512 points per layer;
+counts below the chart distinguish shown, visible and full-capture totals.
+Zooming requests fresh points from Rust and reveals all points once the selected
+region fits the display budget. Display sampling is not a density estimate.
+The full view fits both reference and measured points, including outliers.
+
+Captured s2.13 samples are already normalized. The viewer does not apply the
+reference-table scaling to measured samples. Reference tables are compiled into
+the Rust library, so no database, PyPNM checkout or runtime text files are needed.
+Export always includes every measured and ideal point through the shared core
+JSON contract, regardless of zoom or layer visibility.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/constellation-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/constellation-light.png">
+  <img alt="Constellation Display with measured samples and ideal QAM references" src="../images/user-guide/constellation-dark.png" width="1000">
+</picture>

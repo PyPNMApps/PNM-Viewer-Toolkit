@@ -1,0 +1,128 @@
+/*
+ * Copyright 2026 PNM Viewer contributors
+ * SPDX-License-Identifier: GPL-3.0-only
+ */
+use viewer::{chart::MeasurementView, constellation::IqBounds, Capture, MAX_VIEW_SAMPLES};
+fn capture(code: u16) -> Capture {
+    let mut bytes = pnm_fixtures::CONSTELLATION.to_vec();
+    bytes[21..23].copy_from_slice(&code.to_be_bytes());
+    Capture::from_bytes(bytes, "constellation.bin".into()).unwrap()
+}
+#[test]
+fn fixture_has_equal_axes_and_bounded_measured_ideal_overlay() {
+    let capture = capture(7);
+    let metadata = capture.chart_metadata().unwrap();
+    assert_eq!(metadata.title, "Downstream Constellation Display");
+    assert_eq!(metadata.sample_count, 8192);
+    assert!(metadata
+        .chips
+        .iter()
+        .any(|chip| chip.title == "QAM" && chip.value == "256-QAM"));
+    let plot = capture.chart_range(0, 8192).unwrap().constellation.unwrap();
+    assert!(plot.measured.len() + plot.ideal.len() <= MAX_VIEW_SAMPLES);
+    assert_eq!((plot.measured_total, plot.measured_visible), (8192, 8192));
+    assert_eq!((plot.ideal_total, plot.ideal_visible), (256, 256));
+    assert_eq!(plot.measured[0], [0.376953125, -1.15625]);
+    assert_eq!(*plot.measured.last().unwrap(), [1.146484375, 0.0859375]);
+    assert_eq!(plot.bounds.minimum_i, plot.bounds.minimum_q);
+    assert_eq!(plot.bounds.maximum_i, plot.bounds.maximum_q);
+    assert!(capture.chart_range(1, 8191).is_err());
+    assert!(capture
+        .chart_metadata_for(MeasurementView::IqScatter)
+        .is_err());
+    let parser = pnm::pnm::parser::cm_ds_const_disp_meas::CmDsConstDispMeas::parse(
+        pnm_fixtures::CONSTELLATION,
+        pnm::pnm::parser::parse_limits::ParseLimits::default(),
+    )
+    .unwrap();
+    assert_eq!(capture.json().unwrap(), parser.to_json(4_000_000).unwrap());
+}
+#[test]
+fn zoom_filters_in_rust_and_restores_exact_detail_for_dense_qam() {
+    let capture = capture(13);
+    let bounds = IqBounds {
+        minimum_i: -0.1,
+        maximum_i: 0.1,
+        minimum_q: -0.1,
+        maximum_q: 0.1,
+    };
+    let plot = capture
+        .constellation_range(bounds)
+        .unwrap()
+        .constellation
+        .unwrap();
+    assert_eq!(plot.ideal_total, 16384);
+    assert_eq!(plot.ideal_visible, 100);
+    assert_eq!(plot.ideal.len(), 100);
+    assert!(plot.measured_visible < 8192);
+    for point in plot.measured.iter().chain(plot.ideal.iter()) {
+        assert!(point.iter().all(|value| value.abs() <= 0.1));
+    }
+    let reversed = IqBounds {
+        minimum_i: 0.1,
+        maximum_i: -0.1,
+        minimum_q: 0.05,
+        maximum_q: -0.05,
+    };
+    let plot = capture
+        .constellation_range(reversed)
+        .unwrap()
+        .constellation
+        .unwrap();
+    assert!(
+        (plot.bounds.maximum_i
+            - plot.bounds.minimum_i
+            - (plot.bounds.maximum_q - plot.bounds.minimum_q))
+            .abs()
+            < 1e-14
+    );
+    let empty = capture
+        .constellation_range(IqBounds {
+            minimum_i: 10.0,
+            maximum_i: 11.0,
+            minimum_q: 10.0,
+            maximum_q: 11.0,
+        })
+        .unwrap()
+        .constellation
+        .unwrap();
+    assert!(empty.measured.is_empty() && empty.ideal.is_empty());
+}
+#[test]
+fn unknown_modulation_empty_samples_and_invalid_bounds_remain_explicit() {
+    let capture = capture(u16::MAX);
+    let plot = capture.chart_range(0, 8192).unwrap().constellation.unwrap();
+    assert!(!plot.reference_available);
+    assert!(plot.ideal.is_empty());
+    assert_eq!(plot.measured_total, 8192);
+    for bounds in [
+        IqBounds {
+            minimum_i: f64::NAN,
+            maximum_i: 1.0,
+            minimum_q: 0.0,
+            maximum_q: 1.0,
+        },
+        IqBounds {
+            minimum_i: 0.0,
+            maximum_i: 0.0,
+            minimum_q: 0.0,
+            maximum_q: 1.0,
+        },
+        IqBounds {
+            minimum_i: -f64::MAX,
+            maximum_i: f64::MAX,
+            minimum_q: 0.0,
+            maximum_q: 1.0,
+        },
+    ] {
+        assert!(capture.constellation_range(bounds).is_err());
+    }
+    let mut bytes = pnm_fixtures::CONSTELLATION[..30].to_vec();
+    bytes[23..25].fill(0);
+    bytes[26..30].fill(0);
+    let empty = Capture::from_bytes(bytes, "empty.bin".into()).unwrap();
+    let plot = empty.chart_range(0, 0).unwrap().constellation.unwrap();
+    assert_eq!(plot.measured_total, 0);
+    assert!(plot.measured.is_empty());
+    assert_eq!(plot.ideal_total, 256);
+}

@@ -66,6 +66,9 @@ keeps the current capture. Unsupported measurements can still be decoded with
   data traces and labeled special-carrier lanes; hover markers for type details.
   Frequency zoom works as usual. The **Profile BW** chip opens a bandwidth
   grid. JSON includes per-profile `bandwidth_bps` and ideal capacity.
+- Constellation Display overlays measured I/Q and ideal QAM references, with
+  independent layer toggles, drag/wheel zoom and equal I/Q axes. See the
+  [measurement guide](measurements.md#constellation-display).
 - The I/Q density view always shows the full capture and does not use range zoom.
 - For channel estimation, choose **Magnitude**, **Group delay**, or **I/Q scatter**.
   Switching tabs resets the range.

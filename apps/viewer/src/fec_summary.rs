@@ -259,6 +259,7 @@ pub(crate) fn viewport(
         })
         .collect();
     Ok(ChartViewport {
+        constellation: None,
         modulation_profiles: None,
         fec_summary: Some(FecViewport {
             points,

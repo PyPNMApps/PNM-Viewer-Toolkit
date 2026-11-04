@@ -322,6 +322,15 @@ ApplicationWindow {
                             onCarrierRequested: index => backend.toggle_modulation_carrier(index)
                             onAllCarriersRequested: backend.select_all_modulation_carriers()
                         }
+                        ConstellationChart {
+                            visible: window.viewport.constellation !== undefined
+                            theme: appTheme
+                            constellation: window.viewport.constellation || ({})
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            onBoundsRequested: (firstI, lastI, firstQ, lastQ) => backend.zoom_constellation(firstI, lastI, firstQ, lastQ)
+                            onResetRequested: backend.select_view(0)
+                        }
                         IqScatterChart {
                             visible: window.metadata.view_index === 2
                             theme: appTheme
@@ -349,7 +358,7 @@ ApplicationWindow {
                             onRangeRequested: (start, count) => backend.show_range(start, count)
                         }
                         MeasurementChart {
-                            visible: window.metadata.view_index !== 2 && window.metadata.histogram !== true && window.metadata.fec_summary === undefined
+                            visible: window.viewport.constellation === undefined && window.metadata.view_index !== 2 && window.metadata.histogram !== true && window.metadata.fec_summary === undefined
                             stepPlot: window.metadata.modulation_profile !== undefined
                             unit: window.metadata.unit || "dB"
                             axisLabel: window.metadata.axis_label || "Amplitude"

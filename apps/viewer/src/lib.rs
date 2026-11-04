@@ -5,6 +5,7 @@
 //! Bounded capture ownership and desktop chart data.
 pub mod channel_estimation;
 pub mod chart;
+pub mod constellation;
 pub mod fec_summary;
 pub mod histogram;
 pub mod modulation_profile;
@@ -156,8 +157,8 @@ impl Capture {
     fn decoded(&self) -> Result<DecodedPnm<'_>, Diagnostic> {
         let decoded = PnmFile::from_bytes(&self.bytes).decode(ParseLimits::default())?;
         match decoded {
-            DecodedPnm::RxMer(_) | DecodedPnm::SpectrumAnalysis(_) | DecodedPnm::ChannelEstimate(_) | DecodedPnm::Histogram(_) | DecodedPnm::FecSummary(_) | DecodedPnm::ModulationProfile(_) => Ok(decoded),
-            _ => Err(Diagnostic::new("UnsupportedViewer", "This viewer supports RxMER, Spectrum Analyzer, DS Channel Estimation, Histogram, FEC Summary and Modulation Profile captures. Other formats remain available in pnm-decode.")),
+            DecodedPnm::ConstellationDisplay(_) | DecodedPnm::RxMer(_) | DecodedPnm::SpectrumAnalysis(_) | DecodedPnm::ChannelEstimate(_) | DecodedPnm::Histogram(_) | DecodedPnm::FecSummary(_) | DecodedPnm::ModulationProfile(_) => Ok(decoded),
+            _ => Err(Diagnostic::new("UnsupportedViewer", "This viewer supports RxMER, Spectrum Analyzer, DS Channel Estimation, Histogram, FEC Summary, Modulation Profile and Constellation Display captures. Other formats remain available in pnm-decode.")),
         }
     }
     fn parsed(&self) -> Result<CmDsOfdmRxMer<'_>, Diagnostic> {
@@ -379,8 +380,7 @@ mod tests {
     fn reject_invalid_and_other_measurements() {
         assert!(Capture::from_bytes(vec![0; 4], "bad".into()).is_err());
         assert!(
-            Capture::from_bytes(pnm_fixtures::CONSTELLATION.to_vec(), "constellation".into())
-                .is_err()
+            Capture::from_bytes(pnm_fixtures::UPSTREAM_PRE_EQ.to_vec(), "upstream".into()).is_err()
         );
         assert!(Capture::from_bytes(vec![0; MAX_INPUT_BYTES + 1], "large".into()).is_err());
     }

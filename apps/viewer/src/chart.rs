@@ -76,6 +76,8 @@ pub struct ChartPoint {
 #[derive(Serialize)]
 pub struct ChartViewport {
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub constellation: Option<crate::constellation::ConstellationViewport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub modulation_profiles: Option<crate::modulation_profile::ModulationViewport>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fec_summary: Option<crate::fec_summary::FecViewport>,
@@ -131,6 +133,9 @@ impl Capture {
         let decoded = self.decoded()?;
         validate_view(&decoded, &view)?;
         match decoded {
+            DecodedPnm::ConstellationDisplay(capture) => {
+                Ok(crate::constellation::metadata(&capture))
+            }
             DecodedPnm::ModulationProfile(capture) => {
                 crate::modulation_profile::metadata(&capture, view)
             }
@@ -324,6 +329,21 @@ impl Capture {
         start: usize,
         count: usize,
     ) -> Result<ChartViewport, Diagnostic> {
+        if let DecodedPnm::ConstellationDisplay(capture) = self.decoded()? {
+            if view != MeasurementView::Default {
+                return Err(Diagnostic::new(
+                    "UnsupportedView",
+                    "Constellation Display has no such tab.",
+                ));
+            }
+            if start != 0 || count != capture.iq().count() {
+                return Err(Diagnostic::new(
+                    "InvalidRange",
+                    "Use I/Q bounds to zoom a constellation.",
+                ));
+            }
+            return crate::constellation::viewport(&capture, None);
+        }
         if let DecodedPnm::ModulationProfile(capture) = self.decoded()? {
             return crate::modulation_profile::viewport(&capture, view, start, count);
         }
@@ -351,6 +371,7 @@ impl Capture {
                     ));
                 }
                 return Ok(ChartViewport {
+                    constellation: None,
                     modulation_profiles: None,
                     fec_summary: None,
                     histogram: None,
@@ -372,6 +393,7 @@ impl Capture {
             })?;
         let points = overview(&samples[start..end]);
         Ok(ChartViewport {
+            constellation: None,
             modulation_profiles: None,
             fec_summary: None,
             histogram: None,
