@@ -13,7 +13,6 @@ CLI behavior belongs in `docs/cli/`.
 | Understand charts and Rust/QML ownership | [Qt measurement internals](qt-measurements.md) |
 | Work on core APIs, parsers and math | [Rust development](rust.md) |
 | Change compiled QAM resources | [QAM conversion and geometry](qam-resources.md) |
-| Maintain the parallel Tauri prototype | [Tauri development](ui.md) |
 | Review future IPC and retrieval plans | [API contract](api-contract.md) |
 | Save and push changes | [Git workflow](git.md) |
 | Understand required OS checks | [CI and platform matrix](ci.md) |

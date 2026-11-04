@@ -81,7 +81,7 @@ fn fixture_views_are_bounded_and_export_preserves_raw_fields() {
         CmDsOfdmChanEstimateCoef::parse(pnm_fixtures::CHANNEL_ESTIMATE, ParseLimits::default())
             .unwrap();
     assert_eq!(json, serde_json::to_value(raw).unwrap());
-    assert!(capture.metadata().is_err()); // Retained Tauri view is still RxMER-only.
+    assert!(capture.metadata().is_err()); // The small RxMER metadata helper rejects other measurement types.
 }
 fn synthetic(samples: &[[i16; 2]]) -> Vec<u8> {
     let mut bytes = pnm_fixtures::CHANNEL_ESTIMATE[..28].to_vec();

@@ -7,7 +7,7 @@ description: Apply PNM Viewer coding conventions when writing, modifying, or rev
 
 Adapted from OSCAR-UI's `skills/coding-style/SKILL.md` on 2026-11-03.
 Source checkout HEAD: `4dfe461eab736a71a7dd35e71491fd83f74c4eb3` (working-tree skill reviewed).
-Retain its documentation and readability conventions; Rust/Tauri ownership and
+Retain its documentation and readability conventions; Rust/Qt ownership and
 PNM evidence rules below replace Java/Qt/Oscar-specific details.
 
 ## Member and module order
@@ -162,14 +162,14 @@ artificial constants. Distinguish application safety limits from protocol limits
 
 Preserve the PyPNM-inspired module hierarchy. Use snake_case Rust modules and
 UpperCamelCase types. Parsing consumes bytes and returns models without file/network
-I/O, derived statistics or Tauri dependencies. Share PnmHeader behavior through
+I/O, derived statistics or Qt dependencies. Share PnmHeader behavior through
 composition and HasPnmHeader. Keep unsafe code forbidden in pnm.
 
 ## JSON contracts and calculation ownership
 
 Implement measurement JSON changes in the Rust parser serializer or a shared
 Rust serialization/analysis helper. CLI and desktop exports must use that same
-contract; do not add, rename or calculate measurement fields in Qt/QML, React
+contract; do not add, rename or calculate measurement fields in Qt/QML
 or CLI-specific post-processing. Reuse the existing analysis before adding a
 second calculation. All measurement math, derived rates, unit conversions and
 scientific aggregation belong in Rust; UI code presents the supplied values.
@@ -182,16 +182,16 @@ exported JSON or recomputing them for chips/tables.
 
 ## UI component ownership
 
-Give each substantial pane/dialog a cohesive React component or feature module.
+Give each substantial pane/dialog a cohesive QML component or feature module.
 Keep the app shell focused on layout, navigation and coordination. Shared small
 controls stay with their owner unless actual reuse justifies extraction.
 
 Keep scientific interpretation, parsing, storage, aggregation, decimation and
-exports in Rust. React owns presentation and transient interaction state. Expose
+exports in Rust. QML owns presentation and transient interaction state. Expose
 typed operations and bounded DTOs rather than mutable internal state or entire
 captures. Preserve cancellation, session cleanup, stale-result rejection and
-accessible controls when moving responsibilities. Browser mock tests do not
-replace native Tauri validation.
+accessible controls when moving responsibilities. Offscreen QML tests do not
+replace native Qt integration validation.
 
 ## SPDX headers
 
@@ -203,7 +203,7 @@ header after checking its ownership and license context.
 | --- | --- |
 | Reusable Rust libraries under crates/ and their tests | Apache-2.0 |
 | Project-owned development tooling under scripts/ and tools/ | Apache-2.0 |
-| Desktop Rust shell and React/TypeScript UI under apps/desktop/ | GPL-3.0-only |
+| Qt desktop under apps/qt/ and capture layer under apps/viewer/ | GPL-3.0-only |
 
 Rust, JavaScript and TypeScript:
 

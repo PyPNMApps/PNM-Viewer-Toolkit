@@ -1,8 +1,8 @@
 # Development setup
 
-PNM Viewer Toolkit remains under development. The Rust parsers, native Qt viewer
-and retained Tauri/React prototype have runnable source builds. See the
-[desktop user guide](../ui/README.md) for the main Qt workflow.
+PNM Viewer Toolkit remains under development. The Rust parsers, CLI and native
+Qt viewer have runnable source builds. See the [desktop user guide](../ui/README.md)
+for the Qt workflow and the [developer index](../development/README.md) for code guides.
 
 ## Install
 
@@ -12,48 +12,49 @@ Run as your normal user, from the repository root:
 ./install.sh --development --dry-run
 ./install.sh --development
 ./install.sh --development --check
+./scripts/setup-qt.sh
 ```
 
 The entry point also works by absolute path from another directory. No arguments
-or invalid options exit 2. Help exits 0. Check exits 0 when all prerequisites are
-ready, 1 when incomplete; unsupported hosts exit 2. Dry run prints the plan and
-exits 0 on a supported host, even if dependencies are missing. Both inspection
-modes avoid network access, sudo and filesystem writes. Do not combine them.
+or invalid options exit 2. Help exits 0. Check exits 0 when host packages and the
+local Rust tools are ready, 1 when incomplete; unsupported hosts exit 2. The Qt
+SDK has its own setup/check commands in the [Qt guide](../development/qt.md).
+Dry run prints the plan and exits 0 on a supported host even when dependencies
+are missing. Both inspection modes avoid network access, sudo and filesystem
+writes. Do not combine them.
 
 Installation supports Ubuntu 22.04 and 24.04 on x86_64 and ARM64. It rejects other
-platforms and root execution before installation. Only the Ubuntu 22.04 x86_64
-inspection path and mocked installer behavior have been tested; a full native
-installation and the other supported combinations remain unverified.
+platforms and root execution before installation. The Qt SDK setup supports the
+native architectures listed in the Qt guide; installer architecture acceptance
+alone does not establish Qt SDK availability. The local native viewer has been
+exercised on Ubuntu 22.04 x86_64; other combinations require their own evidence.
 
 Missing OS packages are installed with `sudo apt-get update` and
 `sudo apt-get install -y --no-install-recommends`. Sudo may request your password.
-Configured Ubuntu repositories must provide the packages; the installer does not
-add repositories. Network access is required for missing tools. Package-manager
-or download failures stop setup and propagate a nonzero exit status.
+Configured Ubuntu repositories must provide the packages; the installer adds no
+repositories. Network access is required for missing tools. Package-manager or
+download failures stop setup and propagate a nonzero exit status.
 
 ## Dependencies and ownership
 
-- Native development: build-essential, pkg-config, libssl-dev, WebKitGTK 4.1,
-  libxdo-dev, libayatana-appindicator3-dev and librsvg2-dev. The desktop libraries
-  follow [Tauri 2 prerequisites](https://v2.tauri.app/start/prerequisites/).
+- Native build tools: build-essential, CMake, pkg-config and libssl-dev.
+- Qt host dependencies: OpenGL/EGL development and runtime libraries, XKB/XCB
+  libraries including libxcb-cursor0, GTK 3 for the native Linux file chooser,
+  and libb2. The exact package list lives in `scripts/install-development.sh`.
 - Utilities: Git, CA certificates, curl, wget, file, xz-utils, unzip, Python 3,
   Python venv and ShellCheck. Python supports repository tooling, not the app.
 - Rust: the channel from `rust-toolchain.toml`, with rustfmt and Clippy, installed
   into `local/cargo` and `local/rustup`. Bootstrap uses the official HTTPS rustup
   installer at https://sh.rustup.rs without modifying shell profiles.
-- Node.js/npm: version from `.node-version`, installed into `local/node-vVERSION`.
-  Official Node archives are checked against committed SHA-256 values in
-  `scripts/install-development.sh`. Update both architecture hashes when changing
-  the pin; source: https://nodejs.org/dist/v24.22.2/SHASUMS256.txt.
+- Qt SDK: pinned project-local Qt/CXX-Qt setup, documented in the
+  [Qt development guide](../development/qt.md#linux-development).
 
-The installer reuses ready local tools and skips apt when packages are present.
-Downloads are staged in a temporary directory under `local/` and cleaned on exit.
-An incomplete existing Node directory causes an explicit error; move it aside
-before retrying. Existing global Rust/Node installations and shell profiles are
-untouched. System package versions follow the configured Ubuntu repositories.
-No Docker, Kubernetes, Java, Python services or global npm packages are needed.
-Qt uses a separate [project-local SDK setup](../development/qt.md#linux-development).
-The retained Tauri frontend uses the [documented npm setup](../development/ui.md#run-locally).
+The installer reuses ready local Rust tools and skips apt when packages are
+present. Downloads are staged in a temporary directory under `local/` and cleaned
+on exit. Global tool installations and shell profiles are untouched. System
+package versions follow the configured Ubuntu repositories. No Node, npm,
+WebKit or WebView toolchain is required. Previously installed system packages
+and old local tool caches are not automatically uninstalled.
 
 ## Use the tools
 
@@ -61,20 +62,18 @@ The retained Tauri frontend uses the [documented npm setup](../development/ui.md
 scripts/cargo-local.sh test --workspace --locked
 scripts/cargo-local.sh fmt --all -- --check
 scripts/cargo-local.sh clippy --workspace --all-targets --locked -- -D warnings
-scripts/node-local.sh node --version
-scripts/node-local.sh npm --version
+scripts/qt-desktop.sh
 ```
 
-The Node wrapper preserves the caller's directory so future frontend commands can
-run inside their package directory. Its npm cache stays in `local/npm-cache`.
-The Rust wrapper runs from the repository root. Neither wrapper installs tools.
+The Rust wrapper runs from the repository root and does not install tools.
+For native Windows/macOS setup, use the [Qt guide](../development/qt.md#windows-and-macos).
 
 ## Validate installer changes
 
 ```bash
-bash -n install.sh scripts/install-development.sh scripts/node-local.sh
+bash -n install.sh scripts/install-development.sh scripts/cargo-local.sh
 python3 scripts/tests/test_install.py
-shellcheck install.sh scripts/install-development.sh scripts/node-local.sh
+shellcheck install.sh scripts/install-development.sh scripts/cargo-local.sh
 ./install.sh --development --dry-run
 ./install.sh --development --check
 ```
@@ -85,9 +84,9 @@ setup without system installation or downloads. They do not validate downloaded
 binaries, real apt installation or GUI execution.
 
 The design follows PyPNM's explicit development mode and OSCAR-UI's prerequisite
-checks and project-local dependency ownership, adapted to this Rust/Tauri stack.
+checks and project-local dependency ownership, adapted to Rust and Qt.
 
 ## CLI-only installation
 
 After preparing the Rust toolchain, use `./install.sh --cli --prefix DIRECTORY`.
-This builds the decoder without UI dependencies. See [CLI usage](../cli/usage.md).
+This builds the decoder without Qt dependencies. See [CLI usage](../cli/usage.md).

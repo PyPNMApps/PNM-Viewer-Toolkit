@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   desktop:
-    name: Qt and Tauri / ${{ matrix.os }}
+    name: Qt / ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -24,9 +24,6 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
       - name: Enable MSVC compiler
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
@@ -36,14 +33,9 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libssl-dev libayatana-appindicator3-dev librsvg2-dev cmake python3-venv libgl1-mesa-dev
+          sudo apt-get install -y build-essential cmake python3-venv libgl1-mesa-dev libegl1 libopengl0 libdbus-1-3 libfontconfig1 libfreetype6 libx11-xcb1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-randr0 libxcb-xfixes0 libxcb-sync1 libxcb-render0 libsm6 libice6 libgtk-3-0 libb2-1
       - name: Load pinned Rust toolchain
         run: rustup show
-      - name: Install locked frontend dependencies
-        working-directory: apps/desktop
-        run: npm ci
-      - name: Check retained Tauri desktop
-        run: bash scripts/check-desktop.sh
       - name: Prepare pinned native Qt SDK
         run: python scripts/qt-sdk.py setup
       - name: Check Qt adapter and presentation

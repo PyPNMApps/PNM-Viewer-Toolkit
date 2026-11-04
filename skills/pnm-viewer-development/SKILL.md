@@ -6,7 +6,9 @@ description: Use the original PNM Viewer requirements and PyPNM source map when 
 # PNM Viewer development references
 
 Use root AGENTS.md and the current implementation as the active project contract.
-Consult the original design only for the feature being worked on:
+Qt Quick/QML is now the sole desktop UI; the original web stack and its
+packaging instructions below are superseded. Consult the original design only
+for still-applicable requirements of the feature being worked on:
 
 - [Bootstrap guide](references/bootstrap-guide.md): product requirements,
   Rust/UI ownership, file sessions, retrieval, scientific processing and packaging.

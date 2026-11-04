@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 """Version propagation tests using isolated synthetic releases."""
-import json
 from pathlib import Path
 import shutil
 import sys
@@ -21,7 +20,7 @@ class VersionPropagationTests(unittest.TestCase):
         """Propagate two releases and reject deliberate metadata drift."""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            for name in versions.MANIFESTS + versions.LOCKS + versions.JSON_FILES:
+            for name in versions.MANIFESTS + versions.LOCKS:
                 target = root / name
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(versions.ROOT / name, target)
@@ -31,9 +30,6 @@ class VersionPropagationTests(unittest.TestCase):
                 self.assertEqual((root / 'VERSION').read_text().strip(), version)
                 for name in versions.MANIFESTS:
                     self.assertEqual(versions.cargo_field((root / name).read_text(), 'version'), version)
-                lock = json.loads((root / 'apps/desktop/package-lock.json').read_text())
-                self.assertEqual(lock['version'], version)
-                self.assertEqual(lock['packages']['']['version'], version)
                 self.assertIn('=0.7.3', (root / 'apps/qt/Cargo.toml').read_text())
             manifest = root / versions.MANIFESTS[0]
             manifest.write_text(manifest.read_text().replace('2.0.7', '2.0.6'))

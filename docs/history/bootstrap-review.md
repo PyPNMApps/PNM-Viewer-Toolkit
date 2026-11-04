@@ -1,5 +1,8 @@
 # Bootstrap bundle review
 
+> Historical investigation: the original desktop stack was superseded on
+> 2026-11-04. The current application uses Qt Quick/QML and Rust only.
+
 Reviewed 2026-11-02. Extracted pnm-viewer-bootstrap.zip into the sibling
 pnm-viewer-bootstrap/ directory without replacing project files. All seven
 manifest checksums match. Those original files were review inputs; see consolidation below for current paths.

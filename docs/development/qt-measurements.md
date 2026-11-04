@@ -49,7 +49,6 @@ is applied. Specification checks used versioned text extracts, not rendered PDFs
 
 The shared Qt chart is `MeasurementChart.qml`; Rust owns chart metadata, frequency
 mapping, vertical bounds, and bounded overviews in `apps/viewer/src/chart.rs`.
-The retained Tauri UI remains RxMER-only and keeps its existing DTO contract.
 
 Spectrum native validation on Ubuntu: the fixture displayed 20,736 bins across
 296.264648–903.735351 MHz. Dark/light display, drag zoom/reset, JSON export,

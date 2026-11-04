@@ -1,12 +1,12 @@
 # Permanent project guidance
 
-Build PNM Viewer Toolkit with Rust backend behavior and parallel desktop prototypes:
-Tauri 2/React under apps/desktop and Qt Quick/QML under apps/qt. Preserve both.
+Build PNM Viewer Toolkit with a Rust backend and native Qt Quick/QML desktop
+under apps/qt/. Qt is the sole desktop UI; do not reintroduce a web frontend.
 
 - Work only in this viewer repository. PyPNM is read-only reference material. Do not change its files, configuration, dependencies or services, or run capture/startup code.
 - No SNMP, TFTP, modem controls, capture initiation, Python sidecars, Node production runtime or remote analysis. Optional PyPNM HTTP retrieval runs in Rust and retrieves existing files only.
-- React and QML render charts, navigation and transient interaction state. Rust owns filesystem access, parsing, scientific interpretation, analysis, aggregation, persistence, downloads, exports and decimation.
-- Domain/parser libraries must not depend on Tauri, HTTP or app crates. Separate decoding from analysis, aggregation, storage and transport. Keep Cargo dependencies acyclic.
+- QML renders charts, navigation and transient interaction state. Rust owns filesystem access, parsing, scientific interpretation, analysis, aggregation, persistence, downloads, exports and decimation.
+- Domain/parser libraries must not depend on Qt, HTTP or app crates. Separate decoding from analysis, aggregation, storage and transport. Keep Cargo dependencies acyclic.
 - Reusable libraries are Apache-2.0. Desktop shell and UI are GPL-3.0-only. Set package licenses explicitly; preserve third-party licenses, copyrights and applicable NOTICE content.
 - Use separate project skills for DOCSIS 3.1 and 4.0 OSSI work. The user authorized clear versioned text extracts for RxMER; request PDFs for ambiguous layouts and never claim rendered-PDF verification. Do not substitute MULPI configuration TLVs, MIB objects or API JSON schemas for PNM binary layouts.
 - Never invent file identifiers, offsets, widths, byte order, scaling, sentinels or version equivalence. Trace implemented fields to pinned PDF evidence or explicitly labeled implementation evidence. Protocol version and file-format version are separate.
@@ -15,7 +15,7 @@ Tauri 2/React under apps/desktop and Qt Quick/QML under apps/qt. Preserve both.
 - Keep large datasets in Rust behind opaque sessions. Use bounded typed IPC queries, cancellation, progress and cleanup; do not serialize whole captures for a viewport.
 - Aggregate compatible device/channel/type/unit/format and frequency grids only. Preserve invalid samples and gaps. Document and test any explicit alignment transformation.
 - Offline viewing must work without a server or network. Feature-gate the HTTP adapter and test offline-only and retrieval-enabled builds.
-- Pin toolchains and lockfiles. Run Rust formatting, Clippy and tests; UI typecheck, lint, tests and production build. Verify IPC contracts and installed application behavior.
+- Pin toolchains and lockfiles. Run Rust formatting, Clippy and tests; Qt adapter and QML tests and native builds. Verify IPC contracts and installed application behavior.
 - CI builds Windows, macOS Intel/Apple Silicon and Ubuntu packages on suitable native runners. Report unverified targets honestly; a successful cross-compile is not runtime validation.
 - Each primary architecture-specific distributable must be at most 50,000,000 bytes, counting bundled prerequisites and assets. Fail the release gate when exceeded. Report installer bytes, installed footprint and external prerequisites separately.
 - Offline viewing after setup and offline installation on a pristine OS are different promises. Do not claim both fit the budget without measurement.
@@ -29,11 +29,13 @@ Existing Cargo library names and copyright notices retain their current identiti
 
 ## Project status and guidance
 
-The user adopted the bundle's Tauri/Rust stack on 2026-11-02, superseding the
-initial Java plan. On 2026-11-03 the user requested a parallel Qt prototype while retaining Tauri.
+The user selected Qt as the sole desktop UI on 2026-11-04, superseding the
+original bootstrap stack and the parallel-prototype period.
 Shared GPL desktop capture behavior lives under apps/viewer; Qt uses CXX-Qt at
 the adapter boundary only. Core parsers remain safe Rust.
-The project remains in the dev phase; the initial RxMER desktop slice is implemented under apps/desktop/. Native packaging remains pending. The core reader/header foundation is implemented.
+The project remains in the dev phase. Qt supports the measurement views listed
+in docs/ui/measurements.md. Native packaging is configured; hosted platform
+validation and release publication require their own evidence.
 Use development/requirements.md, development/architecture.md, development/checklist.md and
 development/development-guide.md together. Maintain the docs as work lands.
 Original bootstrap references live in skills/pnm-viewer-development/references/;
@@ -110,9 +112,8 @@ for working plans. Update relative links whenever documents move.
 
 Native CI/release ordering: docs/development/ci.md. Keep master and tag validation
 shared; require Ubuntu 22.04/24.04/26.04, Windows x64 and macOS arm64/x64 checks.
-Tag packaging targets Qt and includes the same-version CLI/manual. Preserve Tauri
-regression checks. Native package lifecycle tests run on disposable CI runners;
+Tag packaging targets Qt and includes the same-version CLI/manual. Native package lifecycle tests run on disposable CI runners;
 local builds do not authorize system installation or publication.
 
 Qt setup and validation: docs/development/qt.md. Run scripts/qt-desktop.sh check
-for Qt changes and shared capture changes; preserve Tauri regression checks.
+for Qt changes and capture-layer changes.

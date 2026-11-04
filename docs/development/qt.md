@@ -3,8 +3,8 @@
 For opening captures, chart controls and screenshots, start with the
 [desktop user guide](../ui/README.md). This page covers developer setup and validation.
 
-The Qt prototype lives under `apps/qt/`. Tauri remains under `apps/desktop/`.
-Both use the GPL-3.0-only Rust capture layer in `apps/viewer`, backed by the
+The Qt desktop lives under `apps/qt/`. It uses the GPL-3.0-only Rust capture
+layer in `apps/viewer`, backed by the
 existing Apache-2.0 parsers. Qt Quick renders directly through Qt without a
 browser, WebView or HTTP backend. This is development software.
 
@@ -51,7 +51,7 @@ separate. The development binary requires Qt runtime dependencies.
 The check runs Rust formatting, adapter tests, Clippy, a native build and
 Qt Quick tests for themes, missing readings, sample coordinates and mouse zoom
 inspection. Shared capture tests cover fixtures, JSON and safe export. The
-pre-push gate checks both shells. Native file pickers and platform theme behavior
+pre-push gate checks the Rust workspace and Qt desktop. Native file pickers and platform theme behavior
 also need desktop smoke tests; offscreen tests alone cannot verify OS integration.
 
 ## No display connection
@@ -107,9 +107,7 @@ continue using their platform defaults.
 Reference: [Qt FileDialog native availability](https://doc.qt.io/qt-6.5/qml-qtquick-dialogs-filedialog.html).
 
 Both desktop icon PNGs have transparent backgrounds outside their rounded cyan
-outline. White areas inside the light icon remain part of the artwork. Matching
-multi-resolution dark/light ICO favicons are available in `docs/images/` for the
-retained web frontend; Qt continues to use the PNG window icons.
+outline. White areas inside the light icon remain part of the artwork. Qt uses the matching PNG window icons in both themes.
 
 ## Cross-platform CI and native release builds
 

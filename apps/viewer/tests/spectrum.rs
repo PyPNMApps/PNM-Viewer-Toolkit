@@ -32,7 +32,7 @@ fn spectrum_fixture_metadata_overview_detail_and_export() {
     assert_eq!(segments.len(), 81);
     assert_eq!(segments[0][0], -22.8);
     assert_eq!(segments[80][255], -77.3);
-    assert!(capture.metadata().is_err()); // Legacy Tauri remains RxMER-only.
+    assert!(capture.metadata().is_err()); // The small RxMER metadata helper rejects other measurement types.
 }
 
 fn truncated_spectrum(sample_count: usize) -> Vec<u8> {

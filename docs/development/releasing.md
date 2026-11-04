@@ -6,14 +6,14 @@
 ## Version ownership
 
 Keep the tracked root `VERSION`. It contains one `MAJOR.MINOR.PATCH` value and
-is authoritative for the CLI, Qt viewer, reusable crates and retained Tauri app.
-Cargo and frontend manifests still require their own version fields; the helper
+is authoritative for the CLI, Qt viewer and reusable crates.
+Cargo manifests still require their own version fields; the helper
 synchronizes those consumers and their lockfiles without updating dependencies.
 The CLI version, Qt About dialog and package filenames use this shared version.
 
 This follows OSCAR/OSCAR-UI's three-component versioning and immutable release
-identity. In this Rust/frontend workspace a root file provides one source across
-multiple package systems. Version preparation remains separate from commit,
+identity. In this Rust workspace a root file provides one source across
+the core workspace and standalone Qt crate. Version preparation remains separate from commit,
 tag and push so each operation can be reviewed.
 
 ## First tag

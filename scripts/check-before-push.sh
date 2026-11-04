@@ -25,7 +25,7 @@ python3 -m unittest discover -s tools/git/tests -p 'test_*.py'
 if [[ "$(uname -s)" == Linux ]]; then
   python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 fi
-SHELL_SCRIPTS=(install.sh scripts/install-cli.sh scripts/check-before-push.sh scripts/desktop.sh scripts/check-desktop.sh scripts/qt-desktop.sh scripts/setup-qt.sh tools/git/git-save.sh tools/git/git-push.sh)
+SHELL_SCRIPTS=(install.sh scripts/install-development.sh scripts/cargo-local.sh tools/bump-version.sh scripts/install-cli.sh scripts/check-before-push.sh scripts/qt-desktop.sh scripts/setup-qt.sh tools/git/git-save.sh tools/git/git-push.sh)
 for script in "${SHELL_SCRIPTS[@]}"; do
   bash -n "${script}"
 done
@@ -39,6 +39,5 @@ trap 'rm -rf -- "${SMOKE_DIRECTORY}"' EXIT
 "${CARGO_COMMAND[@]}" run --release --locked --quiet -p pnm-decode -- \
   tests/fixtures/pypnm/tests/files/rxmer.bin --output "${SMOKE_DIRECTORY}/rxmer.json"
 python3 -m json.tool "${SMOKE_DIRECTORY}/rxmer.json" > /dev/null
-"${SCRIPT_DIR}/check-desktop.sh"
 "${SCRIPT_DIR}/qt-desktop.sh" check
 echo "All local pre-push checks passed."

@@ -15,7 +15,7 @@ publication, external signing and Apple notarization are separate actions.
 | macOS Apple Silicon | `PNM-Viewer-Toolkit-VERSION-macos-arm64.dmg` | `.tar.gz` |
 | macOS Intel | `PNM-Viewer-Toolkit-VERSION-macos-x64.dmg` | `.tar.gz` |
 
-The primary desktop is Qt Quick; Tauri remains covered by CI. UI packages contain
+The desktop is Qt Quick. UI packages contain
 or depend on the same-version `pnm-decode` and manual. The UI calls shared Rust
 libraries directly; it does not launch the CLI to decode files.
 

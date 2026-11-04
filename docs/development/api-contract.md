@@ -1,13 +1,50 @@
-# API and IPC contract plan
+# Qt adapter and optional retrieval contracts
 
-## Local IPC
+[Developer index](README.md) · [Qt implementation](qt-measurements.md)
 
-Use bounded typed commands for open/import, metadata, hex range, series viewport,
-analysis, comparison, export, close/cancel and optional listing/download. Rust
-owns session IDs and input access; frontend capabilities must not permit arbitrary
-filesystem/shell/network operations. Restrict CSP and bundle assets locally.
-Verify/generated DTOs must preserve nulls, error variants and large integers
-without JavaScript precision loss. Document numeric limits before implementation.
+## Implemented desktop boundary
+
+The native Qt application lives in `apps/qt/`. `src/backend.rs` exposes a CXX-Qt
+QObject to QML. File pickers produce local QUrl values; Rust validates paths,
+reads files and exports JSON. There is no browser, JavaScript IPC or HTTP server.
+
+| Operation | Adapter methods |
+| --- | --- |
+| Open/export | `open_file`, `export_json` |
+| Frequency/bin zoom | `show_range` |
+| I/Q region zoom | `zoom_constellation` |
+| Channel-estimation tabs | `select_view` |
+| FEC profile/time range | `select_fec_profile`, `show_fec_time_range` |
+| Modulation selection | `toggle_modulation_profile`, `select_all_modulation_profiles`, `toggle_modulation_carrier`, `select_all_modulation_carriers`, `select_modulation_metric` |
+| Close capture | `close_capture` |
+
+Properties carry version, loaded/busy state, metadata JSON, bounded viewport
+JSON, status and error text. JSON is a transport representation of Rust-owned
+DTOs; QML does not add measurement fields or calculate scientific values.
+See the [measurement internals](qt-measurements.md) for each viewport budget.
+
+`apps/viewer` owns the original file bytes. Queries borrow the same buffer;
+workers retain an Arc rather than duplicating it. Qt queues worker completion
+onto the UI thread. File operations are gated; a failed open or invalid query
+retains the previous valid capture/view. Window teardown safely rejects pending
+callbacks. Close releases the active capture when no file operation is running.
+
+Input and full JSON output each have a 16 MiB limit; decoding uses the core's
+65,536-item budget. Existing destinations and original captures are never
+overwritten. Native dialog cancellation makes no change. There is no mid-read
+cancellation for these bounded operations. Streaming progress and cancellation
+tokens remain future work.
+
+Parser diagnostics retain field and byte offset in Rust; the adapter displays
+code/message text. Rust tests cover bounds, missing values and exports. QML
+tests cover controls, themes, drop routing and zoom; actual native picker and
+installed-package behavior require separate platform checks.
+
+## Future operations
+
+Hex ranges, compatible capture comparison, persistence and optional retrieval
+are plans rather than implemented Qt commands. Keep filesystem/network work
+in Rust, expose bounded typed operations and retain errors and missing values.
 
 ## Optional PyPNM retrieval
 
@@ -30,45 +67,6 @@ or capture endpoints. Local and downloaded files enter the same Rust pipeline.
 Feature-gate HTTP dependencies. Test exact paths/casing, base path prefixes,
 encoding, TLS/redirect policy, credential isolation, timeouts, cancellation,
 content/compression errors and bounded streaming/atomic cache writes with mocks.
-Store secrets in OS credentials or memory, never frontend state or plain settings.
+Store secrets in OS credentials or memory, never QML state or plain settings.
 Reverify a configured deployment's OpenAPI when authorized. No live service was
 called and no runtime contract tests have run in this review.
-
-## Implemented RxMER commands
-
-Only the main window has core capabilities. The frontend has no generic filesystem,
-dialog, shell or network permission. Rust opens native pickers itself.
-
-| Command | Inputs | Result |
-| --- | --- | --- |
-| `open_capture` | None | null on cancel; session_id, metadata, initial viewport on success |
-| `viewport` | sessionId, start | start, total, up to 1,024 points |
-| `export_json` | sessionId | false on cancel; true after writing a new full JSON file |
-| `close_capture` | sessionId | Releases matching session; old handles cannot close a newer one |
-
-A point contains `frequency_hz: u32` and `rxmer_db: number or null`. Viewports use
-exact samples without reduction; start is a zero-based sample index. Session IDs
-are monotonically checked u32 values, safe in JavaScript. Stale handles fail.
-One active session owns original file bytes; replacement happens only after a
-successful parse. Export workers retain an Arc, not a second byte buffer. Parsing
-borrows these bytes afresh for each bounded query; no self-referential structs.
-
-Input and JSON output each have a 16 MiB limit. Parsing uses the core's 65,536-item
-budget. File operations run on a blocking worker; a backend operation gate allows
-one open/export job at a time. The UI disables competing operations and reports
-selection/loading/export status. Native dialogs provide cancellation; there is no
-mid-read cancellation for these bounded local operations. Closing the window
-releases process memory. Long jobs, streaming progress and cancellation tokens
-remain future work.
-
-Errors serialize `code`, `message`, optional `field` and `offset`. Parser offsets
-refer to original file bytes. The frontend retains its previous capture on errors.
-Rust tests verify bounds/nulls/core JSON parity and stale sessions; frontend tests
-exercise theme changes, errors, dialog cancellation, paging, export and close.
-
-## Parallel Qt shell
-
-`apps/qt/src/backend.rs` exposes local-file open, JSON export, page selection and
-close through a CXX-Qt QObject. Properties carry metadata, bounded viewports,
-status, busy state and error text. Capture bytes stay in `apps/viewer`, shared
-with Tauri. The Qt adapter accepts local QUrl paths and queues worker completions.

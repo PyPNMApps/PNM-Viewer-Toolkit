@@ -58,7 +58,6 @@ platform matrix remain pending.
 - [Development setup](docs/install/development.md) · [Qt build and checks](docs/development/qt.md)
 - [Rust APIs and examples](docs/development/rust.md)
 - [Developer guide](docs/development/README.md) · [Version bumps and releases](docs/development/releasing.md)
-- [Retained Tauri RxMER prototype](docs/development/ui.md)
 - [All documentation](docs/README.md) · [Repository conventions](AGENTS.md)
 
 ## License

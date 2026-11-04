@@ -2,7 +2,7 @@
  * Copyright 2026 PNM Viewer contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
-//! Qt adapter for the same Rust capture layer used by the Tauri prototype.
+//! Native Qt adapter for the Rust capture and presentation layer.
 //! Unsafe extern declarations are confined to CXX-Qt's typed interop boundary.
 #[cxx_qt::bridge]
 mod bridge {

@@ -23,7 +23,7 @@ class InstallerTests(unittest.TestCase):
         self.addCleanup(self.workspace.cleanup)
         self.project = Path(self.workspace.name)
         for relative in ("install.sh", "scripts/install-development.sh",
-                         "rust-toolchain.toml", ".node-version"):
+                         "rust-toolchain.toml"):
             destination = self.project / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(PROJECT_DIR / relative, destination)
@@ -98,16 +98,10 @@ class InstallerTests(unittest.TestCase):
     @unittest.skipIf(os.geteuid() == 0, "Installer intentionally rejects root")
     def test_repeat_install_reuses_ready_tools(self):
         """Repeated setup avoids apt and downloads when prerequisites exist."""
-        version = (self.project / ".node-version").read_text().strip()
-        for relative, body in (
-            ("local/cargo/bin/rustup", "exit 0"),
-            (f"local/node-v{version}/bin/node", f"echo v{version}"),
-            (f"local/node-v{version}/bin/npm", "exit 0"),
-        ):
-            target = self.project / relative
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(f"#!/bin/bash\n{body}\n")
-            target.chmod(0o755)
+        target = self.project / "local/cargo/bin/rustup"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("#!/bin/bash\nexit 0\n")
+        target.chmod(0o755)
         for attempt in range(2):
             result = self.run_installer("--development")
             self.assertEqual(result.returncode, 0, (attempt, result.stderr))

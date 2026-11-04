@@ -8,7 +8,7 @@ description: Prepare PNM Viewer three-component version bumps and release comman
 Read `docs/release/versioning.md`, `VERSION`, and the repository's helpers before preparing
 commands. Resolve those paths from the repository root (two levels above this
 canonical skill directory). VERSION is the canonical source. The bump helper synchronizes local Cargo
-manifests/lockfiles, the frontend package/lockfile and Tauri configuration. Run
+manifests/lockfiles, including the standalone Qt crate. Run
 `python3 tools/release/versions.py` to reject drift; never override a version from
 a tag or edit consumer manifests independently.
 

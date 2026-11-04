@@ -33,5 +33,5 @@ explicit package/component ownership rules; those installers are not built yet.
 
 For today's CLI, see [source build](source.md), then [usage](../cli/usage.md).
 UI contributors can read [development setup](development.md) and the
-[UI roadmap](../development/ui.md). Packaging requirements live in
+[Qt developer guide](../development/qt.md). Packaging requirements live in
 [release documentation](../release/packaging.md).

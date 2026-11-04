@@ -48,3 +48,8 @@ source. Bump previews validate metadata and list affected files. Developer guide
 now separate Qt setup from measurement internals and include first-tag and
 screenshot checklists. The dark/light gallery includes FEC Summary and the
 constellation view without its sample-count footer.
+
+Qt Quick is now the sole desktop UI. The Tauri/React prototype, Node tooling,
+WebKit prerequisites and associated CI checks have been removed. CLI/parser
+behavior and the Qt packaging matrix are unchanged. Version helpers synchronize
+only the Rust workspace and standalone Qt manifests/lockfiles.

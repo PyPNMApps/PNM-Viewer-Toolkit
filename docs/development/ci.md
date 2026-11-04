@@ -12,13 +12,13 @@ CodeQL + code checks
          │ both pass
          ├── Rust tests on every OS
          ├── CLI release build + JSON smoke on every OS
-         └── Qt + retained Tauri checks on every OS
+         └── Qt checks on every OS
                           │ all pass
                     Required checks
 ```
 
-CodeQL scans Rust, TypeScript/JavaScript, Python tooling and GitHub Actions. Code checks run
-Rustfmt for all three Cargo workspaces, core Clippy with warnings denied,
+CodeQL scans Rust, Python tooling and GitHub Actions. Code checks run
+Rustfmt for both Cargo workspaces, core Clippy with warnings denied,
 version consistency, Bash syntax and ShellCheck. Completing
 CodeQL analysis uploads findings to code scanning; it does not by itself mean
 there are no alerts. Configure repository code-scanning rules to block findings
@@ -37,8 +37,7 @@ All native matrices require:
 
 Each OS runs all workspace parser/math/header/CLI tests, version/packaging-tool
 unit tests, a release CLI build and RxMER JSON smoke test. All three Ubuntu
-versions also run mocked installer and push-tool tests. Desktop checks run the retained Tauri typecheck, lint,
-frontend tests/build and Rust adapter checks, followed by Qt Rust tests,
+versions also run mocked installer and push-tool tests. Desktop checks run Qt Rust tests,
 Clippy/build and QML presentation tests. Every matrix uses `fail-fast: false`
 so one failure does not hide results from other platforms.
 
@@ -62,7 +61,7 @@ CI workflow on that exact tagged commit, then builds packages on native runners.
 The Ubuntu 22.04-built DEBs are downloaded unchanged and installed/tested on
 **22.04, 24.04 and 26.04**. Windows and each macOS architecture test their own
 native installers/images. Every test checks package hashes, GUI open/render/JSON
-export for all six current measurements, CLI operation, manual installation and
+export for all current measurements, CLI operation, manual installation and
 removal. Linux also verifies that removing the viewer preserves the CLI package.
 
 Only after every lifecycle job succeeds does one job assemble the complete
@@ -78,6 +77,6 @@ the required matrix, not passing results. A configured runner is not evidence of
 a successful hosted run; inspect the first run after pushing these changes.
 Native Windows/macOS and Ubuntu 24.04/26.04 results remain pending until hosted CI.
 
-The local pre-push gate checks versions, tooling, Rust, Tauri and Linux Qt without
+The local pre-push gate checks versions, tooling, Rust and Linux Qt without
 installing dependencies. Native package installation is restricted to disposable
 GitHub runners. Local package builds do not install or publish anything.

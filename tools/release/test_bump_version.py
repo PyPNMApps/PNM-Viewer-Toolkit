@@ -12,7 +12,7 @@ import unittest
 
 SCRIPT = Path(__file__).with_name("bump-version.py")
 sys.path.insert(0, str(SCRIPT.parent))
-from versions import MANIFESTS, LOCKS, JSON_FILES, synchronize
+from versions import MANIFESTS, LOCKS, synchronize
 
 SPEC = importlib.util.spec_from_file_location("bump_version", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -50,7 +50,7 @@ class BumpVersionTests(unittest.TestCase):
             shutil.copy2(SCRIPT, script)
             shutil.copy2(SCRIPT.with_name("versions.py"), script.with_name("versions.py"))
             repository = SCRIPT.parents[2]
-            for name in MANIFESTS + LOCKS + JSON_FILES:
+            for name in MANIFESTS + LOCKS:
                 target = root / name
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(repository / name, target)
@@ -62,7 +62,7 @@ class BumpVersionTests(unittest.TestCase):
             preview = subprocess.run(command + ["--dry-run"], cwd=directory,
                                      check=True, capture_output=True, text=True)
             self.assertIn("0.1.0 -> 0.2.0 (dry run)", preview.stdout)
-            for name in MANIFESTS + LOCKS + JSON_FILES:
+            for name in MANIFESTS + LOCKS:
                 self.assertIn(name, preview.stdout)
             for path, content in before.items():
                 self.assertEqual(path.read_bytes(), content)

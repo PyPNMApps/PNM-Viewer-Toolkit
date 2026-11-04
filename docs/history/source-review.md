@@ -1,5 +1,8 @@
 # Source investigation and provenance
 
+> Historical investigation: the original desktop stack was superseded on
+> 2026-11-04. The current application uses Qt Quick/QML and Rust only.
+
 Investigated 2026-11-02.
 
 ## Setup reference

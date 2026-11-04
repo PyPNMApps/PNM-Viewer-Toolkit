@@ -7,7 +7,7 @@ cargo build --release --locked -p pnm-decode
 ```
 
 This standard Cargo command selects only the CLI and its required Rust libraries.
-It does not build a UI or require Node.js, Tauri or WebView development packages.
+It does not build a UI or require Qt development packages.
 The same command applies to Linux, macOS and Windows; native Windows/macOS
 execution has not yet been validated for this project.
 

@@ -29,12 +29,8 @@ target/
 __pycache__/
 *.pyc
 
-# Tauri/React build output and private evidence
-node_modules/
+# Generated release packages
 dist/
 
 # Local development plans, specification evidence and working notes
 /development/
-
-# Tauri-generated IPC schemas
-/apps/desktop/src-tauri/gen/

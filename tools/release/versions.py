@@ -5,7 +5,6 @@
 #
 """Synchronize project-owned version metadata from the root VERSION file."""
 import argparse
-import json
 from pathlib import Path
 import re
 
@@ -14,11 +13,8 @@ MANIFESTS = (
     'crates/core/Cargo.toml', 'crates/logging/Cargo.toml',
     'crates/cli/Cargo.toml', 'tests/fixtures/Cargo.toml',
     'apps/viewer/Cargo.toml', 'apps/qt/Cargo.toml',
-    'apps/desktop/src-tauri/Cargo.toml',
 )
-LOCKS = ('Cargo.lock', 'apps/qt/Cargo.lock', 'apps/desktop/src-tauri/Cargo.lock')
-JSON_FILES = ('apps/desktop/package.json', 'apps/desktop/package-lock.json',
-              'apps/desktop/src-tauri/tauri.conf.json')
+LOCKS = ('Cargo.lock', 'apps/qt/Cargo.lock')
 
 
 def validate(version):
@@ -54,7 +50,7 @@ def metadata(root):
     """
     names = set()
     texts = {}
-    for name in MANIFESTS + LOCKS + JSON_FILES:
+    for name in MANIFESTS + LOCKS:
         texts[name] = (root / name).read_text(encoding='utf-8')
     for name in MANIFESTS:
         names.add(cargo_field(texts[name], 'name'))
@@ -88,16 +84,6 @@ def synchronize(root, version, write=False):
                     blocks[index] = re.sub(r'(?m)^version = "[^"]+"$',
                                            f'version = "{version}"', block, count=1)
             updated = '[[package]]'.join(blocks)
-        else:
-            data = json.loads(text)
-            old_version = data['version']
-            # Replace the first JSON version property only (root project version).
-            updated = text.replace(f'"version": "{old_version}"',
-                                   f'"version": "{version}"', 1)
-            if name.endswith('package-lock.json'):
-                root_version = data['packages']['']['version']
-                updated = updated.replace(f'"version": "{root_version}"',
-                                          f'"version": "{version}"', 1)
         if updated != text:
             replacements[name] = updated
     if write:

@@ -86,5 +86,4 @@ session. Screenshots follow your documentation viewer's theme.
 The panel button at the top right shows or hides the left navigation pane.
 **About** shows the version, development status, licenses and project link.
 
-Developer details belong in the [Qt guide](../development/qt.md). The
-[retained Tauri prototype](../development/ui.md) has a separate RxMER-only workflow.
+Developer details belong in the [Qt guide](../development/qt.md).

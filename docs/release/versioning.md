@@ -6,7 +6,7 @@ Python 3 is needed for the development helper, not the Rust CLI or desktop runti
 
 For the first `v0.1.0` tag, subsequent bumps and the ordered release checklist,
 see [release preparation](../development/releasing.md). Keep the root `VERSION`;
-it is the canonical version source across the CLI, Qt and retained Tauri app.
+it is the canonical version source across the CLI, Qt and reusable Rust crates.
 
 | Bump | Example | Intended use |
 | --- | --- | --- |
@@ -26,8 +26,8 @@ cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
 tools/bump-version.sh --bump patch
 ```
 
-Replace `patch` with `minor` or `major` as appropriate. The helper updates VERSION, local Cargo package manifests and lockfiles,
-the frontend package/lockfile and Tauri configuration together. It does not stage, commit, tag, push, or publish. It rejects malformed
+Replace `patch` with `minor` or `major` as appropriate. The helper updates VERSION and all local Cargo package manifests and lockfiles
+together, including the standalone Qt crate. It does not stage, commit, tag, push, or publish. It rejects malformed
 versions, including four components and leading zeros. Paths resolve from the
 helper, so invoking it from another directory still targets this repository.
 The preview validates all metadata inputs and lists every version file it would
