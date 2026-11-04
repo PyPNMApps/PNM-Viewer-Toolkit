@@ -1,0 +1,51 @@
+# Copyright 2026 PNM Viewer contributors
+# SPDX-License-Identifier: Apache-2.0
+name: CLI build
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: '1'
+
+jobs:
+  build:
+    name: CLI build / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15, macos-15-intel]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Load pinned toolchain
+        run: rustup show
+      - name: Build release decoder
+        run: cargo build --release --locked -p pnm-decode
+      - name: Smoke-test release decoder
+        run: |
+          binary=target/release/pnm-decode
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            binary="${binary}.exe"
+          fi
+          "$binary" --version
+          "$binary" --help
+          "$binary" tests/fixtures/pypnm/tests/files/rxmer.bin --output "$RUNNER_TEMP/rxmer.json"
+          test -s "$RUNNER_TEMP/rxmer.json"

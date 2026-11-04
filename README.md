@@ -1,5 +1,12 @@
 # PNM Viewer Toolkit
 
+[![CLI build](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/cli-build.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/cli-build.yml)
+[![Tests](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/tests.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/tests.yml)
+[![Code checks](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ci.yml)
+[![Rust 1.85.1](https://img.shields.io/badge/Rust-1.85.1-orange?logo=rust)](rust-toolchain.toml)
+[![Status: in development](https://img.shields.io/badge/status-in_development-yellow)](docs/development/ui.md)
+[![Component licenses](https://img.shields.io/badge/license-Apache--2.0%20%2F%20GPL--3.0--only-blue)](LICENSE)
+
 An offline desktop viewer for DOCSIS Proactive Network Maintenance (PNM) capture
 files, with a Rust backend and a planned Tauri 2 + React/TypeScript interface.
 The repository is `PNM-Viewer-Toolkit`; the standalone CLI is `pnm-decode`.

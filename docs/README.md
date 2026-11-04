@@ -19,6 +19,7 @@ application or published cross-platform download is available yet.
 - [Desktop UI roadmap](development/ui.md)
 - [Planned UI IPC and optional retrieval](development/api-contract.md)
 - [Git workflow](development/git.md)
+- [Continuous integration](development/ci.md)
 
 ## Release and background
 
