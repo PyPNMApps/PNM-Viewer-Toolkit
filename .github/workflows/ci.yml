@@ -6,7 +6,17 @@ on:
     branches: [main, master]
   pull_request:
   workflow_dispatch:
+    inputs:
+      run_native_checks:
+        description: Run the preserved full native platform matrix
+        type: boolean
+        default: true
   workflow_call:
+    inputs:
+      run_native_checks:
+        description: Run the full native platform matrix
+        type: boolean
+        default: false
 permissions:
   contents: read
   security-events: write
@@ -50,6 +60,8 @@ jobs:
           for script in scripts/*.sh tools/git/*.sh tools/bump-version.sh; do bash -n "$script"; done
           shellcheck install.sh scripts/*.sh tools/git/*.sh tools/bump-version.sh
   native:
+    # Temporary Ubuntu-only delivery: full matrix is explicit/manual.
+    if: inputs.run_native_checks == true
     needs: [codeql, quality]
     uses: ./.github/workflows/native-checks.yml
   required:
@@ -60,8 +72,15 @@ jobs:
     steps:
       - name: Require every stage to succeed
         env:
-          RESULTS: ${{ join(needs.*.result, ',') }}
+          CODEQL_RESULT: ${{ needs.codeql.result }}
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          NATIVE_RESULT: ${{ needs.native.result }}
+          RUN_NATIVE: ${{ inputs.run_native_checks == true }}
         run: |
-          for result in ${RESULTS//,/ }; do
-            test "$result" = success || exit 1
-          done
+          test "$CODEQL_RESULT" = success
+          test "$QUALITY_RESULT" = success
+          if [[ "$RUN_NATIVE" == true ]]; then
+            test "$NATIVE_RESULT" = success
+          else
+            test "$NATIVE_RESULT" = skipped
+          fi

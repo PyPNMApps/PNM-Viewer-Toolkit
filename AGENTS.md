@@ -121,3 +121,12 @@ local builds do not authorize system installation or publication.
 
 Qt setup and validation: docs/development/qt.md. Run scripts/qt-desktop.sh check
 for Qt changes and capture-layer changes.
+
+## Temporary Ubuntu-only CI mode
+
+User instruction on 2026-11-04 pauses automatic multi-OS execution. Preserve
+full matrices and package/lifecycle/draft gates for explicit manual runs, while
+master/PR runs keep CodeQL/static checks and v* tags use ubuntu-deb-temp.yml.
+That workflow validates and builds/tests Ubuntu 22.04 development artifacts only,
+without a GitHub release. A temporary green CI result is not full OS validation.
+See docs/release/ubuntu-deb-testing.md before restoring automatic scheduling.

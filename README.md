@@ -9,11 +9,14 @@
 </p>
 
 [![CI](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ci.yml)
-[![Native packages](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/release.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/release.yml)
-[![Ubuntu matrix](https://img.shields.io/badge/Ubuntu-22.04%20%7C%2024.04%20%7C%2026.04-E95420?logo=ubuntu)](docs/development/ci.md)
-[![Windows matrix](https://img.shields.io/badge/Windows-x64-0078D4)](docs/development/ci.md)
-[![macOS matrix](https://img.shields.io/badge/macOS-Apple%20Silicon%20%7C%20Intel-555555?logo=apple)](docs/development/ci.md)
+[![Ubuntu 22.04 DEB](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ubuntu-deb-temp.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ubuntu-deb-temp.yml)
+[![Ubuntu matrix](https://img.shields.io/badge/Ubuntu-22.04%20DEB-E95420?logo=ubuntu)](docs/development/ci.md)
+[![Windows matrix](https://img.shields.io/badge/Windows-x64%20manual-0078D4)](docs/development/ci.md)
+[![macOS matrix](https://img.shields.io/badge/macOS-Apple%20Silicon%20%7C%20Intel%20manual-555555?logo=apple)](docs/development/ci.md)
 [![Component licenses](https://img.shields.io/badge/license-Apache--2.0%20%2F%20GPL--3.0--only-blue)](LICENSE)
+
+Temporary delivery: tags build Ubuntu 22.04 test DEBs only; the full OS matrix
+is manual-only. [Download and test the artifacts](docs/release/ubuntu-deb-testing.md).
 
 An offline desktop viewer for DOCSIS PNM capture files. Open a capture, explore
 its graph, and export decoded JSON. The native Qt interface uses a Rust backend.

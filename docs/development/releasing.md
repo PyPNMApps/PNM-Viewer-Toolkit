@@ -3,6 +3,16 @@
 [Developer index](README.md) · [Version rules](../release/versioning.md) ·
 [Native packages](../release/packaging.md)
 
+## Temporary tag delivery
+
+Tag push commands are unchanged. They currently trigger only the
+[Ubuntu 22.04 development workflow](../../.github/workflows/ubuntu-deb-temp.yml)
+and produce downloadable Actions artifacts after Ubuntu checks/lifecycle tests.
+They do not create a draft or public release. See
+[DEB installation and upgrade testing](../release/ubuntu-deb-testing.md).
+The preserved full package workflow is manual-only against a selected tag;
+its complete multi-OS gates remain mandatory if explicitly run.
+
 ## Version ownership
 
 The tracked root `VERSION` is authoritative for the CLI, Qt viewer and reusable

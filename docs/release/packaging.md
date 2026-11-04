@@ -3,10 +3,12 @@
 [CI and release ordering](../development/ci.md) · [Versioning](versioning.md)
 
 The project remains **under development**. Tag automation builds development
-packages and creates a draft release only after native checks pass. Public
+packages. Temporarily, tag pushes create Ubuntu 22.04-only workflow artifacts;
+see [DEB testing](ubuntu-deb-testing.md). The preserved full multi-OS workflow is
+manual-only and creates a draft release only after its full native checks pass. Public
 publication, external signing and Apple notarization are separate actions.
 
-## Outputs
+## Preserved native outputs
 
 | Native builder | Viewer | Standalone CLI |
 | --- | --- | --- |

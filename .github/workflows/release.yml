@@ -1,9 +1,9 @@
 # Copyright 2026 PNM Viewer contributors
 # SPDX-License-Identifier: Apache-2.0
-name: Native packages
+name: Native packages (manual full matrix)
 on:
-  push:
-    tags: ['v*']
+  # Temporary: tag pushes use ubuntu-deb-temp.yml instead.
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
@@ -22,6 +22,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
+          test "$GITHUB_REF_TYPE" = tag
           python3 tools/release/versions.py --tag "$RELEASE_TAG"
           git merge-base --is-ancestor "$GITHUB_SHA" origin/master
   validate:
@@ -30,6 +31,8 @@ jobs:
       contents: read
       security-events: write
     uses: ./.github/workflows/ci.yml
+    with:
+      run_native_checks: true
   package:
     name: Package / ${{ matrix.os }}
     needs: validate

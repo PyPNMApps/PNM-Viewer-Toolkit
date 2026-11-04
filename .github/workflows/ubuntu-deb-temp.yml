@@ -1,0 +1,111 @@
+# Copyright 2026 PNM Viewer contributors
+# SPDX-License-Identifier: Apache-2.0
+# Temporary Ubuntu-only development artifacts; never a full release gate.
+name: Ubuntu 22.04 DEB (temporary)
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency:
+  group: ubuntu-deb-temp-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  tag:
+    name: Validate development tag
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require matching version and master ancestry
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python3 tools/release/versions.py --tag "$RELEASE_TAG"
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/master
+  code-checks:
+    needs: tag
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/ci.yml
+    with:
+      run_native_checks: false
+  deb:
+    name: Build and test Ubuntu 22.04 DEBs
+    needs: code-checks
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install build and lifecycle prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake python3-venv shellcheck patchelf xvfb xauth libgl1-mesa-dev libegl1 libopengl0 libdbus-1-3 libfontconfig1 libfreetype6 libx11-xcb1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-randr0 libxcb-xfixes0 libxcb-sync1 libxcb-render0 libsm6 libice6 libgtk-3-0 libb2-1
+      - name: Load pinned Rust toolchain
+        run: rustup show
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: native-package
+          key: ubuntu-22.04-qt-${{ hashFiles('scripts/qt-sdk.py') }}
+          workspaces: |
+            . -> target
+            apps/qt -> target
+          cache-bin: false
+      - name: Cache pinned native Qt SDK
+        uses: actions/cache@v4
+        with:
+          path: local/qt
+          key: qt-sdk-ubuntu-22.04-${{ runner.arch }}-${{ hashFiles('scripts/qt-sdk.py') }}
+      - name: Prepare pinned native Qt SDK
+        run: python scripts/qt-sdk.py setup
+      - name: Run workspace, CLI, tooling and native Qt checks
+        run: |
+          set -o pipefail
+          bash scripts/check-before-push.sh 2>&1 | tee checks.log
+      - name: Build packages with checksums and size gates
+        run: python scripts/release/build.py --output dist/release
+      - name: Verify package bytes
+        run: python scripts/release/verify.py --packages dist/release
+      - name: Test installed Ubuntu 22.04 packages
+        run: |
+          set -o pipefail
+          xvfb-run -a python scripts/release/test-installed.py --packages dist/release --ci-disposable-host 2>&1 | tee lifecycle.log
+      - name: Retain verified development packages
+        uses: actions/upload-artifact@v6
+        with:
+          name: ubuntu-22.04-deb-${{ github.ref_name }}
+          path: dist/release/*
+          if-no-files-found: error
+          retention-days: 30
+      - name: Retain test and build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ubuntu-22.04-diagnostics-${{ github.ref_name }}
+          path: |
+            checks.log
+            lifecycle.log
+            local/qt-test-results/
+            dist/release/*.json
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Explain temporary artifact scope
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          {
+            echo '### Ubuntu 22.04 development packages'
+            echo "Tag: $RELEASE_TAG"
+            echo 'Download the ubuntu-22.04-deb artifact for the paired viewer and CLI DEBs, checksums and build metadata.'
+            echo 'Only Ubuntu 22.04 was built and tested. This workflow does not create or publish a GitHub release.'
+            echo 'Installed smoke tests cover installation, viewing/export and removal. Upgrade from an older package remains a separate test.'
+          } >> "$GITHUB_STEP_SUMMARY"

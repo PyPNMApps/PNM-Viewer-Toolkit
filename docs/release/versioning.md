@@ -53,8 +53,9 @@ Do not manually bump before a combined bump mode. For an already prepared
 version or a failed upload, use `--tag vMAJOR.MINOR.PATCH` with its matching
 existing tag at HEAD. See [release preparation](../development/releasing.md)
 for first-tag instructions, no-op behavior and recovery without a second bump.
-Never overwrite tags. The tag workflow repeats native checks and prepares a
-**draft** release; public publication remains separate.
+Never overwrite tags. Temporary tag delivery runs Ubuntu 22.04 checks and uploads test-package
+artifacts, without creating a GitHub release. The full multi-OS workflow is
+manual-only; see [DEB testing](ubuntu-deb-testing.md).
 
 Run `python3 tools/release/versions.py` to detect version drift; do not edit
 individual application versions independently.

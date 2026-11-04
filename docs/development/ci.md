@@ -2,10 +2,41 @@
 
 [Documentation index](../README.md) · [Native packaging](../release/packaging.md)
 
-## Master and pull requests
+## Temporary Ubuntu-only delivery
+
+By user request, automatic multi-OS runs are paused while Ubuntu DEBs are tested.
+[Ubuntu 22.04 DEB (temporary)](../../.github/workflows/ubuntu-deb-temp.yml) runs
+only on pushed `v*` tags. It validates VERSION and master ancestry, requires
+CodeQL/static checks, runs the complete local gate on Ubuntu 22.04, builds both
+viewer/CLI DEBs with existing size/checksum gates, and tests installed packages
+on a disposable Ubuntu 22.04 host. Successful packages are retained as workflow
+artifacts for 30 days, not attached to a GitHub release. Diagnostics last 14 days.
+See [artifact installation and upgrade testing](../release/ubuntu-deb-testing.md).
+
+Master/PR CI still runs CodeQL and static checks automatically. The full native
+matrix requires `run_native_checks: true`: this is the default for manual CI,
+but false for reusable calls and absent on ordinary pushes/PRs. Required checks
+explicitly expect the native job to be skipped in this temporary automatic mode;
+failed/canceled code checks still fail. In full mode, every native result must
+succeed. A green automatic CI badge therefore does **not** certify all OSes.
+
+The original full package workflow is preserved with a manual trigger only.
+Run it against an existing matching tag to explicitly request full validation;
+it passes `run_native_checks: true` and retains every original packaging/lifecycle
+and draft-release gate. The temporary workflow never invokes it.
+
+The [investigated run](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/41934494719)
+passed all three Ubuntu native jobs. Windows failed the pre-EQ label-width QML
+test; both macOS targets failed chart interaction/rendering tests. Those failures
+remain unresolved and are not relabeled as passing. Restore normal scheduling
+only after the platform issues are addressed: restore the full release tag
+trigger, re-enable automatic native CI, and remove the temporary workflow.
+
+## Preserved full CI mode
 
 [CI](../../.github/workflows/ci.yml) runs on pushes to `master`/`main`, pull
-requests, manual dispatch, and reusable calls from the tag workflow.
+requests, manual dispatch, and reusable calls. Automatic runs currently use
+the reduced scope above; the diagram below describes explicit full mode.
 
 ```text
 CodeQL + code checks
@@ -25,7 +56,7 @@ CodeQL analysis uploads findings to code scanning; it does not by itself mean
 there are no alerts. Configure repository code-scanning rules to block findings
 at the desired severity.
 
-All native matrices require:
+When full native mode is explicitly enabled, its matrix requires:
 
 | Runner | Architecture |
 | --- | --- |
@@ -46,7 +77,9 @@ so one failure does not hide results from other platforms.
 Its six jobs start only after CodeQL and code checks pass. Tests, release CLI
 build/smoke and desktop checks share one runner per platform. This replaces the
 three separate six-platform matrices, reducing hosted runner allocations from
-18 to six while retaining every check on every platform. A failed, canceled or skipped stage makes **Required checks** fail.
+18 to six while retaining every check on every platform. In full mode, a failed,
+canceled or skipped stage makes **Required checks** fail. The temporary automatic
+mode accepts only the deliberately skipped native job; CodeQL/quality must pass.
 
 In GitHub repository settings, protect `master` with the **Required checks**
 status and require the branch to be current before merging. Workflow files
@@ -106,8 +139,8 @@ still run for the current commit.
 
 Cold runs and cache evictions still require full downloads/builds. CodeQL remains
 before the matrix. No fixed runtime is promised: GitHub runner queue time and
-macOS availability are outside this repository's control. The Required checks
-job continues to reject failures, skipped jobs and cancellations.
+macOS availability are outside this repository's control. Full-mode Required checks continue to reject native failures, skips and
+cancellations; temporary automatic mode follows the explicit scope above.
 
 The [v0.1.1 run](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/41914986990)
 failed because its macOS ARM desktop job never acquired a hosted runner. GitHub
@@ -120,8 +153,8 @@ an existing release tag to apply these optimizations.
 
 ## Tags
 
-[Native packages](../../.github/workflows/release.yml) runs only for pushed `v*`
-tags. It first requires exact `vMAJOR.MINOR.PATCH` agreement with VERSION and every
+[Native packages](../../.github/workflows/release.yml) is currently manual-only
+and requires a selected `v*` tag. Its preserved full delivery flow follows. It first requires exact `vMAJOR.MINOR.PATCH` agreement with VERSION and every
 manifest/lockfile, plus tag-commit ancestry in `origin/master`. It calls the same
 CI workflow on that exact tagged commit, then builds packages on native runners.
 
@@ -139,7 +172,7 @@ signing or notarization. Failed packages, missing targets and packages above
 
 ## Evidence and badges
 
-README CI and package badges show actual workflow state. Platform badges describe
+README CI and temporary-DEB badges show their actual workflow state. Platform badges describe
 the required matrix, not passing results. A configured runner is not evidence of
 a successful hosted run; inspect the first run after pushing these changes.
 The linked run completed native build/test checks on all three Ubuntu versions,
