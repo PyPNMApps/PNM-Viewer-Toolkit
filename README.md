@@ -39,7 +39,7 @@ The current viewer supports:
 | DS Channel Estimation | Magnitude, group delay and I/Q density |
 | Histogram | Hit counts by bin index |
 | FEC Summary | Per-profile interval codewords over UTC time |
-| Constellation Display | Measured I/Q scatter and ideal QAM overlay |
+| Constellation Display | Soft/hard decisions and symbol boundaries |
 | Modulation Profile | Ideal Shannon minimum MER and bit loading by frequency |
 
 Choose System, Dark or Light appearance. Drag across a graph to zoom and

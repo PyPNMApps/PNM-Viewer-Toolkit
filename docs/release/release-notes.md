@@ -36,3 +36,8 @@ Constellation Display is available in the Qt viewer with measured/ideal overlays
 layer toggles and coordinate zoom. Preserved PyPNM QAM resources compile into
 static Rust lookup tables; runtime viewing needs no table files or database.
 Core/CLI JSON now includes shared reference analysis while preserving measured I/Q.
+
+The constellation viewer now labels the layers Soft decisions and Hard decisions,
+adds independently controlled nearest-symbol boundaries, and removes numeric
+axis scales. Rust compiles square-QAM midpoint grids and cross-QAM diagonal
+boundaries into the same reference data shared by CLI and desktop JSON.

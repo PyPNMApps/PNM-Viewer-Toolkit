@@ -10,15 +10,17 @@ ColumnLayout {
     id: chart
     required property Theme theme
     property var constellation: ({})
-    property bool showMeasured: true
-    property bool showIdeal: true
+    property bool showSoft: true
+    property bool showHard: true
+    property bool showBoundaries: true
     readonly property color referenceColor: theme.dark ? "#fb7185" : "#b42345"
     signal boundsRequested(real firstI, real lastI, real firstQ, real lastQ)
     signal resetRequested()
     spacing: 6
     onConstellationChanged: plot.requestPaint()
-    onShowMeasuredChanged: plot.requestPaint()
-    onShowIdealChanged: plot.requestPaint()
+    onShowSoftChanged: plot.requestPaint()
+    onShowHardChanged: plot.requestPaint()
+    onShowBoundariesChanged: plot.requestPaint()
     Connections {
         target: chart.theme
         function onDarkChanged() { plot.requestPaint() }
@@ -26,23 +28,36 @@ ColumnLayout {
     RowLayout {
         spacing: 6
         MeasurementToggle {
-            objectName: "constellationMeasuredToggle"
-            text: "Measured"
-            Accessible.name: "Show measured constellation"
+            objectName: "constellationSoftToggle"
+            text: "Soft decisions"
+            Accessible.name: "Show soft decisions"
             theme: chart.theme
+            implicitWidth: 164
             traceColor: chart.theme.accent
-            checked: chart.showMeasured
-            onClicked: chart.showMeasured = !chart.showMeasured
+            checked: chart.showSoft
+            onClicked: chart.showSoft = !chart.showSoft
         }
         MeasurementToggle {
-            objectName: "constellationIdealToggle"
-            text: "Ideal"
-            Accessible.name: "Show ideal constellation"
+            objectName: "constellationHardToggle"
+            text: "Hard decisions"
+            Accessible.name: "Show hard decisions"
             theme: chart.theme
+            implicitWidth: 164
             traceColor: chart.referenceColor
-            checked: chart.showIdeal
+            checked: chart.showHard
             enabled: chart.constellation.reference_available === true
-            onClicked: chart.showIdeal = !chart.showIdeal
+            onClicked: chart.showHard = !chart.showHard
+        }
+        MeasurementToggle {
+            objectName: "constellationBoundaryToggle"
+            text: "Decision boundaries"
+            Accessible.name: "Show decision boundaries"
+            theme: chart.theme
+            implicitWidth: 164
+            traceColor: chart.theme.muted
+            checked: chart.showBoundaries
+            enabled: chart.constellation.reference_available === true
+            onClicked: chart.showBoundaries = !chart.showBoundaries
         }
         Item { Layout.fillWidth: true }
     }
@@ -56,9 +71,9 @@ ColumnLayout {
             anchors.centerIn: parent
             width: Math.max(0, Math.min(parent.width, parent.height))
             height: width
-            readonly property real leftMargin: 58
-            readonly property real topMargin: 14
-            readonly property real plotSize: Math.max(0, width - 80)
+            readonly property real leftMargin: 12
+            readonly property real topMargin: 12
+            readonly property real plotSize: Math.max(0, width - 24)
             Accessible.role: Accessible.Graphic
             Accessible.name: "Constellation I/Q; drag to zoom, double-click to reset"
             onWidthChanged: requestPaint()
@@ -85,37 +100,41 @@ ColumnLayout {
                 }
                 context.font = "11px sans-serif"
                 context.lineWidth = 1
-                for (let tick = 0; tick <= 4; tick++) {
-                    const fraction = tick / 4
-                    const horizontal = leftMargin + fraction * plotSize
-                    const vertical = topMargin + fraction * plotSize
-                    context.strokeStyle = chart.theme.line
-                    context.beginPath()
-                    context.moveTo(horizontal, topMargin)
-                    context.lineTo(horizontal, topMargin + plotSize)
-                    context.moveTo(leftMargin, vertical)
-                    context.lineTo(leftMargin + plotSize, vertical)
-                    context.stroke()
-                    context.fillStyle = chart.theme.muted
-                    context.textAlign = "center"
-                    context.fillText((bounds.minimum_i + fraction * (bounds.maximum_i - bounds.minimum_i)).toFixed(3), horizontal, topMargin + plotSize + 20)
-                    context.textAlign = "right"
-                    context.fillText((bounds.maximum_q - fraction * (bounds.maximum_q - bounds.minimum_q)).toFixed(3), leftMargin - 8, vertical + 4)
+                // Boundary geometry is computed and clipped in Rust; QML only maps it to pixels.
+                if (chart.showBoundaries) {
+                    context.strokeStyle = chart.theme.muted
+                    context.globalAlpha = 0.4
+                    context.lineWidth = 1
+                    for (const segment of (chart.constellation.decision_boundaries || [])) {
+                        context.beginPath()
+                        for (let endpoint = 0; endpoint < 2; endpoint++) {
+                            const point = segment[endpoint]
+                            const horizontal = leftMargin + (point[0] - bounds.minimum_i) / (bounds.maximum_i - bounds.minimum_i) * plotSize
+                            const vertical = topMargin + plotSize - (point[1] - bounds.minimum_q) / (bounds.maximum_q - bounds.minimum_q) * plotSize
+                            if (endpoint === 0) {
+                                context.moveTo(horizontal, vertical)
+                            } else {
+                                context.lineTo(horizontal, vertical)
+                            }
+                        }
+                        context.stroke()
+                    }
+                    context.globalAlpha = 1
                 }
                 const layers = [
-                    {points: chart.constellation.measured || [], visible: chart.showMeasured, ideal: false, color: chart.theme.accent},
-                    {points: chart.constellation.ideal || [], visible: chart.showIdeal, ideal: true, color: chart.referenceColor}
+                    {points: chart.constellation.soft_decisions || [], visible: chart.showSoft, hard: false, color: chart.theme.accent},
+                    {points: chart.constellation.hard_decisions || [], visible: chart.showHard, hard: true, color: chart.referenceColor}
                 ]
                 for (const layer of layers) {
                     if (!layer.visible) { continue }
                     context.strokeStyle = layer.color
                     context.fillStyle = layer.color
-                    context.globalAlpha = layer.ideal ? 1 : 0.75
+                    context.globalAlpha = layer.hard ? 1 : 0.75
                     for (const point of layer.points) {
                         const horizontal = leftMargin + (point[0] - bounds.minimum_i) / (bounds.maximum_i - bounds.minimum_i) * plotSize
                         const vertical = topMargin + plotSize - (point[1] - bounds.minimum_q) / (bounds.maximum_q - bounds.minimum_q) * plotSize
                         context.beginPath()
-                        if (layer.ideal) {
+                        if (layer.hard) {
                             context.moveTo(horizontal - 3, vertical)
                             context.lineTo(horizontal + 3, vertical)
                             context.moveTo(horizontal, vertical - 3)
@@ -130,13 +149,7 @@ ColumnLayout {
                 context.globalAlpha = 1
                 context.fillStyle = chart.theme.muted
                 context.textAlign = "center"
-                context.fillText("In-phase (I)", leftMargin + plotSize / 2, topMargin + plotSize + 44)
-                context.save()
-                context.translate(12, topMargin + plotSize / 2)
-                context.rotate(-Math.PI / 2)
-                context.fillText("Quadrature (Q)", 0, 0)
-                context.restore()
-                if ((chart.constellation.measured_visible || 0) === 0 && (chart.constellation.ideal_visible || 0) === 0) {
+                if ((chart.constellation.soft_visible || 0) === 0 && (chart.constellation.hard_visible || 0) === 0) {
                     context.fillText("No points in this region", leftMargin + plotSize / 2, topMargin + plotSize / 2)
                 }
             }
@@ -194,7 +207,7 @@ ColumnLayout {
         }
     }
     Label {
-        text: (chart.constellation.measured_label || "") + "    ·    " + (chart.constellation.ideal_label || "")
+        text: (chart.constellation.soft_label || "") + "    ·    " + (chart.constellation.hard_label || "")
         color: chart.theme.muted
         font.pixelSize: 11
         Layout.fillWidth: true

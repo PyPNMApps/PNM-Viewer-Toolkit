@@ -137,7 +137,8 @@ metric and carrier visibility selections do not remove profiles from JSON.
 
 `const_display.bin` is detected automatically. Its normal JSON output includes
 all measured `iq` pairs unchanged and `constellation_analysis.reference` with
-the normalized ideal QAM points, bit loading and scaling multiplier. Unknown
+the normalized hard-reference QAM points, bit loading, scaling multiplier and
+nearest-reference `decision_boundaries`. Soft samples are not rescaled. Unknown
 modulation retains the samples and exports a null reference. No extra CLI flag
 is needed. See the [complete JSON example](examples/constellation.json) and
 [reference contract](../reference/formats.md#constellation-display-reference-analysis).

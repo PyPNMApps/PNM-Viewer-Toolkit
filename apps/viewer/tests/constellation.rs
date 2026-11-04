@@ -19,11 +19,21 @@ fn fixture_has_equal_axes_and_bounded_measured_ideal_overlay() {
         .iter()
         .any(|chip| chip.title == "QAM" && chip.value == "256-QAM"));
     let plot = capture.chart_range(0, 8192).unwrap().constellation.unwrap();
-    assert!(plot.measured.len() + plot.ideal.len() <= MAX_VIEW_SAMPLES);
-    assert_eq!((plot.measured_total, plot.measured_visible), (8192, 8192));
-    assert_eq!((plot.ideal_total, plot.ideal_visible), (256, 256));
-    assert_eq!(plot.measured[0], [0.376953125, -1.15625]);
-    assert_eq!(*plot.measured.last().unwrap(), [1.146484375, 0.0859375]);
+    assert!(plot.soft_decisions.len() + plot.hard_decisions.len() <= MAX_VIEW_SAMPLES);
+    assert_eq!(plot.decision_boundaries.len(), 30);
+    for edge in &plot.decision_boundaries {
+        for point in edge {
+            assert!(point[0] >= plot.bounds.minimum_i && point[0] <= plot.bounds.maximum_i);
+            assert!(point[1] >= plot.bounds.minimum_q && point[1] <= plot.bounds.maximum_q);
+        }
+    }
+    assert_eq!((plot.soft_total, plot.soft_visible), (8192, 8192));
+    assert_eq!((plot.hard_total, plot.hard_visible), (256, 256));
+    assert_eq!(plot.soft_decisions[0], [0.376953125, -1.15625]);
+    assert_eq!(
+        *plot.soft_decisions.last().unwrap(),
+        [1.146484375, 0.0859375]
+    );
     assert_eq!(plot.bounds.minimum_i, plot.bounds.minimum_q);
     assert_eq!(plot.bounds.maximum_i, plot.bounds.maximum_q);
     assert!(capture.chart_range(1, 8191).is_err());
@@ -51,11 +61,11 @@ fn zoom_filters_in_rust_and_restores_exact_detail_for_dense_qam() {
         .unwrap()
         .constellation
         .unwrap();
-    assert_eq!(plot.ideal_total, 16384);
-    assert_eq!(plot.ideal_visible, 100);
-    assert_eq!(plot.ideal.len(), 100);
-    assert!(plot.measured_visible < 8192);
-    for point in plot.measured.iter().chain(plot.ideal.iter()) {
+    assert_eq!(plot.hard_total, 16384);
+    assert_eq!(plot.hard_visible, 100);
+    assert_eq!(plot.hard_decisions.len(), 100);
+    assert!(plot.soft_visible < 8192);
+    for point in plot.soft_decisions.iter().chain(plot.hard_decisions.iter()) {
         assert!(point.iter().all(|value| value.abs() <= 0.1));
     }
     let reversed = IqBounds {
@@ -86,15 +96,16 @@ fn zoom_filters_in_rust_and_restores_exact_detail_for_dense_qam() {
         .unwrap()
         .constellation
         .unwrap();
-    assert!(empty.measured.is_empty() && empty.ideal.is_empty());
+    assert!(empty.soft_decisions.is_empty() && empty.hard_decisions.is_empty());
 }
 #[test]
 fn unknown_modulation_empty_samples_and_invalid_bounds_remain_explicit() {
     let capture = capture(u16::MAX);
     let plot = capture.chart_range(0, 8192).unwrap().constellation.unwrap();
     assert!(!plot.reference_available);
-    assert!(plot.ideal.is_empty());
-    assert_eq!(plot.measured_total, 8192);
+    assert!(plot.decision_boundaries.is_empty());
+    assert!(plot.hard_decisions.is_empty());
+    assert_eq!(plot.soft_total, 8192);
     for bounds in [
         IqBounds {
             minimum_i: f64::NAN,
@@ -122,7 +133,7 @@ fn unknown_modulation_empty_samples_and_invalid_bounds_remain_explicit() {
     bytes[26..30].fill(0);
     let empty = Capture::from_bytes(bytes, "empty.bin".into()).unwrap();
     let plot = empty.chart_range(0, 0).unwrap().constellation.unwrap();
-    assert_eq!(plot.measured_total, 0);
-    assert!(plot.measured.is_empty());
-    assert_eq!(plot.ideal_total, 256);
+    assert_eq!(plot.soft_total, 0);
+    assert!(plot.soft_decisions.is_empty());
+    assert_eq!(plot.hard_total, 256);
 }

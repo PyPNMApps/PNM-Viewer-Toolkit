@@ -2,7 +2,7 @@
  * Copyright 2026 PNM Viewer contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
-//! Bounded measured/ideal I/Q overlays; scientific normalization stays in core.
+//! Bounded soft_decisions/hard_decisions I/Q overlays; scientific normalization stays in core.
 use crate::{
     chart::{ChartMetadata, ChartViewport, Chip},
     Capture, Diagnostic, MAX_VIEW_SAMPLES,
@@ -90,15 +90,16 @@ impl IqBounds {
 #[derive(Serialize)]
 pub struct ConstellationViewport {
     pub bounds: IqBounds,
-    pub measured: Vec<IqPair>,
-    pub ideal: Vec<IqPair>,
-    pub measured_total: usize,
-    pub ideal_total: usize,
-    pub measured_visible: usize,
-    pub ideal_visible: usize,
+    pub soft_decisions: Vec<IqPair>,
+    pub hard_decisions: Vec<IqPair>,
+    pub soft_total: usize,
+    pub hard_total: usize,
+    pub soft_visible: usize,
+    pub hard_visible: usize,
     pub reference_available: bool,
-    pub measured_label: String,
-    pub ideal_label: String,
+    pub decision_boundaries: Vec<[IqPair; 2]>,
+    pub soft_label: String,
+    pub hard_label: String,
 }
 
 /// Builds compact constellation identification without copying sample arrays.
@@ -151,8 +152,8 @@ fn bounded(points: &[IqPair]) -> Vec<IqPair> {
 
 /// Filters and bounds both layers using one Rust-owned square coordinate window.
 /// # Arguments
-/// * `capture` - Original measured samples, with no second normalization.
-/// * `requested` - Optional drag/wheel bounds; None fits measured and ideal data.
+/// * `capture` - Original soft_decisions samples, with no second normalization.
+/// * `requested` - Optional drag/wheel bounds; None fits soft_decisions and hard_decisions data.
 /// # Returns
 /// At most MAX_VIEW_SAMPLES combined points, exact counts and a shared equal scale.
 /// Empty and unknown-modulation captures remain viewable without invented points.
@@ -162,8 +163,8 @@ pub(crate) fn viewport(
     capture: &CmDsConstDispMeas<'_>,
     requested: Option<IqBounds>,
 ) -> Result<ChartViewport, Diagnostic> {
-    let measured: Vec<_> = capture.iq().flatten().collect();
-    let ideal = capture
+    let soft_decisions: Vec<_> = capture.iq().flatten().collect();
+    let hard_decisions = capture
         .constellation_analysis
         .reference
         .map(|reference| reference.iq)
@@ -171,9 +172,9 @@ pub(crate) fn viewport(
     let bounds = if let Some(bounds) = requested {
         bounds.square()?
     } else {
-        let extent = measured
+        let extent = soft_decisions
             .iter()
-            .chain(ideal.iter())
+            .chain(hard_decisions.iter())
             .flat_map(|pair| pair.iter())
             .fold(0.0_f64, |extent, value| extent.max(value.abs()));
         let extent = if extent > 0.0 {
@@ -188,54 +189,71 @@ pub(crate) fn viewport(
             maximum_q: extent,
         }
     };
-    let visible_measured: Vec<_> = measured
+    let visible_soft: Vec<_> = soft_decisions
         .iter()
         .copied()
         .filter(|pair| bounds.contains(pair))
         .collect();
-    let visible_ideal: Vec<_> = ideal
+    let visible_hard: Vec<_> = hard_decisions
         .iter()
         .copied()
         .filter(|pair| bounds.contains(pair))
         .collect();
-    let measured_points = bounded(&visible_measured);
-    let ideal_points = bounded(&visible_ideal);
-    let measured_label = format!(
-        "Measured: {} of {} visible · {} total",
-        measured_points.len(),
-        visible_measured.len(),
-        measured.len()
+    let soft_points = bounded(&visible_soft);
+    let hard_points = bounded(&visible_hard);
+    let soft_label = format!(
+        "Soft decisions: {} of {} visible · {} total",
+        soft_points.len(),
+        visible_soft.len(),
+        soft_decisions.len()
     );
-    let ideal_label = if capture.constellation_analysis.reference.is_some() {
+    let hard_label = if capture.constellation_analysis.reference.is_some() {
         format!(
-            "Ideal: {} of {} visible · {} total",
-            ideal_points.len(),
-            visible_ideal.len(),
-            ideal.len()
+            "Hard decisions: {} of {} visible · {} total",
+            hard_points.len(),
+            visible_hard.len(),
+            hard_decisions.len()
         )
     } else {
-        "Ideal reference unavailable for this modulation".into()
+        "Hard-decision reference unavailable for this modulation".into()
     };
+    let decision_boundaries = capture
+        .constellation_analysis
+        .reference
+        .map(|reference| {
+            reference
+                .decision_boundaries
+                .iter()
+                .filter_map(|boundary| {
+                    boundary.clipped(
+                        [bounds.minimum_i, bounds.minimum_q],
+                        [bounds.maximum_i, bounds.maximum_q],
+                    )
+                })
+                .collect()
+        })
+        .unwrap_or_default();
     Ok(ChartViewport {
         constellation: Some(ConstellationViewport {
             bounds,
-            measured: measured_points,
-            ideal: ideal_points,
-            measured_total: measured.len(),
-            ideal_total: ideal.len(),
-            measured_visible: visible_measured.len(),
-            ideal_visible: visible_ideal.len(),
+            soft_decisions: soft_points,
+            hard_decisions: hard_points,
+            soft_total: soft_decisions.len(),
+            hard_total: hard_decisions.len(),
+            soft_visible: visible_soft.len(),
+            hard_visible: visible_hard.len(),
             reference_available: capture.constellation_analysis.reference.is_some(),
-            measured_label,
-            ideal_label,
+            decision_boundaries,
+            soft_label,
+            hard_label,
         }),
         modulation_profiles: None,
         fec_summary: None,
         histogram: None,
         iq_density: None,
         start: 0,
-        count: measured.len(),
-        total: measured.len(),
+        count: soft_decisions.len(),
+        total: soft_decisions.len(),
         points: vec![],
     })
 }

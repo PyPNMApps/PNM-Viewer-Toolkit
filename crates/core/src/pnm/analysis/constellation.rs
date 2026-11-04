@@ -13,6 +13,7 @@ use serde::Serialize;
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ConstellationAnalysis {
     pub reference: Option<&'static QamReference>,
+    pub decision_rule: &'static str,
     pub normalization: &'static str,
     pub soft_samples_rescaled: bool,
 }
@@ -25,6 +26,7 @@ impl ConstellationAnalysis {
     pub fn from_modulation_type(modulation_type: ConstellationModulationOrder) -> Self {
         Self {
             reference: reference_for_modulation_type(modulation_type),
+            decision_rule: "nearest_reference_euclidean",
             normalization: "unit_average_symbol_power",
             soft_samples_rescaled: false,
         }

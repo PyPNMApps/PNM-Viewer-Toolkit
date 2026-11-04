@@ -4,6 +4,7 @@
  */
 //! Reusable DSP calculations, independent of parsers, JSON and desktop APIs.
 pub mod channel_response;
+pub mod decision_boundary;
 pub mod ofdm;
 pub mod qam;
 pub mod shannon;

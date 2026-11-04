@@ -5,6 +5,9 @@
 //! Validate preserved PyPNM resources and embed normalized QAM tables at build time.
 use std::{collections::BTreeSet, env, fmt::Write, fs, path::PathBuf};
 
+#[path = "build/qam_boundaries.rs"]
+mod qam_boundaries;
+
 const SUPPORTED_ORDERS: [u16; 12] = [2, 4, 16, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384];
 
 /// Generates static reference points; runtime decoding needs no text files.
@@ -53,7 +56,7 @@ fn main() {
         );
         let scale_factor = 1.0 / energy.sqrt();
         writeln!(output, "QamReference {{ order: {order}, bit_loading: {bits}, scale_factor: {scale_factor:?}, iq: &[").unwrap();
-        for (in_phase, quadrature) in points {
+        for &(in_phase, quadrature) in &points {
             writeln!(
                 output,
                 "[{:?}, {:?}],",
@@ -62,7 +65,9 @@ fn main() {
             )
             .unwrap();
         }
-        output.push_str("] },\n");
+        output.push_str("],\n");
+        qam_boundaries::write_boundaries(&points, scale_factor, &mut output);
+        output.push_str("},\n");
     }
     output.push_str("];\n");
     fs::write(

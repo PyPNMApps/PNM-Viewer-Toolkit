@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 //! Build-time-normalized reference constellations from preserved PyPNM tables.
+use super::decision_boundary::DecisionBoundary;
 use crate::pnm::data_type::{BitsPerSymbol, ConstellationModulationOrder, IqPair};
 use serde::Serialize;
 
@@ -18,6 +19,7 @@ pub struct QamReference {
     pub bit_loading: BitsPerSymbol,
     pub scale_factor: QamScaleFactor,
     pub iq: &'static [IqPair],
+    pub decision_boundaries: &'static [DecisionBoundary],
 }
 include!(concat!(env!("OUT_DIR"), "/qam_references.rs"));
 

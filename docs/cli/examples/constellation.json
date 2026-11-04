@@ -33813,8 +33813,371 @@
           -0.3834824944236852,
           -0.3834824944236852
         ]
+      ],
+      "decision_boundaries": [
+        {
+          "origin": [
+            -0.0,
+            -1.0737509843863184
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            -0.0,
+            -0.9203579866168444
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            -0.0,
+            -0.7669649888473704
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            -0.0,
+            -0.6135719910778963
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            -0.0,
+            -0.4601789933084222
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            -0.0,
+            -0.30678599553894814
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            -0.0,
+            -0.15339299776947407
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.0,
+            0.15339299776947407
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.0,
+            0.30678599553894814
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.0,
+            0.4601789933084222
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.0,
+            0.6135719910778963
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.0,
+            0.7669649888473704
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.0,
+            0.9203579866168444
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.0,
+            1.0737509843863184
+          ],
+          "direction": [
+            -1.0,
+            0.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            -1.0737509843863184,
+            -0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            -0.9203579866168444,
+            -0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            -0.7669649888473704,
+            -0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            -0.6135719910778963,
+            -0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            -0.4601789933084222,
+            -0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            -0.30678599553894814,
+            -0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            -0.15339299776947407,
+            -0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.15339299776947407,
+            0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.30678599553894814,
+            0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.4601789933084222,
+            0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.6135719910778963,
+            0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.7669649888473704,
+            0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            0.9203579866168444,
+            0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "origin": [
+            1.0737509843863184,
+            0.0
+          ],
+          "direction": [
+            -0.0,
+            1.0
+          ],
+          "minimum": null,
+          "maximum": null
+        }
       ]
     },
+    "decision_rule": "nearest_reference_euclidean",
     "normalization": "unit_average_symbol_power",
     "soft_samples_rescaled": false
   }

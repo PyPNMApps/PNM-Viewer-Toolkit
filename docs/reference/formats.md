@@ -197,6 +197,7 @@ means 256-QAM; 3 means QPSK. Raw s2.13 `iq` pairs remain unchanged.
 
 ```json
 {
+  "decision_rule": "nearest_reference_euclidean",
   "normalization": "unit_average_symbol_power",
   "soft_samples_rescaled": false,
   "reference": {
@@ -231,3 +232,30 @@ Evidence, using authorized text extracts:
   pattern: normalize the hard-reference table, preserve measured soft samples.
 
 This does not establish rendered-PDF verification, decode codewords or estimate MER.
+
+
+### Constellation decision-boundary JSON
+
+`constellation_analysis.decision_rule` is `nearest_reference_euclidean`.
+Each known `reference` also contains `decision_boundaries` calculated in the
+Rust build. Their coordinates share the normalized units of `reference.iq`:
+
+```json
+{
+  "origin": [0.0, 0.0],
+  "direction": [0.0, 1.0],
+  "minimum": null,
+  "maximum": null
+}
+```
+
+This example is the vertical boundary through zero. Position is
+`origin + direction × parameter`. Null `minimum` or `maximum` means the line
+extends indefinitely in that parameter direction; finite values restrict it to
+a ray or segment. Direction is a parameter vector, not necessarily unit length.
+The complete model includes cross-QAM diagonals and unbounded outer regions.
+The viewer clips these boundaries in Rust for display; no viewport coordinates
+replace these descriptors in CLI/desktop capture JSON. Unknown modulation keeps
+`reference: null`. Raw captured `iq` remains unchanged. See the
+[calculation design](../development/qam-resources.md) and the regenerated
+[complete example](../cli/examples/constellation.json).

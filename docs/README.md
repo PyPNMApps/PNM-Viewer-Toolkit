@@ -20,6 +20,7 @@ downloads are not available yet.
 
 - [Development environment](install/development.md)
 - [Rust APIs, numeric helpers and tests](development/rust.md)
+- [QAM resource conversion and decision boundaries](development/qam-resources.md)
 - [Runnable parser examples](../crates/core/examples/README.md)
 - [Retained Tauri RxMER prototype](development/ui.md)
 - [Planned UI IPC and optional retrieval](development/api-contract.md)

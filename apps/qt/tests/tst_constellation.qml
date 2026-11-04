@@ -24,29 +24,59 @@ TestCase {
         onResetRequested: resets++
     }
     function init() {
-        chart.showMeasured = true
-        chart.showIdeal = true
+        chart.showSoft = true
+        chart.showHard = true
+        chart.showBoundaries = true
         chart.requested = []
         chart.resets = 0
         chart.constellation = {bounds: {minimum_i: -2, maximum_i: 2, minimum_q: -2, maximum_q: 2},
-            measured: [[0.5,0.5],[-0.5,-0.5]],ideal: [[1,1],[-1,-1]],
-            measured_visible: 2,ideal_visible: 2,reference_available: true,
-            measured_label: "Measured: 2 of 2 visible",ideal_label: "Ideal: 2 of 2 visible"}
+            soft_decisions: [[0.5,0.5],[-0.5,-0.5]],hard_decisions: [[1,1],[-1,-1]],
+            soft_visible: 2,hard_visible: 2,reference_available: true, decision_boundaries: [[[0,-2],[0,2]],[[-2,0],[2,0]]],
+            soft_label: "Soft decisions: 2 of 2 visible",hard_label: "Hard decisions: 2 of 2 visible"}
         wait(20)
     }
     function test_independent_layer_controls_and_unknown_reference() {
-        const measured=findChild(chart,"constellationMeasuredToggle")
-        const ideal=findChild(chart,"constellationIdealToggle")
-        mouseClick(measured)
-        compare(chart.showMeasured,false)
-        compare(chart.showIdeal,true)
-        mouseClick(ideal)
-        compare(chart.showIdeal,false)
-        mouseClick(measured)
-        compare(chart.showMeasured,true)
-        chart.constellation = Object.assign({},chart.constellation,{reference_available:false,ideal:[]})
-        compare(ideal.enabled,false)
-        compare(measured.enabled,true)
+        const soft_decisions=findChild(chart,"constellationSoftToggle")
+        const hard_decisions=findChild(chart,"constellationHardToggle")
+        mouseClick(soft_decisions)
+        compare(chart.showSoft,false)
+        compare(chart.showHard,true)
+        const boundary=findChild(chart,"constellationBoundaryToggle")
+        compare(boundary.width,soft_decisions.width)
+        mouseClick(boundary)
+        compare(chart.showBoundaries,false)
+        compare(chart.showHard,true)
+        mouseClick(hard_decisions)
+        compare(chart.showHard,false)
+        mouseClick(soft_decisions)
+        compare(chart.showSoft,true)
+        chart.constellation = Object.assign({},chart.constellation,{reference_available:false,hard_decisions:[]})
+        compare(hard_decisions.enabled,false)
+        compare(boundary.enabled,false)
+        compare(soft_decisions.enabled,true)
+    }
+    function test_boundaries_toggle_changes_plot_without_hiding_symbols() {
+        const plot=findChild(chart,"constellationPlot")
+        chart.showSoft=false
+        chart.showHard=false
+        chart.showBoundaries=true
+        wait(40)
+        const withBoundaries=grabImage(plot)
+        const horizontal=Math.round(plot.leftMargin+plot.plotSize/2)
+        const vertical=Math.round(plot.topMargin+plot.plotSize/4)
+        chart.showBoundaries=false
+        wait(40)
+        const withoutBoundaries=grabImage(plot)
+        let difference=0
+        // Canvas strokes can cover either adjacent pixel at subpixel positions.
+        for (let offset=-2;offset<=2;offset++) {
+            const first=withBoundaries.pixel(horizontal+offset,vertical)
+            const second=withoutBoundaries.pixel(horizontal+offset,vertical)
+            difference=Math.max(difference,Math.abs(first.r-second.r)+Math.abs(first.g-second.g)+Math.abs(first.b-second.b)+Math.abs(first.a-second.a))
+        }
+        verify(difference>0.01)
+        compare(chart.showSoft,false)
+        compare(chart.showHard,false)
     }
     function test_drag_wheel_reset_and_outside_plot() {
         const plot=findChild(chart,"constellationPlot")
@@ -82,7 +112,7 @@ TestCase {
             const image=grabImage(plot)
             verify(image.width>100&&image.height>100)
         }
-        chart.constellation=Object.assign({},chart.constellation,{measured:[],ideal:[],measured_visible:0,ideal_visible:0})
+        chart.constellation=Object.assign({},chart.constellation,{soft_decisions:[],hard_decisions:[],soft_visible:0,hard_visible:0})
         wait(20)
         verify(grabImage(plot).width>100)
     }

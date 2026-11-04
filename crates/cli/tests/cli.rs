@@ -220,6 +220,10 @@ fn constellation_cli_exports_shared_reference_without_rescaling_samples() {
     let reference = &output["constellation_analysis"]["reference"];
     assert_eq!(reference["order"], 256);
     assert_eq!(reference["bit_loading"], 8);
+    assert_eq!(
+        reference["decision_boundaries"].as_array().unwrap().len(),
+        30
+    );
     assert_eq!(reference["iq"].as_array().unwrap().len(), 256);
     assert!((reference["scale_factor"].as_f64().unwrap() - 0.07669649888473704).abs() < 1e-14);
     assert_eq!(

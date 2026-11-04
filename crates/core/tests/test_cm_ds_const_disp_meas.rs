@@ -56,6 +56,14 @@ fn shared_reference_json_preserves_unscaled_received_samples() {
     assert_eq!(analysis["soft_samples_rescaled"], false);
     assert_eq!(analysis["reference"]["order"], 256);
     assert_eq!(analysis["reference"]["bit_loading"], 8);
+    assert_eq!(analysis["decision_rule"], "nearest_reference_euclidean");
+    assert_eq!(
+        analysis["reference"]["decision_boundaries"]
+            .as_array()
+            .unwrap()
+            .len(),
+        30
+    );
     assert_eq!(analysis["reference"]["iq"].as_array().unwrap().len(), 256);
     assert!(
         (analysis["reference"]["scale_factor"].as_f64().unwrap() - 0.07669649888473704).abs()
