@@ -1,0 +1,70 @@
+# PNM Viewer Toolkit user guide
+
+[Project README](../../README.md) · [Measurement gallery](measurements.md)
+
+The application is **under development**. This guide describes the native Qt
+viewer in the current source tree. Screenshots use the repository's preserved
+PyPNM example captures; appearance can vary with the operating system.
+
+## Launch
+
+There are no published desktop installers yet. On the supported Linux development
+host, follow [development setup](../install/development.md) and
+[Qt prerequisites](../development/qt.md#linux-development), then run from the
+repository root:
+
+```bash
+./scripts/setup-qt.sh
+./scripts/qt-desktop.sh
+```
+
+Qt setup is needed once; subsequent launches use `./scripts/qt-desktop.sh`.
+For VS Code Remote or SSH, see [display connection setup](../development/qt.md#no-display-connection).
+The current UI has been exercised on Ubuntu 22.04 x86_64. Other native platforms
+and packaged installation remain unverified.
+
+## Starting screen
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/home-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/home-light.png">
+  <img alt="Starting screen with left navigation pane open and the Open, Settings and About toolbar" src="../images/user-guide/home-dark.png" width="1000">
+</picture>
+
+1. Choose **Open capture**, **Open** in the toolbar, or Ctrl+O.
+2. Select a local PNM file in the operating system's file picker. Detection uses
+   the contents, not the filename extension.
+3. Inspect the matching graph. See the [measurement gallery](measurements.md)
+   for each supported view and its example file.
+4. Use **⇩ Export JSON** to save the full decoded capture to a new destination.
+5. Use **× Close capture** to return to Home.
+
+Export includes the whole capture, even while zoomed. Existing destinations and
+input files are never overwritten. Canceling a picker or opening an invalid file
+keeps the current capture. Unsupported measurements can still be decoded with
+[the CLI](../cli/usage.md) where [format support](../reference/formats.md) allows.
+
+## Chart controls
+
+- Drag across the plot to select and zoom into a frequency or bin range.
+- Use the mouse wheel to zoom around the pointer; double-click to reset.
+- Read the selected range at the bottom left. Histogram also shows its hit total.
+- The I/Q density view always shows the full capture and does not use range zoom.
+- For channel estimation, choose **Magnitude**, **Group delay**, or **I/Q scatter**.
+  Switching tabs resets the range.
+
+Large datasets use bounded overviews calculated in Rust. Frequency plots preserve
+extrema and missing-data gaps; histogram buckets sum counts. Zoom reveals finer
+detail. Export retains full-resolution data.
+
+## Settings and navigation
+
+Choose **Settings → System… → Appearance** for **System**, **Dark**, or **Light**.
+System follows the desktop appearance. This preference lasts for the current
+session. Screenshots follow your documentation viewer's theme.
+
+The panel button at the top right shows or hides the left navigation pane.
+**About** shows the version, development status, licenses and project link.
+
+Developer details belong in the [Qt guide](../development/qt.md). The
+[retained Tauri prototype](../development/ui.md) has a separate RxMER-only workflow.

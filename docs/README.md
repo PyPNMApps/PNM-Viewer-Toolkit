@@ -1,9 +1,12 @@
 # PNM Viewer Toolkit documentation
 
-The CLI, Rust parsers and initial RxMER desktop source are available; no desktop
-installer or published cross-platform download is available yet.
+The Qt viewer, CLI and Rust parsers are available from source. The project is
+under development; desktop installers and prebuilt downloads are not available.
 
 ## Use the toolkit
+
+- [Desktop user guide and starting screen](ui/README.md)
+- [Measurement screenshots](ui/measurements.md)
 
 - [Installation and binary availability](install/README.md)
 - [Build only the CLI from source](install/source.md)
@@ -16,7 +19,7 @@ installer or published cross-platform download is available yet.
 - [Development environment](install/development.md)
 - [Rust APIs, numeric helpers and tests](development/rust.md)
 - [Runnable parser examples](../crates/core/examples/README.md)
-- [Desktop UI roadmap](development/ui.md)
+- [Retained Tauri RxMER prototype](development/ui.md)
 - [Planned UI IPC and optional retrieval](development/api-contract.md)
 - [Git workflow](development/git.md)
 - [Continuous integration](development/ci.md)
@@ -30,7 +33,8 @@ installer or published cross-platform download is available yet.
 
 ## Organization
 
-User installation instructions belong in `install/`, command behavior in `cli/`,
+User workflows and screenshots belong in `ui/`, installation in `install/`,
+command behavior in `cli/`,
 format contracts in `reference/`, contributor/API guidance in `development/`,
 and distribution requirements in `release/`. Historical investigations belong
 in `history/` and must not be presented as current capabilities.

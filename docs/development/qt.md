@@ -1,5 +1,8 @@
 # Qt Quick desktop prototype
 
+For opening captures, chart controls and screenshots, start with the
+[desktop user guide](../ui/README.md). This page covers developer setup and implementation.
+
 The Qt prototype lives under `apps/qt/`. Tauri remains under `apps/desktop/`.
 Both use the GPL-3.0-only Rust capture layer in `apps/viewer`, backed by the
 existing Apache-2.0 parsers. Qt Quick renders directly through Qt without a

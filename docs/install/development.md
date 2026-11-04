@@ -1,7 +1,8 @@
 # Development setup
 
-PNM Viewer remains in the dev phase. The Rust parser exists; the Tauri shell and
-React frontend do not yet have application manifests or a runnable build.
+PNM Viewer Toolkit remains under development. The Rust parsers, native Qt viewer
+and retained Tauri/React prototype have runnable source builds. See the
+[desktop user guide](../ui/README.md) for the main Qt workflow.
 
 ## Install
 
@@ -50,8 +51,9 @@ Downloads are staged in a temporary directory under `local/` and cleaned on exit
 An incomplete existing Node directory causes an explicit error; move it aside
 before retrying. Existing global Rust/Node installations and shell profiles are
 untouched. System package versions follow the configured Ubuntu repositories.
-No Docker, Kubernetes, Java, Qt, Python services or global npm packages are needed.
-No frontend dependency installation occurs until an application manifest exists.
+No Docker, Kubernetes, Java, Python services or global npm packages are needed.
+Qt uses a separate [project-local SDK setup](../development/qt.md#linux-development).
+The retained Tauri frontend uses the [documented npm setup](../development/ui.md#run-locally).
 
 ## Use the tools
 

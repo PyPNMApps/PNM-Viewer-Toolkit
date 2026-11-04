@@ -1,4 +1,4 @@
-# PNM Viewer Toolkit
+# PNM Viewer Toolkit — Under Development
 
 <p align="center">
   <picture>
@@ -12,124 +12,51 @@
 [![Tests](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/tests.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/tests.yml)
 [![Code checks](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ci.yml)
 [![Desktop checks: pending](https://img.shields.io/badge/Desktop_checks-pending-lightgrey)](.github/workflows/desktop.yml)
-[![Rust 1.85.1](https://img.shields.io/badge/Rust-1.85.1-orange?logo=rust)](rust-toolchain.toml)
-[![Status: in development](https://img.shields.io/badge/status-in_development-yellow)](docs/development/ui.md)
 [![Component licenses](https://img.shields.io/badge/license-Apache--2.0%20%2F%20GPL--3.0--only-blue)](LICENSE)
 
-An offline desktop viewer for DOCSIS Proactive Network Maintenance (PNM) capture
-files, with a Rust backend and parallel Qt Quick and Tauri/React prototypes.
-The repository is `PNM-Viewer-Toolkit`; the standalone CLI is `pnm-decode`.
-The parser design follows PyPNM, with shared file headers, typed measurement
-objects, and human-readable JSON exports.
+An offline desktop viewer for DOCSIS PNM capture files. Open a capture, explore
+its graph, and export decoded JSON. The native Qt interface uses a Rust backend.
 
-**In the dev phase:** the Rust parsing libraries and development tools are
-implemented, including the standalone CLI and Linux source installer. The
-Qt desktop opens RxMER, Spectrum Analyzer, DS Channel Estimation and Histogram captures
-with zoomable graphs and JSON export; the retained Tauri prototype supports RxMER.
-Desktop installers remain planned. See [run the viewer](docs/development/ui.md).
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/user-guide/home-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/images/user-guide/home-light.png">
+  <img alt="PNM Viewer Toolkit starting screen with the left navigation pane open" src="docs/images/user-guide/home-dark.png" width="1000">
+</picture>
 
-## What works today
+## Start here
 
-- Open RxMER, Spectrum Analyzer, DS Channel Estimation and Histogram files in Qt,
-  zoom into frequency ranges, and export JSON.
-- Choose System, Dark or Light appearance, including live system-theme changes.
+[Launch the viewer](docs/ui/README.md#launch) ·
+[User guide](docs/ui/README.md) ·
+[Screenshots and measurements](docs/ui/measurements.md)
 
-- Decode RxMER, channel estimates, constellation samples, histograms, upstream
-  pre-equalization coefficients and last updates, FEC summaries, spectrum
-  analysis, and modulation profiles from file-format version 1.0 captures.
-- Export decoded measurements as bounded, formatted JSON. Complex samples use
-  `iq`, ordered `[I, Q]` (in-phase, quadrature).
-- Preserve original capture bytes and report structured errors for unsupported
-  formats, truncation, inconsistent lengths, and resource limits.
-- Test against nine preserved PyPNM binary fixtures, with additional malformed
-  and boundary cases.
+The current viewer supports:
 
-Latency decoding currently has **synthetic tests only**. Symbol capture is a
-**header-only stub**. See [format support](docs/reference/formats.md) for the exact
-coverage and JSON differences from PyPNM. This is not a claim of blanket
-DOCSIS 3.1 or 4.0 compliance.
-
-## Get started
-
-The standalone decoder builds with standard Cargo from the repository root:
-
-```bash
-cargo build --release --locked -p pnm-decode
-```
-
-Run `target/release/pnm-decode` on Linux/macOS or
-`target\release\pnm-decode.exe` on Windows. For example:
-
-```bash
-./target/release/pnm-decode capture.bin --output capture.json
-```
-
-Only Ubuntu 22.04 x86_64 has been built and tested so far. Prebuilt Windows,
-macOS and Linux downloads are planned; they are not published yet.
-See [installation options](docs/install/README.md),
-[source builds](docs/install/source.md) and [CLI usage](docs/cli/usage.md).
-
-Contributors can follow [development setup](docs/install/development.md),
-[Rust APIs and tests](docs/development/rust.md), and
-[parser examples](crates/core/examples/README.md).
-See the [desktop viewer guide and remaining work](docs/development/ui.md).
-
-## Qt desktop prototype
-
-The Qt Quick/Rust prototype lives alongside the retained Tauri app. It opens
-RxMER, Spectrum Analyzer, DS Channel Estimation and Histogram captures, plots
-full-range overviews with drag zoom, exports JSON, and offers System/Dark/Light themes.
-See [Qt setup and launch instructions](docs/development/qt.md). Both prototypes
-remain in development; desktop installers are not yet available.
-
-## Design direction
-
-Rust owns binary decoding, numerical processing, exports, and future analysis
-and storage. Qt Quick renders directly through Qt; the retained React interface
-uses Tauri's system WebView. Both share the same Rust capture layer and work
-without a local HTTP backend. Optional retrieval of existing PyPNM
-captures is planned; modem control, capture initiation, SNMP/TFTP, Python
-sidecars, and remote analysis are outside the viewer's scope.
-
-## Repository layout
-
-| Path | Purpose |
+| Capture | Views |
 | --- | --- |
-| `apps/qt/` | Qt Quick/QML desktop and Rust adapter |
-| `apps/desktop/` | Retained Tauri/React desktop |
-| `apps/viewer/` | Shared Rust desktop capture and JSON export layer |
-| `crates/cli/` | Standalone `pnm-decode` command and man page |
-| `crates/core/` | Rust `pnm` package: parsers, shared types, Q-format math and utilities |
-| `crates/logging/` | Application logging setup |
-| `tests/fixtures/` | PyPNM binary examples, licenses and provenance |
-| `docs/` | Setup, format support, API and packaging documentation |
-| `skills/` | Canonical development skills and reference material |
-| `scripts/` | Development setup and local toolchain wrappers |
-| `tools/` | Git and three-part version/release helpers |
-| `development/` | Ignored local plans and specification evidence |
-| `local/` | Ignored toolchains and generated JSON |
-| `target/` | Ignored Cargo build output |
+| RxMER | MER by frequency |
+| Spectrum Analyzer | Amplitude by frequency and calculated RBW |
+| DS Channel Estimation | Magnitude, group delay and I/Q density |
+| Histogram | Hit counts by bin index |
 
-Working plans and `development/specs/` evidence records are local-only and are
-not included in GitHub clones. The tracked
-[development reference skill](skills/pnm-viewer-development/SKILL.md) preserves
-the original bootstrap guidance and PyPNM source map.
+Choose System, Dark or Light appearance. Drag across a graph to zoom and
+double-click to reset; the I/Q density view shows the full capture.
 
-## Documentation
+Desktop installers and prebuilt downloads are not available yet. Development
+builds have been exercised on Ubuntu 22.04 x86_64; Windows/macOS runtime
+validation remains pending.
 
-Start with the [documentation index](docs/README.md) for installation, CLI usage,
-format support, contributor guides, the UI roadmap, release procedures and history.
-See [AGENTS.md](AGENTS.md) for repository conventions when using a coding agent.
+## CLI and development
 
-## License and acknowledgment
+- [Build the standalone `pnm-decode` CLI](docs/install/source.md) · [CLI usage](docs/cli/usage.md)
+- [Supported formats and limits](docs/reference/formats.md)
+- [Development setup](docs/install/development.md) · [Qt build and checks](docs/development/qt.md)
+- [Rust APIs and examples](docs/development/rust.md)
+- [Retained Tauri RxMER prototype](docs/development/ui.md)
+- [All documentation](docs/README.md) · [Repository conventions](AGENTS.md)
 
-See [LICENSE](LICENSE) for the component-specific licensing:
+## License
 
-- Reusable Rust libraries and project-owned development tooling:
-  [Apache-2.0](LICENSES/Apache-2.0.txt).
-- Desktop shells, UIs and shared desktop capture layer:
-  [GPL-3.0-only](LICENSES/GPL-3.0-only.txt).
-
-Third-party material retains its original terms and notices.
-Acknowledgment: **PyPNM - Proactive Network Maintenance Toolkit**.
-See [NOTICE](NOTICE) and the [fixture references](tests/fixtures/pypnm/README.md).
+Core libraries and development tooling use Apache-2.0; desktop components use
+GPL-3.0-only. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+Built with guidance and example captures from **PyPNM**; third-party material
+retains its original notices.
