@@ -5,8 +5,10 @@
 #
 """Check native Qt tool selection without downloading SDKs or invoking compilers."""
 import importlib.util
+import io
 import os
 from pathlib import Path
+from contextlib import redirect_stdout
 import subprocess
 import tempfile
 import unittest
@@ -147,6 +149,82 @@ class QtEnvironmentTests(unittest.TestCase):
             self.assertNotIn(LINKER_KEY, environment)
             self.assertEqual(environment['PATH'].split(os.pathsep)[0], str(self.sdk / 'bin'))
             self.assertEqual(environment['LD_LIBRARY_PATH'].split(os.pathsep)[0], str(self.sdk / 'lib'))
+
+
+class QmlReportTests(unittest.TestCase):
+    """Keep otherwise invisible Windows test failures observable and fatal."""
+
+    def setUp(self):
+        """Isolate reports and fake SDK paths without downloading or compiling."""
+        temporary = tempfile.TemporaryDirectory(prefix='pnm qml reports ')
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.output = io.StringIO()
+        self.addCleanup(patch.stopall)
+        patch.object(QT, 'ROOT', self.root).start()
+        patch.object(QT, 'sdk_path', return_value=self.root / 'Qt SDK').start()
+        self.environment = {'PATH': 'caller tools'}
+
+    def fake_run(self, command, **options):
+        """Write test reports as the native runner would, including UTF-8 text."""
+        outputs = [command[index + 1] for index, argument in enumerate(command)
+                   if argument == '-o']
+        self.assertEqual(len(outputs), 2)
+        text, xml = [Path(value.rsplit(',', 1)[0]) for value in outputs]
+        text.write_text('FAIL! simulated assertion with café\n', encoding='utf-8')
+        xml.write_text('<testsuite failures="1"/>', encoding='utf-8')
+        options['stdout'].write(b'Native runner diagnostic\n')
+        self.assertEqual(options['env']['QT_QPA_PLATFORM'], 'offscreen')
+        self.assertEqual(options['env']['QT_QUICK_BACKEND'], 'software')
+        self.assertTrue(options['check'])
+        raise subprocess.CalledProcessError(1, command)
+
+    def test_failure_prints_reports_and_preserves_exit_status(self):
+        """Never hide a failed assertion behind the final subprocess exception."""
+        with patch.object(QT.subprocess, 'run', side_effect=self.fake_run), \
+                redirect_stdout(self.output):
+            with self.assertRaises(subprocess.CalledProcessError) as failure:
+                QT.qml_check(self.environment)
+        self.assertEqual(failure.exception.returncode, 1)
+        self.assertIn('FAIL! simulated assertion with café', self.output.getvalue())
+        self.assertIn('Native runner diagnostic', self.output.getvalue())
+        self.assertEqual(len(list(self.root.rglob('qml-tests.xml'))), 1)
+        self.assertEqual(self.environment, {'PATH': 'caller tools'})
+
+    def test_startup_failure_keeps_available_process_diagnostics(self):
+        """Print startup errors even when no Qt Test report could be written."""
+        def fail_before_report(command, **options):
+            options['stdout'].write(b'QML module not installed\n')
+            raise subprocess.CalledProcessError(2, command)
+        with patch.object(QT.subprocess, 'run', side_effect=fail_before_report), \
+                redirect_stdout(self.output):
+            with self.assertRaises(subprocess.CalledProcessError):
+                QT.qml_check(self.environment)
+        self.assertIn('QML module not installed', self.output.getvalue())
+        self.assertIn('no text report', self.output.getvalue())
+
+    def test_qml_failure_stops_before_native_compilation(self):
+        """Avoid expensive Rust builds after a known presentation-suite failure."""
+        failure = subprocess.CalledProcessError(1, ['qmltestrunner'])
+        with patch.object(QT, 'qt_environment', return_value=self.environment), \
+                patch.object(QT, 'qml_check', side_effect=failure), \
+                patch.object(QT, 'run') as native:
+            with self.assertRaises(subprocess.CalledProcessError):
+                QT.check()
+            native.assert_not_called()
+
+    def test_repeated_runs_have_separate_reports(self):
+        """A later startup failure cannot reuse an earlier passing result file."""
+        def succeed(command, **options):
+            destination = Path(command[command.index('-o') + 1].rsplit(',', 1)[0])
+            destination.write_text('PASS fresh result\n', encoding='utf-8')
+        with patch.object(QT.subprocess, 'run', side_effect=succeed), \
+                redirect_stdout(self.output):
+            first = QT.qml_check(self.environment)
+            second = QT.qml_check(self.environment)
+        self.assertNotEqual(first, second)
+        self.assertTrue((first / 'qml-tests.txt').exists())
+        self.assertTrue((second / 'qml-tests.txt').exists())
 
 
 if __name__ == '__main__':

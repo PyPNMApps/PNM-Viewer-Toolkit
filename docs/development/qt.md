@@ -166,3 +166,26 @@ not overwrite existing outputs. Normal launches do not activate this mode.
 Use the [user guide](../ui/README.md) for controls and screenshots.
 Rust/QML ownership, decimation and measurement-specific implementation notes
 live in [Qt measurement internals](qt-measurements.md).
+
+## QML reports and isolated checks
+
+`python scripts/qt-sdk.py check` runs QML presentation tests before the expensive
+native Rust/C++ checks. A failure stops the check; successful runs still execute
+all native tests, formatting, Clippy and builds. To isolate the complete QML
+suite with an already installed SDK and configured developer environment:
+
+```bash
+python scripts/qt-sdk.py qml-test
+```
+
+Each invocation creates a fresh directory under `local/qt-test-results/` with
+`qml-tests.txt`, `qml-tests.xml` (JUnit) and `process.log`. Available text and
+process diagnostics are printed even when the runner fails. The original exit
+status still fails the check. CI retains per-platform reports for 14 days,
+including failed runs. No test is skipped or retried to obtain a passing result.
+
+Explicit files avoid relying on Windows GUI console output. See the
+[Qt Test output options](https://doc.qt.io/qt-6/qtest-overview.html) and
+[Windows debugging guidance](https://doc.qt.io/qt-6/debug.html#environment-variables-recognized-by-qt).
+If startup fails before Qt Test can write its reports, inspect `process.log`;
+a report may be absent when the process never initialized.

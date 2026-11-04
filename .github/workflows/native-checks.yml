@@ -80,3 +80,11 @@ jobs:
         run: python scripts/qt-sdk.py setup
       - name: Check Qt adapter and presentation
         run: python scripts/qt-sdk.py check
+      - name: Retain QML test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qml-tests-${{ matrix.os }}
+          path: local/qt-test-results/
+          if-no-files-found: ignore
+          retention-days: 14

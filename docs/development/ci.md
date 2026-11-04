@@ -71,6 +71,21 @@ extends the same selection logic to them; it does not remove any tests. Local
 synthetic-tool tests cover the export, but hosted Windows validation is still
 required. Re-running the old tag uses its original workflow, without this fix.
 
+## QML failure diagnostics
+
+Native Qt checks run QML before native compilation and preserve explicit text,
+JUnit XML and process logs under `local/qt-test-results/`. CI uploads those files
+as `qml-tests-<runner>` artifacts even when the check fails. They are retained
+for 14 days. See [isolated checks](qt.md#qml-reports-and-isolated-checks).
+
+In [the v0.1.4 Windows job](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/41926580364/job/126914502859),
+workspace tests, the CLI build/smoke, Qt Rust tests, Clippy and native build all
+passed. `qmltestrunner` then exited with status 1 without visible assertions.
+That log establishes the failing stage, not the underlying test/startup cause.
+Explicit reports address the missing diagnostic evidence; a new Windows run is
+required to identify and resolve the original failure. Re-running the old tag
+will not include the new reporting behavior.
+
 ## Caching and runtime
 
 Native validation and package builds cache the pinned Qt SDK under `local/qt`.

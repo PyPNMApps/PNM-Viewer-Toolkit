@@ -10,6 +10,7 @@ from pathlib import Path
 import platform
 import subprocess
 import sys
+import tempfile
 import venv
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -140,31 +141,72 @@ def setup():
         raise ValueError('Qt SDK lacks qmltestrunner; move the incomplete local SDK aside')
 
 
+def qml_check(environment=None):
+    """Run the complete QML suite with persistent, console-independent reports.
+
+    environment optionally supplies an already validated Qt subprocess environment;
+    otherwise validate the SDK here. Copy it before selecting offscreen/software
+    rendering. Write fresh text, JUnit XML and process logs in a unique directory
+    under local/qt-test-results, then print available diagnostics even on failure.
+    Return the report directory. SDK, filesystem and subprocess errors propagate;
+    a nonzero test exit always fails the check, never triggers a passing retry.
+    """
+    environment = dict(qt_environment() if environment is None else environment)
+    environment.update(QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software')
+    reports = ROOT / 'local/qt-test-results'
+    reports.mkdir(parents=True, exist_ok=True)
+    destination = Path(tempfile.mkdtemp(prefix='run-', dir=reports))
+    text_report = destination / 'qml-tests.txt'
+    xml_report = destination / 'qml-tests.xml'
+    process_log = destination / 'process.log'
+    suffix = '.exe' if os.name == 'nt' else ''
+    command = [str(sdk_path() / 'bin' / ('qmltestrunner' + suffix)),
+               '-input', str(ROOT / 'apps/qt/tests'),
+               '-import', str(ROOT / 'apps/qt/qml'),
+               '-o', f'{text_report},txt', '-o', f'{xml_report},junitxml']
+    print(f'QML test reports: {destination}', flush=True)
+    try:
+        with process_log.open('wb') as output:
+            subprocess.run(command, cwd=ROOT, env=environment, stdout=output,
+                           stderr=subprocess.STDOUT, check=True)
+    finally:
+        for report in (process_log, text_report):
+            if report.is_file():
+                print(report.read_text(encoding='utf-8', errors='replace'), flush=True)
+        if not text_report.is_file():
+            print('QML runner produced no text report; inspect process.log for startup errors.',
+                  flush=True)
+    return destination
+
+
 def check():
-    """Run native Qt format, Rust tests/lints/build, and QML presentation tests."""
+    """Check QML first, then native Qt format, Rust tests/lints and build.
+
+    A failed presentation test stops before expensive native compilation; all
+    existing checks still run on success. Propagate the original failure.
+    """
     environment = qt_environment()
+    qml_check(environment)
     cargo = [str(ROOT / 'scripts/cargo-local.sh')] if os.name != 'nt' and (ROOT / 'local/cargo/bin/cargo').exists() else ['cargo']
     manifest = ['--manifest-path', 'apps/qt/Cargo.toml']
     run([*cargo, 'fmt', *manifest, '--', '--check'], environment)
     run([*cargo, 'test', *manifest, '--locked'], environment)
     run([*cargo, 'clippy', *manifest, '--all-targets', '--locked', '--', '-D', 'warnings'], environment)
     run([*cargo, 'build', *manifest, '--locked'], environment)
-    environment.update(QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software')
-    suffix = '.exe' if os.name == 'nt' else ''
-    run([sdk_path() / 'bin' / ('qmltestrunner' + suffix), '-input',
-         ROOT / 'apps/qt/tests', '-import', ROOT / 'apps/qt/qml'], environment)
 
 
 def main():
     """Dispatch SDK checks or CI linker export and report failures clearly."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=('setup', 'check', 'export-msvc-linker'))
+    parser.add_argument('action', choices=('setup', 'check', 'qml-test', 'export-msvc-linker'))
     args = parser.parse_args()
     try:
         if args.action == 'setup':
             setup()
         elif args.action == 'check':
             check()
+        elif args.action == 'qml-test':
+            qml_check()
         else:
             export_msvc_linker()
     except (ValueError, OSError, subprocess.CalledProcessError) as error:
