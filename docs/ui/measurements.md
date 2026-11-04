@@ -98,6 +98,12 @@ profile, series toggles or zoom. No inferred error-rate fields are added.
 
 Example: `fec_summary.bin` (five profiles, 600 intervals each).
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/fec-summary-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/fec-summary-light.png">
+  <img alt="FEC Summary interval codewords with profile selection and error counts" src="../images/user-guide/fec-summary-dark.png" width="1000">
+</picture>
+
 ## Modulation Profile
 
 Choose **dB** or **Bit loading** in the left-aligned Y axis control. Toggle the
@@ -199,8 +205,7 @@ or a reconstruction of the modem's internal decision logic.
 
 Drag a rectangle to zoom into a region; the Rust viewer expands it to equal
 I/Q scales. Mouse-wheel zoom follows the pointer. Double-click restores the
-whole constellation. The display samples at most 512 points per layer; counts
-below the chart distinguish shown, visible and full-capture totals. Zooming
+whole constellation. The display samples at most 512 points per layer. Zooming
 requests fresh points from Rust and reveals all points once the selected region
 fits the display budget. Boundaries use the complete reference table, even when
 the hard points are sampled or hidden. Display sampling is not a density estimate.

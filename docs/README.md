@@ -18,6 +18,9 @@ downloads are not available yet.
 
 ## Develop the toolkit
 
+- [Developer starting point](development/README.md)
+- [Native Qt setup, launch and checks](development/qt.md)
+- [Qt measurement implementation](development/qt-measurements.md)
 - [Development environment](install/development.md)
 - [Rust APIs, numeric helpers and tests](development/rust.md)
 - [QAM resource conversion and decision boundaries](development/qam-resources.md)
@@ -26,6 +29,8 @@ downloads are not available yet.
 - [Planned UI IPC and optional retrieval](development/api-contract.md)
 - [Git workflow](development/git.md)
 - [Continuous integration](development/ci.md)
+- [Version bumps and first-tag checklist](development/releasing.md)
+- [Refresh UI screenshots](development/screenshots.md)
 
 ## Release and background
 
@@ -46,5 +51,3 @@ Detailed working plans and private specification evidence remain in the separate
 ignored repository-root `development/`. They are not part of downloaded checkouts.
 This structure follows PyPNM's topic-oriented docs and Oscar's separation of
 usage, reference, and historical material; it does not copy their runtime design.
-
-- [Qt Quick desktop prototype](development/qt.md): setup, launch and tests.

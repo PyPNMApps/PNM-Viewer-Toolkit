@@ -12,7 +12,7 @@ import unittest
 
 SCRIPT = Path(__file__).with_name("bump-version.py")
 sys.path.insert(0, str(SCRIPT.parent))
-from versions import MANIFESTS, LOCKS, JSON_FILES
+from versions import MANIFESTS, LOCKS, JSON_FILES, synchronize
 
 SPEC = importlib.util.spec_from_file_location("bump_version", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -54,10 +54,18 @@ class BumpVersionTests(unittest.TestCase):
                 target = root / name
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(repository / name, target)
+            # Keep this synthetic starting release independent of the checkout version.
+            synchronize(root, "0.1.0", write=True)
             version = root / "VERSION"
-            version.write_text("0.1.0\n")
             command = [sys.executable, str(script), "--bump", "minor"]
-            subprocess.run(command + ["--dry-run"], cwd=directory, check=True, capture_output=True)
+            before = {path: path.read_bytes() for path in root.rglob('*') if path.is_file()}
+            preview = subprocess.run(command + ["--dry-run"], cwd=directory,
+                                     check=True, capture_output=True, text=True)
+            self.assertIn("0.1.0 -> 0.2.0 (dry run)", preview.stdout)
+            for name in MANIFESTS + LOCKS + JSON_FILES:
+                self.assertIn(name, preview.stdout)
+            for path, content in before.items():
+                self.assertEqual(path.read_bytes(), content)
             self.assertEqual(version.read_text(), "0.1.0\n")
             subprocess.run(command, cwd=directory, check=True, capture_output=True)
             self.assertEqual(version.read_text(), "0.2.0\n")
@@ -65,6 +73,14 @@ class BumpVersionTests(unittest.TestCase):
             result = subprocess.run(command, cwd=directory, capture_output=True)
             self.assertNotEqual(result.returncode, 0)
             self.assertEqual(version.read_text(), "1.2.3.4\n")
+
+            # A preview must detect an incomplete checkout just as a write does.
+            version.write_text("0.2.0\n")
+            (root / MANIFESTS[0]).unlink()
+            for arguments in (command, command + ["--dry-run"]):
+                result = subprocess.run(arguments, cwd=directory, capture_output=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(version.read_text(), "0.2.0\n")
 
 
 if __name__ == "__main__":

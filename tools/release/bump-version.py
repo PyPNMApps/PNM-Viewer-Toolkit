@@ -6,8 +6,7 @@
 """Bump the repository's three-component project version without Git mutations."""
 import argparse
 from pathlib import Path
-import re
-from versions import synchronize
+from versions import synchronize, validate
 
 
 def bumped(version: str, part: str) -> str:
@@ -21,10 +20,7 @@ def bumped(version: str, part: str) -> str:
     Raises:
         ValueError: Version syntax or component name is invalid.
     """
-    # Match the entire input, with no capture groups or whitespace normalization.
-    # Accept "1.2.3"; reject "01.2.3", "1.2" and "1.2.3-dev".
-    if not re.fullmatch(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", version):
-        raise ValueError("VERSION must contain MAJOR.MINOR.PATCH without leading zeros")
+    validate(version)
     parts = [int(value) for value in version.split(".")]
     index = ("major", "minor", "patch").index(part)
     parts[index] += 1
@@ -47,11 +43,14 @@ def main() -> None:
     try:
         current = version_file.read_text(encoding="utf-8").strip()
         new = bumped(current, args.bump)
+        changes = synchronize(version_file.parent, new)
         if not args.dry_run:
             synchronize(version_file.parent, new, write=True)
     except (OSError, ValueError) as error:
         parser.exit(1, f"ERROR: {error}\n")
     print(f"{current} -> {new}" + (" (dry run)" if args.dry_run else ""))
+    for name in ["VERSION", *changes]:
+        print(f"  {name}")
 
 
 if __name__ == "__main__":

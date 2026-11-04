@@ -2,7 +2,8 @@ PNM Viewer Toolkit is under development.
 
 This draft contains native Qt viewer packages and standalone `pnm-decode`
 archives. The viewer supports RxMER, Spectrum Analyzer, downstream channel
-estimation, histogram, FEC summary and modulation profile files, with JSON export and System/Dark/Light themes.
+estimation, histogram, FEC summary, modulation profile and constellation files,
+with JSON export and System/Dark/Light themes.
 
 Modulation-profile JSON now uses textual modulation names and adds data
 `bit_loading`, carrier roles and retained numeric assignment codes. JSON consumers
@@ -32,7 +33,7 @@ preamble. CLI and Qt share Rust-derived ideal Shannon references; both roles
 plot on the numeric axis without contributing to data-only profile bandwidth.
 See the [JSON contract](../reference/formats.md#modulation-profile-json-assignments).
 
-Constellation Display is available in the Qt viewer with measured/ideal overlays,
+Constellation Display is available in the Qt viewer with soft/hard decision overlays,
 layer toggles and coordinate zoom. Preserved PyPNM QAM resources compile into
 static Rust lookup tables; runtime viewing needs no table files or database.
 Core/CLI JSON now includes shared reference analysis while preserving measured I/Q.
@@ -41,3 +42,9 @@ The constellation viewer now labels the layers Soft decisions and Hard decisions
 adds independently controlled nearest-symbol boundaries, and removes numeric
 axis scales. Rust compiles square-QAM midpoint grids and cross-QAM diagonal
 boundaries into the same reference data shared by CLI and desktop JSON.
+
+Release preparation keeps root `VERSION` as the shared three-component version
+source. Bump previews validate metadata and list affected files. Developer guides
+now separate Qt setup from measurement internals and include first-tag and
+screenshot checklists. The dark/light gallery includes FEC Summary and the
+constellation view without its sample-count footer.
