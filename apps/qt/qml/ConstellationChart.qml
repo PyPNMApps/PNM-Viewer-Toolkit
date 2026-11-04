@@ -206,11 +206,4 @@ ColumnLayout {
             }
         }
     }
-    Label {
-        text: (chart.constellation.soft_label || "") + "    ·    " + (chart.constellation.hard_label || "")
-        color: chart.theme.muted
-        font.pixelSize: 11
-        Layout.fillWidth: true
-        wrapMode: Text.Wrap
-    }
 }
