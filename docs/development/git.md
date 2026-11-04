@@ -1,8 +1,9 @@
 # Git workflow
 
-The project uses the standard helpers copied from
-`build-local-mxl-build-server/tools/git/`. Both locate this repository relative
-to their script location, independently of the caller's working directory.
+The save helper and branch push gate follow the standard project workflow.
+Release modes follow OSCAR-UI, adapted to this repository's VERSION and full
+validation gate. Helpers resolve this checkout from their own location,
+independently of the caller's working directory.
 
 ## Inspect changes
 
@@ -15,7 +16,7 @@ git diff --cached
 ```
 
 Also inspect all untracked files before saving. `git-save.sh` stages all
-non-ignored changes, including untracked files such as the original archive.
+non-ignored changes, including untracked files.
 
 ## Save a local commit
 
@@ -32,7 +33,7 @@ The helper requires a message, rejects nested Git metadata under skills, stages
 all changes, and creates a local commit. It does not push. No staged changes
 is reported as an error. Existing Git author configuration is used unchanged.
 
-## Push
+## Push a branch
 
 ```bash
 cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
@@ -44,7 +45,8 @@ origin remote. It checks the remote branch and fetches it if present, rejects a
 local branch behind or diverged from origin, and pushes with upstream tracking.
 Before pushing, it runs `scripts/check-before-push.sh`: Rust formatting, Clippy,
 locked workspace tests, release-helper and push-gate tests, mocked installer
-tests on Linux, Bash/ShellCheck, and a release CLI build and JSON smoke test.
+tests on Linux, Bash/ShellCheck, a release CLI build/JSON smoke test, and Qt
+adapter/build/QML checks.
 Required missing tools or any failed check stop the push; there is no skip flag.
 It uses the local Rust toolchain when installed, otherwise standard Cargo.
 
@@ -63,6 +65,25 @@ Windows/Linux/macOS tests and builds. Direct `git push` can bypass this helper;
 to enforce checks for everyone, configure GitHub rules for main/master requiring
 pull requests and the CI checks before merging. Those server-side rules have not
 been configured by this change.
+
+## Bump, tag and push a release
+
+Commit development work first, then use a combined release mode from clean master:
+
+```bash
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
+./tools/git/git-push.sh --tag-patch
+```
+
+Also available: `--tag-minor`, `--tag-major`, and release previews with `--dry-run`.
+The helper bumps VERSION and Cargo metadata, validates the bumped candidate,
+commits only version files, creates an annotated tag, then atomically pushes
+master and that tag. It never overwrites tags or force-pushes.
+
+Use `--tag vMAJOR.MINOR.PATCH` to validate/push an existing matching tag at HEAD,
+including retries after upload failure without another version bump. No release
+mode publishes a public GitHub release directly. See [release preparation](releasing.md)
+for first-tag instructions, candidate failures, no-op behavior and recovery.
 
 ## Help
 

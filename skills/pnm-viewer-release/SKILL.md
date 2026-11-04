@@ -20,14 +20,21 @@ Inspect tracked, staged, and untracked changes before drafting a save command;
 the save helper stages all non-ignored files. Follow AGENTS.md message format.
 Supply copy/paste commands beginning with `cd /home/dev01/Projects/PNM-Viewer-Toolkit &&`
 unless explicitly asked to execute. A request to add tooling is not a request to
-release. Keep version preparation, commit, tag, and push explicit.
+release. Combined --tag-patch, --tag-minor and --tag-major modes explicitly
+automate versioning, checks, commit, annotated tag and atomic push when the user
+runs them. Plain push stays branch-only; the standalone bump helper stays local.
 
-Before a release tag, require a clean main/master branch, verify VERSION matches
+Before a release tag, require clean master (the tag workflow checks origin/master), verify VERSION matches
 the committed file, review validation evidence, and check local and remote tag
-availability. Never replace existing tags. Use the guarded push helper for the
-branch and an explicit tag ref for the tag, never `git push --tags` or force.
-If publication partly fails, inspect local and remote refs before retrying;
-do not bump again automatically or delete published refs.
+availability. Never replace existing tags. Prefer the combined release modes
+with --dry-run for a preview. They validate the bumped candidate before committing
+and atomically push exact objects; never use `git push --tags` or force.
+For existing tags or failed uploads use git-push.sh --tag vMAJOR.MINOR.PATCH:
+it checks VERSION/HEAD and revalidates without bumping again. If both origin refs
+match it is a no-op. Preserve local candidate/commit/tag state after failures;
+inspect it before retrying. See docs/development/releasing.md for recovery.
+A bump at an already published current-version HEAD is a no-op; it must not
+create another release with no development change.
 
 The project is in the dev phase. A version or tag alone is not evidence of a
 working application, tested platform, packaged artifact, or published release.

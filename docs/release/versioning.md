@@ -36,25 +36,33 @@ without Bash: `python3 tools/release/bump-version.py --bump patch --dry-run`.
 
 ## Commit and release
 
-Review all changes and use the [Git workflow](../development/git.md) to save and push.
-Commit messages must cover everything staged, not just the version change.
-A release tag uses `vMAJOR.MINOR.PATCH` at the reviewed version commit.
-Before creating it, verify a clean main/master branch, that committed VERSION
-matches the intended tag, that the tag is absent locally and remotely, and that
-relevant checks pass. Push the branch through `tools/git/git-push.sh`, then push
-only the intended tag with an explicit tag ref. Never overwrite tags.
+For the combined OSCAR-UI-style workflow, commit development changes and run:
 
-Tag creation and publication are explicit release actions; the bump helper does
-not perform them. The project skill `pnm-viewer-release` guides this workflow.
-The [tag workflow](../development/ci.md#tags) checks the exact tag/version and
-master ancestry, repeats CI, builds native packages and tests their installed
-behavior before creating a draft. It never publishes publicly automatically.
-Use `python3 tools/release/versions.py` to detect version drift; do not edit
+```bash
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
+./tools/git/git-push.sh --tag-patch
+```
+
+Use `--tag-minor` or `--tag-major` for other components; add `--dry-run` to preview.
+These explicit release modes bump, validate the exact candidate, commit version
+files, create an annotated tag and atomically push master and that tag. They
+require clean master and consistent metadata. Plain push remains branch-only.
+The standalone bump helper above continues to make version edits only.
+
+Do not manually bump before a combined bump mode. For an already prepared
+version or a failed upload, use `--tag vMAJOR.MINOR.PATCH` with its matching
+existing tag at HEAD. See [release preparation](../development/releasing.md)
+for first-tag instructions, no-op behavior and recovery without a second bump.
+Never overwrite tags. The tag workflow repeats native checks and prepares a
+**draft** release; public publication remains separate.
+
+Run `python3 tools/release/versions.py` to detect version drift; do not edit
 individual application versions independently.
 
 ## Tool validation
 
 ```bash
 cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
-python3 -m unittest discover -s tools/release -p 'test_*.py'
+python3 -m unittest discover -s tools/release -p 'test_*.py' &&
+python3 -m unittest discover -s tools/git/tests -p 'test_*.py'
 ```

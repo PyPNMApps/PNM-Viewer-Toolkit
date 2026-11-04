@@ -53,3 +53,9 @@ Qt Quick is now the sole desktop UI. The Tauri/React prototype, Node tooling,
 WebKit prerequisites and associated CI checks have been removed. CLI/parser
 behavior and the Qt packaging matrix are unchanged. Version helpers synchronize
 only the Rust workspace and standalone Qt manifests/lockfiles.
+
+The Git push helper now supports OSCAR-UI-style --tag-patch, --tag-minor and
+--tag-major releases: synchronize VERSION/Cargo, validate the bumped candidate,
+commit, annotate and atomically push master plus the selected tag. Existing-tag
+mode supports first-tag/retry workflows without another bump. Plain push remains
+branch-only and tag CI still creates draft releases rather than publishing.

@@ -5,103 +5,120 @@
 
 ## Version ownership
 
-Keep the tracked root `VERSION`. It contains one `MAJOR.MINOR.PATCH` value and
-is authoritative for the CLI, Qt viewer and reusable crates.
-Cargo manifests still require their own version fields; the helper
-synchronizes those consumers and their lockfiles without updating dependencies.
-The CLI version, Qt About dialog and package filenames use this shared version.
+The tracked root `VERSION` is authoritative for the CLI, Qt viewer and reusable
+crates. Cargo manifests and lockfiles require version copies; the shared version
+helper synchronizes them without updating dependencies. The CLI version, Qt
+About dialog and package filenames use this version.
 
-This follows OSCAR/OSCAR-UI's three-component versioning and immutable release
-identity. In this Rust workspace a root file provides one source across
-the core workspace and standalone Qt crate. Version preparation remains separate from commit,
-tag and push so each operation can be reviewed.
+## Combined release commands
 
-## First tag
+Like OSCAR-UI, the push helper supports explicit release modes:
 
-The initial version is `0.1.0`. For the first development release, keep that
-version and tag the reviewed commit `v0.1.0`; no bump is needed just to create
-the first tag. The project remains under development after tagging.
+| Mode | Example from `0.1.7` |
+| --- | --- |
+| `--tag-patch` | `0.1.8` |
+| `--tag-minor` | `0.2.0` |
+| `--tag-major` | `1.0.0` |
 
-Before saving the release preparation:
+Commit development changes first. Release modes require a clean **master** branch,
+consistent version metadata and an origin that is not ahead/diverged. They read
+local/remote tags and reject collisions before changing files.
 
-1. Review [release notes](../release/release-notes.md) and current supported views.
-2. Refresh [UI screenshots](screenshots.md), including dark/light Home and every
-   supported measurement. Remove stale descriptions of retired controls.
-3. Confirm all versions agree:
+Preview a release without running builds or changing versions, commits, tags or
+remote refs (origin is read and Git fetch metadata may be updated):
 
 ```bash
 cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
-python3 tools/release/versions.py --tag v0.1.0
+./tools/git/git-push.sh --tag-patch --dry-run
 ```
 
-Review and commit all preparation changes with the normal save helper. Then
-push the clean master branch through the guarded helper; it runs the complete
-local checks and refuses to push if they fail:
+Create and push a patch release:
 
 ```bash
 cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
-./tools/git/git-push.sh
+./tools/git/git-push.sh --tag-patch
 ```
 
-Review the resulting master CI run for all required operating systems before
-creating the tag. Local Ubuntu checks alone do not verify Windows or macOS.
-Check `git status --short` is empty and `git branch --show-current` is `master`.
-Verify the intended tag does not already exist (both commands should print
-nothing and succeed):
+Use `--tag-minor` or `--tag-major` for the other components. The command:
 
-```bash
-cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
-git tag --list v0.1.0 &&
-git ls-remote --tags origin refs/tags/v0.1.0
-```
+1. Bumps `VERSION` and synchronizes all project-owned Cargo versions.
+2. Runs the full local pre-push gate on the **bumped candidate**.
+3. Rejects changes to the branch, commit or candidate during checks.
+4. Commits only version files and creates an annotated `vMAJOR.MINOR.PATCH` tag.
+5. Atomically pushes the exact validated commit and tag to origin.
 
-Only after those checks, create the annotated tag and push its explicit ref:
+No force-push, extra tags, automatic public publication or skip-check option is
+provided. If HEAD is already published as the current version tag, a repeat bump
+is a no-op; make a new development commit before preparing another release.
+Plain `git-push.sh` (also `--master` or `--branch`) still pushes only the current
+main/master branch; it does not bump, commit or tag.
+
+Before release preparation, review [release notes](../release/release-notes.md),
+refresh [UI screenshots](screenshots.md), and update user guides for changed
+controls or supported measurements. Local Ubuntu validation does not prove
+Windows/macOS runtime behavior.
+
+## First tag or an already prepared version
+
+For the first `0.1.0` development tag, no bump is needed. After committing the
+reviewed preparation, confirm `v0.1.0` is unused locally and remotely:
 
 ```bash
 cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
 python3 tools/release/versions.py --tag v0.1.0 &&
-git tag -a v0.1.0 -m "PNM Viewer Toolkit 0.1.0" &&
-git push origin refs/tags/v0.1.0:refs/tags/v0.1.0
+git tag --list v0.1.0 &&
+git ls-remote --tags origin refs/tags/v0.1.0
 ```
 
-Never replace a tag or force-push it. If the push fails after tag creation,
-inspect the local and remote refs before retrying that same explicit push;
-do not bump again or recreate an existing tag.
+Both tag listings should be empty. Then create the local annotation and use the
+validated existing-tag mode to push master and that tag together:
 
-The [tag workflow](ci.md#tags) validates the version and master ancestry,
-repeats required CI, builds native packages, validates installed behavior and
-creates a **draft** release only after the complete artifact set passes.
-A pushed tag does not itself publish a release. Review artifacts and checksums
-before any separate public publication.
+```bash
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
+git tag -a v0.1.0 -m "PNM Viewer Toolkit 0.1.0" &&
+./tools/git/git-push.sh --tag v0.1.0
+```
 
-## Later versions: automatic bumps
+`--tag` requires an existing local tag at HEAD matching committed VERSION. It
+never bumps, creates a commit or creates/replaces a tag. A remote annotation
+mismatch is rejected even if the target commit is identical. If both refs already
+match origin, the command returns without checks or another upload.
 
-Choose the component explicitly; do not infer it from commit messages.
+## Failure and recovery
 
-| Option | Example | Lower components |
-| --- | --- | --- |
-| `--bump patch` | `0.1.0` → `0.1.1` | Preserved |
-| `--bump minor` | `0.1.7` → `0.2.0` | Patch reset |
-| `--bump major` | `0.2.7` → `1.0.0` | Minor and patch reset |
+Validation or commit failures retain local version edits for review. Fix the
+failure, review the candidate, run the gate, commit the prepared version, and
+create its matching annotation before using `--tag`. Do not bump again merely
+because the earlier operation stopped. Nothing resets or discards work.
 
-Preview all affected paths, then apply the chosen bump:
+If upload fails after the release commit/tag exist, atomic push prevents uploading
+only one ref. The helper prints a recovery command. Inspect local and remote refs,
+then retry that same version, for example:
+
+```bash
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
+./tools/git/git-push.sh --tag v0.1.1
+```
+
+This revalidates the prepared release without another bump or commit. If only
+its commit exists because tag creation failed, inspect it and create the matching
+annotation first. Never overwrite published tags or force-push history.
+
+## Prepare versions without publishing
+
+The independent version helper remains available:
 
 ```bash
 cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
 ./tools/bump-version.sh --bump patch --dry-run
 ```
 
-```bash
-cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
-./tools/bump-version.sh --bump patch &&
-python3 tools/release/versions.py
-```
+Remove `--dry-run` to apply. Use `python3 tools/release/bump-version.py --bump patch`
+without Bash (`python` where that is the Python 3 launcher). This helper never
+commits, tags or pushes. Do not manually bump before using a combined bump mode;
+use the already-prepared-version procedure instead.
 
-Use `python3 tools/release/bump-version.py --bump patch` directly on platforms
-without Bash (`python` where that is the Python 3 launcher). The same major and
-minor options apply. Both previews and writes validate all metadata inputs.
-Preview changes no version metadata. Neither mode commits, tags, pushes or publishes.
-
-Review the diff and release notes, commit, run the guarded push, review CI, and
-use the new `vMAJOR.MINOR.PATCH` everywhere in the tag steps above. Do not edit
-individual consumer versions by hand.
+The [tag workflow](ci.md#tags) validates version/master ancestry, repeats all
+required OS checks, builds native packages and tests installed behavior. Only a
+complete passing artifact set produces a **draft** release. Review artifacts and
+checksums before separate public publication; the project remains in development.

@@ -6,26 +6,7 @@
 """Bump the repository's three-component project version without Git mutations."""
 import argparse
 from pathlib import Path
-from versions import synchronize, validate
-
-
-def bumped(version: str, part: str) -> str:
-    """Return a bumped three-component version without modifying files.
-
-    Args:
-        version: Whole numeric MAJOR.MINOR.PATCH string without leading zeros.
-        part: Component to increment: major, minor or patch.
-    Returns:
-        Incremented version with lower components reset to zero.
-    Raises:
-        ValueError: Version syntax or component name is invalid.
-    """
-    validate(version)
-    parts = [int(value) for value in version.split(".")]
-    index = ("major", "minor", "patch").index(part)
-    parts[index] += 1
-    parts[index + 1:] = [0] * (2 - index)
-    return ".".join(map(str, parts))
+from versions import bumped, synchronize
 
 
 def main() -> None:

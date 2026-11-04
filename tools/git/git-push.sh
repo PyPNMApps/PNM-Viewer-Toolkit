@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 #
-# Push a clean main/master branch to origin without forcing.
-# Validate remote ancestry before pushing; propagate Git failures.
+# Push a validated branch or delegate an explicit version/tag release.
+# Release modes use VERSION; no mode overwrites remote history.
 
 set -euo pipefail
 
@@ -17,9 +17,19 @@ REMOTE="origin"
 # Arguments are unused unless described above; failures stop this script.
 usage() {
   cat <<'EOF'
-Usage: git-push.sh
+Usage: git-push.sh [MODE] [--dry-run]
 
-Push the clean project main/master branch to origin.
+Modes (choose one):
+  --master, --branch  Push main/master only (also the default).
+  --tag-patch         Bump patch, validate, commit, tag and push.
+  --tag-minor         Bump minor, validate, commit, tag and push.
+  --tag-major         Bump major, validate, commit, tag and push.
+  --tag TAG           Validate and push an existing tag at HEAD.
+  --dry-run           Preview a release; no version edits, builds or push.
+
+Release modes require clean master, matching VERSION metadata and origin.
+They atomically push master and only the selected tag; never publish directly.
+Existing-tag mode does not bump, commit or create a tag.
 
 Safety checks:
   - The working tree must have no tracked or untracked changes.
@@ -39,14 +49,42 @@ die() {
   exit 1
 }
 
-case "${1:-}" in
-  "") ;;
-  -h|--help)
-    usage
-    exit 0
-    ;;
-  *) die "Unknown argument: $1 (see --help)" ;;
-esac
+PUSH_MODE=""
+RELEASE_ARGS=()
+DRY_RUN=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --master|--branch|--tag-major|--tag-minor|--tag-patch|--tag)
+      if [[ -n "$PUSH_MODE" ]]; then
+        die "Choose only one push mode"
+      fi
+      PUSH_MODE="$1"
+      case "$PUSH_MODE" in
+        --tag-major|--tag-minor|--tag-patch)
+          RELEASE_ARGS=(--bump "${PUSH_MODE#--tag-}") ;;
+        --tag)
+          if [[ $# -lt 2 ]]; then
+            die "--tag requires vMAJOR.MINOR.PATCH"
+          fi
+          RELEASE_ARGS=(--tag "$2")
+          shift ;;
+      esac
+      ;;
+    --dry-run) DRY_RUN=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *) die "Unknown argument: $1 (see --help)" ;;
+  esac
+  shift
+done
+if [[ ${#RELEASE_ARGS[@]} -gt 0 ]]; then
+  if [[ "$DRY_RUN" == 1 ]]; then
+    RELEASE_ARGS+=(--dry-run)
+  fi
+  exec python3 "${SCRIPT_DIR}/push-release.py" "${RELEASE_ARGS[@]}"
+fi
+if [[ "$DRY_RUN" != 0 ]]; then
+  die "--dry-run requires a release mode"
+fi
 
 if ! git -C "${PROJECT_DIR}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   die "Project directory is not a Git working tree: ${PROJECT_DIR}"
@@ -90,4 +128,4 @@ if [[ "$(git -C "${PROJECT_DIR}" rev-parse HEAD)" != "${validated_commit}" ||
   die "Branch, commit or working tree changed during validation; retry after saving"
 fi
 echo "Pushing validated commit ${validated_commit} to ${REMOTE}/${branch}..."
-git -C "${PROJECT_DIR}" push --set-upstream "${REMOTE}" "${validated_commit}:refs/heads/${branch}"
+git -C "${PROJECT_DIR}" push --no-follow-tags --recurse-submodules=no --set-upstream "${REMOTE}" "${validated_commit}:refs/heads/${branch}"
