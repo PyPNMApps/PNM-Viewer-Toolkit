@@ -29,7 +29,7 @@ Existing Cargo library names and copyright notices retain their current identiti
 ## Project status and guidance
 
 The user adopted the bundle's Tauri/Rust stack on 2026-11-02, superseding the
-initial Java plan. The project remains in the dev phase; no desktop application exists. The core reader/header foundation is implemented.
+initial Java plan. The project remains in the dev phase; the initial RxMER desktop slice is implemented under apps/desktop/. Native packaging remains pending. The core reader/header foundation is implemented.
 Use development/requirements.md, development/architecture.md, development/checklist.md and
 development/development-guide.md together. Maintain the docs as work lands.
 Original bootstrap references live in skills/pnm-viewer-development/references/;

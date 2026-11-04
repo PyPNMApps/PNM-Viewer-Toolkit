@@ -1,7 +1,7 @@
 # PNM Viewer Toolkit documentation
 
-The CLI and Rust parsers work today. The desktop UI is planned; no desktop
-application or published cross-platform download is available yet.
+The CLI, Rust parsers and initial RxMER desktop source are available; no desktop
+installer or published cross-platform download is available yet.
 
 ## Use the toolkit
 

@@ -41,3 +41,11 @@ application manifests and tests exist.
 The [push helper](git.md) also runs a mandatory local validation gate before
 pushing main/master. CI tests the gate with fake Git, including failure and
 checkout-change cases; it does not perform real test pushes.
+
+## Desktop checks
+
+`desktop.yml` runs `scripts/check-desktop.sh` on Linux, Windows and both macOS
+architectures. Linux installs native GTK/WebKit development prerequisites. The
+local pre-push gate now also requires the desktop dependencies (`npm ci` in
+`apps/desktop`) and all desktop checks. These are build/test jobs, not installer
+or interactive GUI validation. CLI-only build commands remain independent.

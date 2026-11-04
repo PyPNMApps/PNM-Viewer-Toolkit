@@ -1,0 +1,6 @@
+{
+  "identifier": "main",
+  "description": "Local viewer window; files selected only through Rust native dialogs.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

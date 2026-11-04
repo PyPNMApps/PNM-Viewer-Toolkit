@@ -33,3 +33,35 @@ content/compression errors and bounded streaming/atomic cache writes with mocks.
 Store secrets in OS credentials or memory, never frontend state or plain settings.
 Reverify a configured deployment's OpenAPI when authorized. No live service was
 called and no runtime contract tests have run in this review.
+
+## Implemented RxMER commands
+
+Only the main window has core capabilities. The frontend has no generic filesystem,
+dialog, shell or network permission. Rust opens native pickers itself.
+
+| Command | Inputs | Result |
+| --- | --- | --- |
+| `open_capture` | None | null on cancel; session_id, metadata, initial viewport on success |
+| `viewport` | sessionId, start | start, total, up to 1,024 points |
+| `export_json` | sessionId | false on cancel; true after writing a new full JSON file |
+| `close_capture` | sessionId | Releases matching session; old handles cannot close a newer one |
+
+A point contains `frequency_hz: u32` and `rxmer_db: number or null`. Viewports use
+exact samples without reduction; start is a zero-based sample index. Session IDs
+are monotonically checked u32 values, safe in JavaScript. Stale handles fail.
+One active session owns original file bytes; replacement happens only after a
+successful parse. Export workers retain an Arc, not a second byte buffer. Parsing
+borrows these bytes afresh for each bounded query; no self-referential structs.
+
+Input and JSON output each have a 16 MiB limit. Parsing uses the core's 65,536-item
+budget. File operations run on a blocking worker; a backend operation gate allows
+one open/export job at a time. The UI disables competing operations and reports
+selection/loading/export status. Native dialogs provide cancellation; there is no
+mid-read cancellation for these bounded local operations. Closing the window
+releases process memory. Long jobs, streaming progress and cancellation tokens
+remain future work.
+
+Errors serialize `code`, `message`, optional `field` and `offset`. Parser offsets
+refer to original file bytes. The frontend retains its previous capture on errors.
+Rust tests verify bounds/nulls/core JSON parity and stale sessions; frontend tests
+exercise theme changes, errors, dialog cancellation, paging, export and close.

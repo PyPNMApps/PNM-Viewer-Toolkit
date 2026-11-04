@@ -1,23 +1,36 @@
 # PNM Viewer Toolkit
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/pnm-viewer-toolkit-logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/images/pnm-viewer-toolkit-logo-light.svg">
+    <img alt="PyPNMApps PNM Viewer Toolkit" src="docs/images/pnm-viewer-toolkit-logo-light.svg" width="461">
+  </picture>
+</p>
+
 [![CLI build](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/cli-build.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/cli-build.yml)
 [![Tests](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/tests.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/tests.yml)
 [![Code checks](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ci.yml)
+[![Desktop checks: pending](https://img.shields.io/badge/Desktop_checks-pending-lightgrey)](.github/workflows/desktop.yml)
 [![Rust 1.85.1](https://img.shields.io/badge/Rust-1.85.1-orange?logo=rust)](rust-toolchain.toml)
 [![Status: in development](https://img.shields.io/badge/status-in_development-yellow)](docs/development/ui.md)
 [![Component licenses](https://img.shields.io/badge/license-Apache--2.0%20%2F%20GPL--3.0--only-blue)](LICENSE)
 
 An offline desktop viewer for DOCSIS Proactive Network Maintenance (PNM) capture
-files, with a Rust backend and a planned Tauri 2 + React/TypeScript interface.
+files, with a Rust backend and an initial Tauri 2 + React/TypeScript interface.
 The repository is `PNM-Viewer-Toolkit`; the standalone CLI is `pnm-decode`.
 The parser design follows PyPNM, with shared file headers, typed measurement
 objects, and human-readable JSON exports.
 
 **In the dev phase:** the Rust parsing libraries and development tools are
 implemented, including the standalone CLI and Linux source installer. The
-desktop interface is not yet available.
+first desktop slice opens RxMER captures, graphs exact samples and exports JSON.
+Desktop installers remain planned. See [run the viewer](docs/development/ui.md).
 
 ## What works today
+
+- Open RxMER files in the desktop viewer, inspect sample windows and export JSON.
+- Choose System, Dark or Light appearance, including live system-theme changes.
 
 - Decode RxMER, channel estimates, constellation samples, histograms, upstream
   pre-equalization coefficients and last updates, FEC summaries, spectrum
@@ -57,12 +70,12 @@ See [installation options](docs/install/README.md),
 Contributors can follow [development setup](docs/install/development.md),
 [Rust APIs and tests](docs/development/rust.md), and
 [parser examples](crates/core/examples/README.md).
-The desktop UI remains [planned work](docs/development/ui.md).
+See the [desktop viewer guide and remaining work](docs/development/ui.md).
 
 ## Design direction
 
 Rust owns binary decoding, numerical processing, exports, and future analysis
-and storage. The planned React interface presents results through Tauri's system
+and storage. The React interface presents results through Tauri's system
 WebView, without a local HTTP backend. Optional retrieval of existing PyPNM
 captures is planned; modem control, capture initiation, SNMP/TFTP, Python
 sidecars, and remote analysis are outside the viewer's scope.
@@ -100,7 +113,7 @@ See [LICENSE](LICENSE) for the component-specific licensing:
 
 - Reusable Rust libraries and project-owned development tooling:
   [Apache-2.0](LICENSES/Apache-2.0.txt).
-- Planned desktop shell and React/TypeScript UI:
+- Desktop shell and React/TypeScript UI:
   [GPL-3.0-only](LICENSES/GPL-3.0-only.txt).
 
 Third-party material retains its original terms and notices.

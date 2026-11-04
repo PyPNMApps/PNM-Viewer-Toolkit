@@ -35,3 +35,6 @@ dist/
 
 # Local development plans, specification evidence and working notes
 /development/
+
+# Tauri-generated IPC schemas
+/apps/desktop/src-tauri/gen/
