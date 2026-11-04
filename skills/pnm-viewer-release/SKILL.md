@@ -16,7 +16,7 @@ patch. Use tags `vMAJOR.MINOR.PATCH`. Do not copy PyPNM's fourth component.
 
 Inspect tracked, staged, and untracked changes before drafting a save command;
 the save helper stages all non-ignored files. Follow AGENTS.md message format.
-Supply copy/paste commands beginning with `cd /home/dev01/Projects/pnm-viewer &&`
+Supply copy/paste commands beginning with `cd /home/dev01/Projects/PNM-Viewer-Toolkit &&`
 unless explicitly asked to execute. A request to add tooling is not a request to
 release. Keep version preparation, commit, tag, and push explicit.
 

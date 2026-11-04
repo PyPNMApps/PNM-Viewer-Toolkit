@@ -7,7 +7,7 @@ to their script location, independently of the caller's working directory.
 ## Inspect changes
 
 ```bash
-cd /home/dev01/Projects/pnm-viewer &&
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
 git status --short &&
 git diff --stat &&
 git diff &&
@@ -22,7 +22,7 @@ non-ignored changes, including untracked files such as the original archive.
 Replace the example message with one describing the full change scope.
 
 ```bash
-cd /home/dev01/Projects/pnm-viewer &&
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
 tools/git/git-save.sh --commit-msg "Feature: Add project tooling
 - Add standard Git save and push helpers
 - Tests: Run Bash syntax and helper checks"
@@ -35,7 +35,7 @@ is reported as an error. Existing Git author configuration is used unchanged.
 ## Push
 
 ```bash
-cd /home/dev01/Projects/pnm-viewer &&
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
 tools/git/git-push.sh
 ```
 
@@ -47,7 +47,7 @@ It can create a missing remote branch. It never force-pushes or creates commits.
 ## Help
 
 ```bash
-cd /home/dev01/Projects/pnm-viewer &&
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
 tools/git/git-save.sh --help &&
 tools/git/git-push.sh --help
 ```

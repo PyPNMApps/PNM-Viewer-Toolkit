@@ -22,7 +22,7 @@ Build PNM Viewer Toolkit with Tauri 2, React/TypeScript presentation and Rust ba
 
 ## Project naming
 
-Display name: PNM Viewer Toolkit. Repository/directory: `pnm-viewer`.
+Display name: PNM Viewer Toolkit. Repository/directory: `PNM-Viewer-Toolkit`.
 Standalone CLI: `pnm-decode` (`pnm-decode.exe` on Windows); manual: `pnm-decode.1`.
 Existing Cargo library names and copyright notices retain their current identities.
 
@@ -51,7 +51,7 @@ for the preserved original guidance before creating new working plans.
 - Use `tools/git/git-save.sh --commit-msg "..."` for local commits and
   `tools/git/git-push.sh` for pushes. Inspect the helpers before constructing commands.
 - Supply copy/paste commands unless the user explicitly asks to execute a commit
-  or push. Begin command blocks with `cd /home/dev01/Projects/pnm-viewer &&`.
+  or push. Begin command blocks with `cd /home/dev01/Projects/PNM-Viewer-Toolkit &&`.
 - Before writing a commit message, inspect `git status --short`, `git diff --stat`,
   `git diff`, staged changes, and every untracked file. The save helper stages all
   non-ignored changes, so the message must describe the complete scope.

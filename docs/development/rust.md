@@ -20,12 +20,12 @@ prerequisites; see [development setup](../install/development.md). The wrapper
 requires that local installation; it does not auto-install.
 
 ```bash
-cd /home/dev01/Projects/pnm-viewer &&
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
 scripts/cargo-local.sh test --workspace --locked
 ```
 
 ```bash
-cd /home/dev01/Projects/pnm-viewer &&
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
 scripts/cargo-local.sh fmt --all -- --check &&
 scripts/cargo-local.sh clippy --workspace --all-targets --locked -- -D warnings
 ```
@@ -231,7 +231,7 @@ and latency edges/bins. It is application policy, not a protocol maximum.
 Export any supported local capture with the generic example:
 
 ```bash
-cd /home/dev01/Projects/pnm-viewer &&
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
 scripts/cargo-local.sh run --quiet --locked -p pnm --example pnm_json --   tests/fixtures/pypnm/tests/files/channel_estimation.bin > local/channel-estimate.json
 ```
 

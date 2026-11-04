@@ -2,7 +2,7 @@
 
 An offline desktop viewer for DOCSIS Proactive Network Maintenance (PNM) capture
 files, with a Rust backend and a planned Tauri 2 + React/TypeScript interface.
-The repository remains `pnm-viewer`; the standalone CLI is `pnm-decode`.
+The repository is `PNM-Viewer-Toolkit`; the standalone CLI is `pnm-decode`.
 The parser design follows PyPNM, with shared file headers, typed measurement
 objects, and human-readable JSON exports.
 

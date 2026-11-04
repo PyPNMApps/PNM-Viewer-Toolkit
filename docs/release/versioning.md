@@ -13,12 +13,12 @@ Python 3 is needed for the development helper, not the planned Rust/Tauri runtim
 ## Preview and update
 
 ```bash
-cd /home/dev01/Projects/pnm-viewer &&
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
 tools/bump-version.sh --bump patch --dry-run
 ```
 
 ```bash
-cd /home/dev01/Projects/pnm-viewer &&
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
 tools/bump-version.sh --bump patch
 ```
 
@@ -45,6 +45,6 @@ synchronization across package manifests before release.
 ## Tool validation
 
 ```bash
-cd /home/dev01/Projects/pnm-viewer &&
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
 python3 -m unittest discover -s tools/release -p 'test_*.py'
 ```

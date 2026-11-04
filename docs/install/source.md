@@ -1,6 +1,6 @@
 # Build the CLI from source
 
-From a checkout of `pnm-viewer`, with the pinned Rust toolchain available:
+From a checkout of `PNM-Viewer-Toolkit`, with the pinned Rust toolchain available:
 
 ```bash
 cargo build --release --locked -p pnm-decode
