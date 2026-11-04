@@ -42,7 +42,27 @@ tools/git/git-push.sh
 The push helper requires a clean working tree, main or master, and an existing
 origin remote. It checks the remote branch and fetches it if present, rejects a
 local branch behind or diverged from origin, and pushes with upstream tracking.
-It can create a missing remote branch. It never force-pushes or creates commits.
+Before pushing, it runs `scripts/check-before-push.sh`: Rust formatting, Clippy,
+locked workspace tests, release-helper and push-gate tests, mocked installer
+tests on Linux, Bash/ShellCheck, and a release CLI build and JSON smoke test.
+Required missing tools or any failed check stop the push; there is no skip flag.
+It uses the local Rust toolchain when installed, otherwise standard Cargo.
+
+The helper verifies branch, HEAD and the clean working tree again after checks,
+then pushes the exact tested commit. It can create a missing remote branch and
+never force-pushes or creates commits. A remote lookup failure stops immediately.
+
+Run the checks without pushing:
+
+```bash
+bash scripts/check-before-push.sh
+```
+
+These checks validate the current host. The GitHub workflows cover native
+Windows/Linux/macOS tests and builds. Direct `git push` can bypass this helper;
+to enforce checks for everyone, configure GitHub rules for main/master requiring
+pull requests and the CI checks before merging. Those server-side rules have not
+been configured by this change.
 
 ## Help
 

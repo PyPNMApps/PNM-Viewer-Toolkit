@@ -37,3 +37,7 @@ documents the selected native labels. The
 [checkout action](https://github.com/actions/checkout) is used with persisted
 credentials disabled. Extend this workflow with UI checks only when the desktop
 application manifests and tests exist.
+
+The [push helper](git.md) also runs a mandatory local validation gate before
+pushing main/master. CI tests the gate with fake Git, including failure and
+checkout-change cases; it does not perform real test pushes.

@@ -59,6 +59,8 @@ for the preserved original guidance before creating new working plans.
   then `- ` detail lines including validation. Keep each message line at most
   60 characters. Pass multiline messages as one double-quoted argument.
 - Push requires a clean main/master branch and origin; never force-push.
+- The push helper must run scripts/check-before-push.sh successfully and push
+  only the tested commit. Do not bypass validation or add a skip option.
 - See docs/development/git.md for commands and helper behavior.
 
 ## Versioning

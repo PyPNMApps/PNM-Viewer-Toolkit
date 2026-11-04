@@ -26,6 +26,8 @@ Safety checks:
   - The current branch must be main or master.
   - The origin remote must exist.
   - The local branch must not be behind or diverged from origin.
+  - Required local checks must pass; no skip option is provided.
+  - Branch, commit and working tree must stay unchanged during checks.
   - Force-push is never used.
 EOF
 }
@@ -66,8 +68,8 @@ if ! git -C "${PROJECT_DIR}" remote get-url "${REMOTE}" >/dev/null 2>&1; then
   die "Remote '${REMOTE}' is not configured"
 fi
 
-if [[ -n "$(git -C "${PROJECT_DIR}" ls-remote --heads \
-    "${REMOTE}" "refs/heads/${branch}")" ]]; then
+remote_head="$(git -C "${PROJECT_DIR}" ls-remote --heads "${REMOTE}" "refs/heads/${branch}")"
+if [[ -n "${remote_head}" ]]; then
   echo "Fetching ${REMOTE}/${branch}..."
   git -C "${PROJECT_DIR}" fetch "${REMOTE}" "${branch}"
   remote_ref="${REMOTE}/${branch}"
@@ -79,5 +81,13 @@ else
   echo "Remote branch ${REMOTE}/${branch} does not exist; creating it."
 fi
 
-echo "Pushing ${branch} to ${REMOTE}..."
-git -C "${PROJECT_DIR}" push --set-upstream "${REMOTE}" "${branch}"
+validated_commit="$(git -C "${PROJECT_DIR}" rev-parse HEAD)"
+echo "Validating ${branch} before push..."
+bash "${PROJECT_DIR}/scripts/check-before-push.sh"
+if [[ "$(git -C "${PROJECT_DIR}" rev-parse HEAD)" != "${validated_commit}" ||
+      "$(git -C "${PROJECT_DIR}" branch --show-current)" != "${branch}" ||
+      -n "$(git -C "${PROJECT_DIR}" status --porcelain)" ]]; then
+  die "Branch, commit or working tree changed during validation; retry after saving"
+fi
+echo "Pushing validated commit ${validated_commit} to ${REMOTE}/${branch}..."
+git -C "${PROJECT_DIR}" push --set-upstream "${REMOTE}" "${validated_commit}:refs/heads/${branch}"

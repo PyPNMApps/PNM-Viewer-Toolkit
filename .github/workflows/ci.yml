@@ -36,5 +36,7 @@ jobs:
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Check shell scripts
         run: |
-          bash -n install.sh scripts/install-cli.sh
-          shellcheck install.sh scripts/install-cli.sh
+          for script in install.sh scripts/install-cli.sh scripts/check-before-push.sh tools/git/git-save.sh tools/git/git-push.sh; do
+            bash -n "$script"
+          done
+          shellcheck install.sh scripts/install-cli.sh scripts/check-before-push.sh tools/git/git-save.sh tools/git/git-push.sh
