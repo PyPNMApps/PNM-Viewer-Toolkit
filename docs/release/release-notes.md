@@ -59,3 +59,8 @@ The Git push helper now supports OSCAR-UI-style --tag-patch, --tag-minor and
 commit, annotate and atomically push master plus the selected tag. Existing-tag
 mode supports first-tag/retry workflows without another bump. Plain push remains
 branch-only and tag CI still creates draft releases rather than publishing.
+
+Windows Qt checks and package builds now select the x64 MSVC linker explicitly,
+preventing Git Bash link.exe from shadowing Microsoft tools. Regression tests
+cover PATH precedence, uppercase environment keys and caller overrides; actual
+Windows compilation still requires a passing hosted run of the corrected commit.

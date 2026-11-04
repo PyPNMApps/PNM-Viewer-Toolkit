@@ -38,6 +38,28 @@ def sdk_path():
     return Path(os.environ.get('QT_SDK_DIR', ROOT / 'local/qt' / QT_VERSION / sdk_layout()[2])).resolve()
 
 
+def msvc_environment(environment):
+    """Select the native x64 MSVC tools in a child-process environment.
+
+    environment is a copied environment dictionary; only that dictionary is
+    modified. Resolve VCToolsInstallDir case-insensitively because Windows Python
+    uppercases environment keys. Put MSVC before Git Bash's unrelated link.exe
+    and set Cargo's default x64 linker to its absolute path. Preserve an explicit
+    Cargo linker override. Raise ValueError for an uninitialized/incomplete x64
+    developer environment before starting any native builds.
+    """
+    tools = next((value for key, value in environment.items()
+                  if key.upper() == 'VCTOOLSINSTALLDIR'), None)
+    if not tools:
+        raise ValueError('VCToolsInstallDir missing; initialize an x64 MSVC developer environment')
+    binaries = Path(tools) / 'bin' / 'Hostx64' / 'x64'
+    for name in ('cl.exe', 'link.exe', 'lib.exe'):
+        if not (binaries / name).is_file():
+            raise ValueError(f'MSVC x64 tool missing: {binaries / name}')
+    environment['PATH'] = str(binaries) + os.pathsep + environment.get('PATH', '')
+    environment.setdefault('CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER', str(binaries / 'link.exe'))
+
+
 def qt_environment():
     """Return a subprocess environment for native Qt/CXX-Qt builds.
 
@@ -52,6 +74,8 @@ def qt_environment():
     environment = os.environ.copy()
     environment.update(QMAKE=str(qmake), QT_VERSION_MAJOR='6', QT_QUICK_CONTROLS_STYLE='Fusion')
     environment['PATH'] = str(sdk / 'bin') + os.pathsep + environment['PATH']
+    if platform.system() == 'Windows':
+        msvc_environment(environment)
     if platform.system() == 'Linux':
         environment['LD_LIBRARY_PATH'] = str(sdk / 'lib') + os.pathsep + environment.get('LD_LIBRARY_PATH', '')
     actual = subprocess.run([str(qmake), '-query', 'QT_VERSION'], env=environment,

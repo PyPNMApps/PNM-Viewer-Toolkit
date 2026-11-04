@@ -46,6 +46,32 @@ Native package builders now cover Windows/macOS, CLI bundling and the size
 gate; their hosted results remain pending. External signing/notarization remains
 separate. The development binary requires Qt runtime dependencies.
 
+## Windows linker selection
+
+Run Qt builds from an initialized **x64 MSVC developer terminal**. GitHub jobs
+initialize this environment with `ilammy/msvc-dev-cmd`. Git Bash can nevertheless
+put its unrelated `Git/usr/bin/link.exe` ahead of Microsoft's linker.
+
+The shared `qt_environment()` helper resolves MSVC from `VCToolsInstallDir`,
+validates the x64 compiler/linker/librarian, and prepends their directory to the
+child PATH. It sets Cargo's default
+`CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER` to the absolute MSVC linker path;
+an explicit caller override is preserved. Windows environment-key casing is
+handled. Qt checks and native package builds use this same helper; global PATH
+and developer tool installations are unchanged.
+
+If the toolchain is uninitialized or incomplete, setup/check fails with a specific
+MSVC message before compiling. An error mentioning `/usr/bin/link: extra operand`
+indicates the Git utility was selected; reinstalling Visual Studio is not the
+remedy for that PATH collision. See [Cargo linker configuration](https://doc.rust-lang.org/cargo/reference/config.html#targettriplelinker).
+
+Regression tests use synthetic tool directories without downloading Qt or running
+MSVC, and run on every desktop CI runner before SDK setup:
+
+```bash
+python3 -m unittest discover -s scripts/tests -p 'test_qt_sdk.py'
+```
+
 ## Validation
 
 The check runs Rust formatting, adapter tests, Clippy, a native build and
