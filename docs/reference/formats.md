@@ -260,13 +260,18 @@ replace these descriptors in CLI/desktop capture JSON. Unknown modulation keeps
 [calculation design](../development/qam-resources.md) and the regenerated
 [complete example](../cli/examples/constellation.json).
 
-## Current upstream pre-equalization analysis
+<a id="current-upstream-pre-equalization-analysis"></a>
 
-PNN6 JSON adds `pre_equalization_analysis` through the shared Rust parser
+## Upstream pre-equalization analysis
+
+PNN6 and PNN7 JSON include `pre_equalization_analysis` through the shared Rust
+parser
 serializer and `pnm::analysis::upstream_pre_equalization` helper. CLI and desktop
-exports are identical. PNN7 last-update JSON is unchanged in this implementation.
+exports are identical. Last-update exports now add this analysis object; their
+original fields and s1.14 I/Q values remain unchanged.
 The existing borrowed parser and original fields/IQ remain available; requesting
-analysis or serializing PNN6 rejects zero spacing and frequency overflow.
+analysis or serializing either variant rejects zero spacing and frequency
+overflow.
 
 ```text
 pre_equalization_analysis: {
@@ -287,12 +292,13 @@ Phase unwrapping restarts after undefined coefficients. No smoothing, absolute
 delay recovery, inferred plant response or echo distance is implied.
 
 Coefficient format and metadata evidence: CM-OSSI 3.1 I27, D.2.13,
-Table 78 and D.2.13.14.1 (pp. 191–192); CM-OSSI 4.0 I13, D.2.13,
-Table 111 and D.2.13.14.1. Current values use s2.13, while last-update values use
+Tables 77/78 and D.2.13.13.1–14.1 (pp. 189–192); CM-OSSI 4.0 I13, D.2.13,
+Tables 110/111 and D.2.13.13.1–14.1. Current values use s2.13; last updates use
 s1.14. The frequency grid follows the pinned PyPNM parser convention. Magnitude,
 group-delay calculation and JSON structure are application analysis choices,
 not fields stored in the OSSI file. Evidence was checked against versioned text
 extracts, without rendered-PDF verification.
 
-[Full output](../cli/examples/upstream-pre-eq.json) ·
+[Current output](../cli/examples/upstream-pre-eq.json) ·
+[Last-update output](../cli/examples/upstream-pre-eq-last.json) ·
 [Viewer controls](../ui/measurements.md#upstream-pre-eq-current)

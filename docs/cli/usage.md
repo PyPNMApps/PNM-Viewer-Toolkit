@@ -143,6 +143,29 @@ modulation retains the samples and exports a null reference. No extra CLI flag
 is needed. See the [complete JSON example](examples/constellation.json) and
 [reference contract](../reference/formats.md#constellation-display-reference-analysis).
 
+### Upstream pre-equalization output
+
+```bash
+./target/release/pnm-decode tests/fixtures/pypnm/tests/files/us_pre_equalizer_coef.bin --stdout
+```
+
+Current PNN6 and last-update PNN7 exports include `pre_equalization_analysis`:
+full-resolution
+`frequencies_hz`, `magnitude_db`, and `group_delay` pairs with `frequency_hz` and
+`delay_s` in seconds. This is the coefficient correction response, not measured
+plant delay. Raw I/Q and header metadata remain unchanged. Undefined magnitudes
+and delays are null. No additional CLI option is needed. Last-update files keep
+their s1.14 I/Q output; current files keep s2.13. The variants are analyzed
+independently. Decode a last update with:
+
+```bash
+./target/release/pnm-decode tests/fixtures/pypnm/tests/files/us_pre_equalizer_coef_last.bin --stdout
+```
+
+See the [field contract](../reference/formats.md#upstream-pre-equalization-analysis)
+and the complete [current](examples/upstream-pre-eq.json) and
+[last-update](examples/upstream-pre-eq-last.json) examples.
+
 ## Limits and errors
 
 Input and serialized JSON are limited to **16 MiB each**, excluding the final
@@ -169,18 +192,3 @@ See the [man page](../../crates/cli/man/pnm-decode.1), installed as
 `pnm-decode(1)`. Windows users can use `pnm-decode.exe --help` and this guide.
 Local validation has been performed on Ubuntu 22.04 x86_64; consult the native
 CI results for Windows/macOS validation.
-
-### Current upstream pre-equalization output
-
-```bash
-./target/release/pnm-decode tests/fixtures/pypnm/tests/files/us_pre_equalizer_coef.bin --stdout
-```
-
-Current PNN6 exports include `pre_equalization_analysis`: full-resolution
-`frequencies_hz`, `magnitude_db`, and `group_delay` pairs with `frequency_hz` and
-`delay_s` in seconds. This is the coefficient correction response, not measured
-plant delay. Raw I/Q and header metadata remain unchanged. Undefined magnitudes
-and delays are null. No additional CLI option is needed. PNN7 last-update files
-remain supported by the CLI with their existing s1.14 I/Q output.
-See the [field contract](../reference/formats.md#current-upstream-pre-equalization-analysis)
-and [complete current-file example](examples/upstream-pre-eq.json).

@@ -72,7 +72,7 @@ fn current_and_last_update_select_distinct_scales() {
 }
 
 #[test]
-fn current_json_analysis_preserves_iq_and_last_update_contract() {
+fn current_and_last_update_json_have_aligned_analysis() {
     let output = json_capture(UPSTREAM);
     let analysis = &output["pre_equalization_analysis"];
     assert_eq!(analysis["frequencies_hz"].as_array().unwrap().len(), 1776);
@@ -82,7 +82,12 @@ fn current_json_analysis_preserves_iq_and_last_update_contract() {
     // Independently computed from the first preserved fixture pair.
     let magnitude = analysis["magnitude_db"][0].as_f64().unwrap();
     assert!((magnitude - (-1.0545710123224268)).abs() < 1e-10);
-    assert!(json_capture(LAST_UPDATE)
-        .get("pre_equalization_analysis")
-        .is_none());
+    let last = json_capture(LAST_UPDATE);
+    let analysis = &last["pre_equalization_analysis"];
+    assert_eq!(analysis["frequencies_hz"][0], 39_900_000);
+    assert_eq!(analysis["frequencies_hz"][1775], 84_275_000);
+    assert_eq!(analysis["magnitude_db"].as_array().unwrap().len(), 1776);
+    assert_eq!(analysis["group_delay"].as_array().unwrap().len(), 1776);
+    // Independent value for the preserved S1.14 first I/Q pair.
+    assert!((analysis["magnitude_db"][0].as_f64().unwrap() - (-15.246083301598743)).abs() < 1e-10);
 }

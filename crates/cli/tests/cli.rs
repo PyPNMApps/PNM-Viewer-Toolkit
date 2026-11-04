@@ -251,3 +251,24 @@ fn upstream_current_cli_includes_shared_response_analysis() {
     assert_eq!(analysis["group_delay"].as_array().unwrap().len(), 1776);
     assert_eq!(json["iq"].as_array().unwrap().len(), 1776);
 }
+
+#[test]
+fn upstream_last_update_cli_includes_analysis_with_s1_14_samples() {
+    let workspace = Workspace::new();
+    fs::write(
+        workspace.0.join("last.bin"),
+        pnm_fixtures::UPSTREAM_PRE_EQ_LAST,
+    )
+    .unwrap();
+    let output = workspace.run(&["last.bin", "--stdout"]);
+    assert!(output.status.success());
+    let json: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(
+        json["iq"][0],
+        serde_json::json!([0.03173828125, -0.169921875])
+    );
+    let analysis = &json["pre_equalization_analysis"];
+    assert_eq!(analysis["frequencies_hz"][0], 39_900_000);
+    assert_eq!(analysis["magnitude_db"].as_array().unwrap().len(), 1776);
+    assert_eq!(analysis["group_delay"].as_array().unwrap().len(), 1776);
+}

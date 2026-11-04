@@ -75,3 +75,31 @@ fn empty_single_zero_spacing_and_frequency_overflow_are_explicit() {
         (ErrorCode::UnsupportedLayout, 29, "spacing_khz")
     );
 }
+
+#[test]
+fn last_update_scaling_delay_gaps_and_grid_errors() {
+    let mut bytes = synthetic(&[[8192, 0], [0, -8192], [-8192, 0], [0, 0], [-32768, -32768]]);
+    let descriptor = pnm::pnm::parser::pnm_file_type::identify_tag("PNN7").unwrap();
+    bytes[..4].copy_from_slice(&descriptor.signature);
+    let capture = CmUsOfdmaPreEq::parse(&bytes, ParseLimits::default()).unwrap();
+    let analysis = PreEqualizationAnalysis::from_capture(&capture).unwrap();
+    assert_eq!(capture.iq().next(), Some(Some([0.5, 0.0])));
+    for index in 0..3 {
+        assert!((analysis.magnitude_db[index].unwrap() + 6.020599913279624).abs() < 1e-12);
+        assert!((analysis.group_delay[index].delay_s.unwrap() - 0.00001).abs() < 1e-16);
+    }
+    assert_eq!(analysis.magnitude_db[3], None);
+    assert_eq!(analysis.group_delay[3].delay_s, None);
+    assert_eq!(analysis.group_delay[4].delay_s, None);
+    assert_eq!(capture.iq().nth(4), Some(Some([-2.0, -2.0])));
+    assert!((analysis.magnitude_db[4].unwrap() - 9.030899869919436).abs() < 1e-12);
+    let json = serde_json::to_value(&capture).unwrap();
+    assert!(json["pre_equalization_analysis"]["magnitude_db"][3].is_null());
+    bytes[29] = 0;
+    let capture = CmUsOfdmaPreEq::parse(&bytes, ParseLimits::default()).unwrap();
+    assert!(capture.to_json(1_000_000).is_err());
+    bytes[29] = 25;
+    bytes[23..27].copy_from_slice(&u32::MAX.to_be_bytes());
+    let capture = CmUsOfdmaPreEq::parse(&bytes, ParseLimits::default()).unwrap();
+    assert!(capture.to_json(1_000_000).is_err());
+}

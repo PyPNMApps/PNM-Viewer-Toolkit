@@ -232,7 +232,7 @@ Open or drop `us_pre_equalizer_coef.bin` (PNN6). The first upstream view uses th
 current CM coefficients in s2.13 format. Channel, CM MAC and CMTS address chips
 identify the capture. The CMTS field is the downstream channel MAC used for
 MAPs/UCDs, as defined by OSSI. The **Current** chip distinguishes this capture
-from the last-update format, which remains CLI-only for now.
+from the [last-update format](#upstream-pre-eq-last-update), which has its own view.
 
 Choose **Magnitude**, **Group delay**, or **I/Q scatter**. The layout follows
 [PyPNM's single-capture pre-equalization view](https://github.com/PyPNMApps/PyPNM-CMTS-WebUI/blob/25f40bda432f3c72df1e606bb229ffc5ba4eacf8/src/pw/features/operations/SingleUsOfdmaPreEqualizationView.tsx),
@@ -261,7 +261,7 @@ separate measurements with different Q-formats; the viewer does not combine them
 Export JSON and `pnm-decode` share the same `pre_equalization_analysis` object,
 including full-resolution frequencies, magnitude and frequency/delay pairs in
 seconds. Original header, CMTS MAC and every I/Q sample are retained. See the
-[JSON contract](../reference/formats.md#current-upstream-pre-equalization-analysis)
+[JSON contract](../reference/formats.md#upstream-pre-equalization-analysis)
 and [complete CLI example](../cli/examples/upstream-pre-eq.json).
 
 **Magnitude**
@@ -286,4 +286,58 @@ and [complete CLI example](../cli/examples/upstream-pre-eq.json).
   <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/upstream-pre-eq-iq-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/upstream-pre-eq-iq-light.png">
   <img alt="Current upstream coefficient I/Q density" src="../images/user-guide/upstream-pre-eq-iq-dark.png" width="1000">
+</picture>
+
+## Upstream Pre-EQ (last update)
+
+Open or drop `us_pre_equalizer_coef_last.bin` (PNN7). **Upstream Pre-EQ Last
+Update** and the **Last update** chip distinguish this file from the current
+coefficient set. Channel, CM MAC and CMTS MAC retain the same meanings.
+
+This capture contains the complex coefficients sent in the last RNG-RSP that
+contained a pre-EQ update, encoded in **s1.14**. It is a separate measurement
+from the current s2.13 coefficient set. The file does not encode whether those
+updates were applied, clipped or rejected; the viewer does not infer that status.
+OSSI describes these CMTS equalizer updates as representing the residual channel
+after pre-equalization. The charts show the captured update coefficients
+as supplied, without combining them with a current capture or inverting them
+into a measured plant response.
+
+Choose **Magnitude**, **Group delay**, or **I/Q scatter**. Update magnitude is
+in dB relative to unit amplitude. Update group delay is derived from unwrapped
+coefficient phase and shown in µs; it is not absolute cable propagation delay.
+The same drag/wheel zoom and double-click reset work on both frequency plots.
+I/Q density always covers the full capture. Switching tabs resets the range.
+All calculations, decimation and density aggregation run in shared Rust code.
+Zero coefficients remain in raw I/Q and appear as gaps for undefined magnitude
+and delay. Signed minimum pairs are valid coefficients.
+
+Export and CLI now both include full-resolution `pre_equalization_analysis`
+for last-update files, with `frequencies_hz`, `magnitude_db` and `group_delay`
+pairs in seconds. Original metadata and s1.14 I/Q remain unchanged. Zoom never
+reduces exported data. See the [JSON contract](../reference/formats.md#upstream-pre-equalization-analysis)
+and [complete last-update example](../cli/examples/upstream-pre-eq-last.json).
+
+**Magnitude**
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/upstream-pre-eq-last-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/upstream-pre-eq-last-light.png">
+  <img alt="Last upstream pre-equalization update magnitude" src="../images/user-guide/upstream-pre-eq-last-dark.png" width="1000">
+</picture>
+
+**Group delay**
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/upstream-pre-eq-last-delay-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/upstream-pre-eq-last-delay-light.png">
+  <img alt="Last upstream pre-equalization update group delay" src="../images/user-guide/upstream-pre-eq-last-delay-dark.png" width="1000">
+</picture>
+
+**I/Q density**
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/upstream-pre-eq-last-iq-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/upstream-pre-eq-last-iq-light.png">
+  <img alt="Last upstream pre-equalization update I/Q density" src="../images/user-guide/upstream-pre-eq-last-iq-dark.png" width="1000">
 </picture>

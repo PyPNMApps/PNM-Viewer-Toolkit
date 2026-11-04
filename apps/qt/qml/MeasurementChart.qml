@@ -100,7 +100,8 @@ ColumnLayout {
         Layout.preferredHeight: 280
         Accessible.role: Accessible.Graphic
         Accessible.name: chart.axisLabel + " in " + chart.unit + " versus frequency in MHz; drag to zoom, double-click to reset"
-        property real leftMargin: 48
+        // Leave room for negative dB labels with three decimal places.
+        property real leftMargin: 64
         property real rightMargin: 18
         property real topMargin: 22
         property real bottomMargin: 42

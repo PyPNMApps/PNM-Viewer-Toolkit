@@ -44,6 +44,18 @@ TestCase {
         onProfileRequested: index => selectedProfile = index
         onRangeRequested: (start, count) => requestedCount = count
     }
+    TextMetrics {
+        id: negativeAxisLabel
+        font.family: "sans-serif"
+        font.pixelSize: 11
+        text: "-15.396"
+    }
+    function test_negative_pre_eq_axis_label_fits_margin() {
+        const plot = findChild(chart, "measurementPlot")
+        verify(plot !== null)
+        // Canvas labels are right aligned, 12 px before the plot origin.
+        verify(plot.leftMargin - 12 >= negativeAxisLabel.width)
+    }
     function test_fec_profiles_utc_selection_toggles_and_empty() {
         chart.visible = false
         fecChart.visible = true

@@ -2,7 +2,7 @@
  * Copyright 2026 PNM Viewer contributors
  * SPDX-License-Identifier: Apache-2.0
  */
-//! Derived current pre-equalizer response; binary decoding remains in the parser.
+//! Derived current or last-update pre-equalizer response; binary decoding remains in the parser.
 use crate::{
     common::signal_processing::channel_response::{
         group_delay_seconds, magnitude_db, GroupDelaySeconds, MagnitudeDb,

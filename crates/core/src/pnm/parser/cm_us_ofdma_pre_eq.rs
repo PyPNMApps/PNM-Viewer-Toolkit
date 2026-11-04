@@ -128,11 +128,11 @@ impl<'input> CmUsOfdmaPreEq<'input> {
 }
 
 impl Serialize for CmUsOfdmaPreEq<'_> {
-    /// Exports original fields and current coefficient-response analysis for CLI and UI.
+    /// Exports original fields and coefficient-response analysis for CLI and UI.
     /// # Arguments
     /// * `serializer` - Destination shared by all callers.
     /// # Returns
-    /// Unchanged I/Q samples plus derived current analysis; last-update JSON is unchanged.
+    /// Unchanged I/Q samples plus derived current or last-update response analysis.
     /// # Errors
     /// Reports invalid frequency grids, serialization and destination failures.
     fn serialize<Output: Serializer>(
@@ -154,16 +154,10 @@ impl Serialize for CmUsOfdmaPreEq<'_> {
             subcarrier_spacing: SubcarrierSpacingKhz,
             data_length: DataLengthBytes,
             iq: &'capture IqSamples<'input>,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            pre_equalization_analysis: Option<PreEqualizationAnalysis>,
+            pre_equalization_analysis: PreEqualizationAnalysis,
         }
-        let analysis = if self.header.descriptor().kind
-            == super::pnm_file_type::PnmFileKind::UpstreamPreEqualization
-        {
-            Some(PreEqualizationAnalysis::from_capture(self).map_err(serde::ser::Error::custom)?)
-        } else {
-            None
-        };
+        let analysis =
+            PreEqualizationAnalysis::from_capture(self).map_err(serde::ser::Error::custom)?;
         CaptureJson {
             pnm_header: &self.header,
             channel_id: self.channel_id,
