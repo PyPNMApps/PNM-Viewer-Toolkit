@@ -1,7 +1,7 @@
 # RxMER desktop viewer
 
-The [Qt Quick prototype](qt.md) supports RxMER, Spectrum Analyzer and DS Channel
-Estimation without a WebView. Both shells share Rust capture behavior in
+The [Qt Quick prototype](qt.md) supports RxMER, Spectrum Analyzer, DS Channel
+Estimation and Histogram without a WebView. Both shells share Rust capture behavior in
 apps/viewer. This page describes the retained Tauri RxMER prototype.
 
 The first desktop slice lives under `apps/desktop/`: Tauri 2, React/TypeScript

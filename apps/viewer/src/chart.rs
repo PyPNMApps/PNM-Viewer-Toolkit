@@ -42,6 +42,7 @@ impl Chip {
 /// Small chart configuration; vertical bounds use the declared measurement unit.
 #[derive(Serialize)]
 pub struct ChartMetadata {
+    pub histogram: bool,
     pub views: Vec<&'static str>,
     pub view_index: u32,
     pub title: &'static str,
@@ -64,6 +65,8 @@ pub struct ChartPoint {
 /// Selected source range and bounded display points for that range.
 #[derive(Serialize)]
 pub struct ChartViewport {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub histogram: Option<crate::histogram::HistogramView>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub iq_density: Option<crate::channel_estimation::IqDensity>,
     pub start: usize,
@@ -92,12 +95,14 @@ impl Capture {
         let decoded = self.decoded()?;
         validate_view(&decoded, view)?;
         match decoded {
+            DecodedPnm::Histogram(capture) => Ok(crate::histogram::metadata(&capture)),
             DecodedPnm::ChannelEstimate(capture) => {
                 crate::channel_estimation::metadata(&capture, view)
             }
             DecodedPnm::RxMer(_) => {
                 let metadata = self.metadata()?;
                 Ok(ChartMetadata {
+                    histogram: false,
                     views: vec![],
                     view_index: 0,
                     spectrum_analysis: None,
@@ -133,6 +138,7 @@ impl Capture {
                     .collect::<Vec<_>>()
                     .join(":");
                 Ok(ChartMetadata {
+                    histogram: false,
                     views: vec![],
                     view_index: 0,
                     title: "Spectrum Analyzer",
@@ -274,6 +280,15 @@ impl Capture {
         start: usize,
         count: usize,
     ) -> Result<ChartViewport, Diagnostic> {
+        if let DecodedPnm::Histogram(capture) = self.decoded()? {
+            if view != MeasurementView::Default {
+                return Err(Diagnostic::new(
+                    "UnsupportedView",
+                    "Histogram has no such tab.",
+                ));
+            }
+            return crate::histogram::viewport(&capture, start, count);
+        }
         if view == MeasurementView::IqScatter {
             let decoded = self.decoded()?;
             validate_view(&decoded, view)?;
@@ -286,6 +301,7 @@ impl Capture {
                     ));
                 }
                 return Ok(ChartViewport {
+                    histogram: None,
                     start,
                     count,
                     total: samples.len(),
@@ -304,6 +320,7 @@ impl Capture {
             })?;
         let points = overview(&samples[start..end]);
         Ok(ChartViewport {
+            histogram: None,
             iq_density: None,
             start,
             count,

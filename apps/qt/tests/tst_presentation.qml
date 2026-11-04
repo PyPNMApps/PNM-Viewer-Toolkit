@@ -54,7 +54,46 @@ TestCase {
         wait(50)
         scatter.visible = false
     }
+    HistogramChart {
+        id: histogramChart
+        theme: appearance
+        // Keep the drawable width divisible by four for integer mouse coordinates.
+        width: 849
+        height: 400
+        visible: false
+        onRangeRequested: (start, count) => {
+            histogramChart.viewport = {start: start, count: count, total: 256,
+                histogram: {bars: [{first_bin: start, bin_count: count, hit_count: 42}], maximum: 42, total_hits: 42, grouped: count > 1}}
+        }
+    }
+    function test_histogram_drag_zoom_and_empty() {
+        chart.visible = false
+        histogramChart.visible = true
+        histogramChart.viewport = {start: 0, count: 256, total: 256}
+        histogramChart.resetZoom()
+        const plot = findChild(histogramChart, "histogramPlot")
+        const usableWidth = plot.width - plot.leftMargin - plot.rightMargin
+        const left = plot.leftMargin + usableWidth * 0.25
+        const right = plot.leftMargin + usableWidth * 0.75
+        mousePress(plot, left, 100)
+        mouseMove(plot, right, 100)
+        mouseRelease(plot, right, 100)
+        compare(histogramChart.viewport.start, 64)
+        compare(histogramChart.viewport.count, 128)
+        mouseDoubleClickSequence(plot, plot.width / 2, 100)
+        compare(histogramChart.viewport.count, 256)
+        mouseWheel(plot, plot.width / 2, 100, 0, 120)
+        compare(histogramChart.viewport.count, 205)
+        appearance.preference = 1
+        histogramChart.viewport = {start: 0, count: 0, total: 0, histogram: {bars: [], maximum: 1, total_hits: 0, grouped: false}}
+        wait(50)
+        histogramChart.visible = false
+        chart.visible = true
+    }
     function init() {
+        chart.visible = true
+        histogramChart.visible = false
+        scatter.visible = false
         chart.unit = "dB"
         chart.axisLabel = "RxMER"
         chart.minimum = 0

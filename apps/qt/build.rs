@@ -23,6 +23,7 @@ fn main() {
                 "qml/Theme.qml",
                 "qml/MeasurementChart.qml",
                 "qml/IqScatterChart.qml",
+                "qml/HistogramChart.qml",
                 "qml/PanelToggle.qml",
             ],
             ..Default::default()

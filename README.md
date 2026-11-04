@@ -24,13 +24,13 @@ objects, and human-readable JSON exports.
 
 **In the dev phase:** the Rust parsing libraries and development tools are
 implemented, including the standalone CLI and Linux source installer. The
-Qt desktop opens RxMER, Spectrum Analyzer and DS Channel Estimation captures
+Qt desktop opens RxMER, Spectrum Analyzer, DS Channel Estimation and Histogram captures
 with zoomable graphs and JSON export; the retained Tauri prototype supports RxMER.
 Desktop installers remain planned. See [run the viewer](docs/development/ui.md).
 
 ## What works today
 
-- Open RxMER, Spectrum Analyzer and DS Channel Estimation files in Qt,
+- Open RxMER, Spectrum Analyzer, DS Channel Estimation and Histogram files in Qt,
   zoom into frequency ranges, and export JSON.
 - Choose System, Dark or Light appearance, including live system-theme changes.
 
@@ -77,7 +77,7 @@ See the [desktop viewer guide and remaining work](docs/development/ui.md).
 ## Qt desktop prototype
 
 The Qt Quick/Rust prototype lives alongside the retained Tauri app. It opens
-RxMER, Spectrum Analyzer and DS Channel Estimation captures, plots
+RxMER, Spectrum Analyzer, DS Channel Estimation and Histogram captures, plots
 full-range overviews with drag zoom, exports JSON, and offers System/Dark/Light themes.
 See [Qt setup and launch instructions](docs/development/qt.md). Both prototypes
 remain in development; desktop installers are not yet available.

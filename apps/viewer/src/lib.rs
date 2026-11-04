@@ -5,6 +5,7 @@
 //! Bounded capture ownership and desktop chart data.
 pub mod channel_estimation;
 pub mod chart;
+pub mod histogram;
 pub mod spectrum_analysis;
 use pnm::pnm::data_type::{ChannelId, FrequencyHz, RxMerDb, SubcarrierSpacingKhz};
 use pnm::pnm::parser::{
@@ -153,8 +154,8 @@ impl Capture {
     fn decoded(&self) -> Result<DecodedPnm<'_>, Diagnostic> {
         let decoded = PnmFile::from_bytes(&self.bytes).decode(ParseLimits::default())?;
         match decoded {
-            DecodedPnm::RxMer(_) | DecodedPnm::SpectrumAnalysis(_) | DecodedPnm::ChannelEstimate(_) => Ok(decoded),
-            _ => Err(Diagnostic::new("UnsupportedViewer", "This viewer supports RxMER, Spectrum Analyzer and DS Channel Estimation captures. Other formats remain available in pnm-decode.")),
+            DecodedPnm::RxMer(_) | DecodedPnm::SpectrumAnalysis(_) | DecodedPnm::ChannelEstimate(_) | DecodedPnm::Histogram(_) => Ok(decoded),
+            _ => Err(Diagnostic::new("UnsupportedViewer", "This viewer supports RxMER, Spectrum Analyzer, DS Channel Estimation and Histogram captures. Other formats remain available in pnm-decode.")),
         }
     }
     fn parsed(&self) -> Result<CmDsOfdmRxMer<'_>, Diagnostic> {
@@ -375,7 +376,10 @@ mod tests {
     #[test]
     fn reject_invalid_and_other_measurements() {
         assert!(Capture::from_bytes(vec![0; 4], "bad".into()).is_err());
-        assert!(Capture::from_bytes(pnm_fixtures::HISTOGRAM.to_vec(), "histogram".into()).is_err());
+        assert!(
+            Capture::from_bytes(pnm_fixtures::CONSTELLATION.to_vec(), "constellation".into())
+                .is_err()
+        );
         assert!(Capture::from_bytes(vec![0; MAX_INPUT_BYTES + 1], "large".into()).is_err());
     }
 }

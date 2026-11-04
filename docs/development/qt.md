@@ -28,7 +28,7 @@ scripts/qt-desktop.sh check
 ## Workflow
 
 The initial Home page shows its title and a centered Open capture button. Choose
-Open capture or Open in the toolbar. RxMER, Spectrum Analyzer and DS Channel Estimation format 1.0
+Open capture or Open in the toolbar. RxMER, Spectrum Analyzer, DS Channel Estimation and Histogram format 1.0
 captures are detected by file contents and open their matching chart. Close
 returns to Home. Other measurements retain the unsupported-viewer diagnostic.
 
@@ -257,3 +257,21 @@ The numbers above illustrate the schema, not the fixture. Core parser and
 `pnm-decode` JSON remain raw; the desktop export adds derived analysis. The
 reusable math lives in `crates/core/src/common/signal_processing/channel_response.rs`;
 `apps/viewer/src/channel_estimation.rs` owns capture mapping and presentation.
+
+## Downstream histogram
+
+Open `tests/fixtures/pypnm/tests/files/histogram.bin` for the 256-bin fixture.
+The chart follows PyPNM-WebUI's single histogram view: hit count on the vertical
+axis and zero-based bin index on the horizontal axis. The MAC chip identifies
+the capture. Drag across bins to zoom, use the wheel to change the range, and
+double-click to reset. The footer shows the selected bin range and its total hits.
+There is no frequency axis or hover tooltip.
+
+Rust returns at most 1,024 bars. Larger ranges sum contiguous bins, explicitly
+labeled "summed bins"; zooming reveals the original individual counts. Sums use
+64-bit integers and preserve every hit in the selected range. Zero bins stay
+zero; empty captures show an empty-state label. Qt only renders the supplied bars.
+
+Export retains the parser's full `hit_count_values`, `dwell_count_values` and
+encoded `symmetry` fields. No probability normalization, symmetry reconstruction
+or amplitude calibration is inferred. This UI adds no derived JSON section.

@@ -300,8 +300,16 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                         }
+                        HistogramChart {
+                            visible: window.metadata.histogram === true
+                            theme: appTheme
+                            viewport: window.viewport
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            onRangeRequested: (start, count) => backend.show_range(start, count)
+                        }
                         MeasurementChart {
-                            visible: window.metadata.view_index !== 2
+                            visible: window.metadata.view_index !== 2 && window.metadata.histogram !== true
                             unit: window.metadata.unit || "dB"
                             axisLabel: window.metadata.axis_label || "Amplitude"
                             minimum: window.metadata.minimum === undefined ? 0 : window.metadata.minimum
