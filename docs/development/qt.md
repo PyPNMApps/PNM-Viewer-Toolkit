@@ -189,3 +189,29 @@ Explicit files avoid relying on Windows GUI console output. See the
 [Windows debugging guidance](https://doc.qt.io/qt-6/debug.html#environment-variables-recognized-by-qt).
 If startup fails before Qt Test can write its reports, inspect `process.log`;
 a report may be absent when the process never initialized.
+
+## Release-update indicator and About
+
+`apps/viewer/src/update.rs` owns read-only GitHub stable-release discovery and
+version comparison. `apps/qt/src/update.rs` provides an independent CXX-Qt
+controller: one request at a time, on a Rust worker, with queued UI-thread
+completion. Capture busy/status state is unaffected. `UpdateChip.qml` and
+`AboutDialog.qml` share this controller. Normal launches start one check; About
+can retry. `--smoke-test` disables the startup request for offline lifecycle checks.
+
+Metadata is capped at 1 MiB with a ten-second request timeout and redirects
+disabled. 404 means no published release. Other HTTP, content-type, malformed
+JSON, draft/prerelease or invalid-version cases produce update-only errors.
+Release links are generated from the fixed project URL and validated numeric
+tags, never arbitrary remote HTML/URLs. A newer stable release reveals the
+green chip; equal/newer installed versions and errors keep it hidden.
+
+The HTTPS dependency is pinned; both lockfiles retain Rust-1.85.1-compatible
+IDNA dependencies. Preserve that compatibility when refreshing dependencies.
+Core parsers and pnm-decode have no update networking dependency.
+
+Tests use local HTTP fixtures and mocked QML update state. They do not require
+a successful tag, published release, credentials or a live GitHub connection.
+This delivery opens release notes/downloads only. Installer downloads, progress,
+verification, process handoff and restart remain future work; no MSI/MSP helper
+is copied from OSCAR-UI into this NSIS-based Windows package.

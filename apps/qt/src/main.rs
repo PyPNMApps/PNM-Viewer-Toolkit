@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 mod backend;
+mod update;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};
 /// Starts the Qt Quick desktop application using embedded QML resources.
 ///

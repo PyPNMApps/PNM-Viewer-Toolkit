@@ -10,6 +10,7 @@ pub mod fec_summary;
 pub mod histogram;
 pub mod modulation_profile;
 pub mod spectrum_analysis;
+pub mod update;
 pub mod upstream_pre_equalization;
 use pnm::pnm::data_type::{ChannelId, FrequencyHz, RxMerDb, SubcarrierSpacingKhz};
 use pnm::pnm::parser::{

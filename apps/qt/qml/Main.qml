@@ -31,8 +31,15 @@ ApplicationWindow {
     palette.highlightedText: appTheme.background
     Theme { id: appTheme }
     ViewerBackend { id: backend }
+    UpdateBackend { id: updateBackend }
     SmokeTest { viewerBackend: backend; applicationWindow: window; surface: captureSurface }
-    Component.onCompleted: backend.set_dark_icon(appTheme.dark)
+    Component.onCompleted: {
+        backend.set_dark_icon(appTheme.dark)
+        // Packaged smoke checks stay offline; normal launch checks once, asynchronously.
+        if (Qt.application.arguments.indexOf("--smoke-test") < 0) {
+            Qt.callLater(function() { updateBackend.check_updates() })
+        }
+    }
     Connections {
         target: appTheme
         function onDarkChanged() { backend.set_dark_icon(appTheme.dark) }
@@ -89,6 +96,11 @@ ApplicationWindow {
             ToolButton { text: "About"; enabled: !window.blocked; onClicked: aboutDialog.open() }
             Item { Layout.fillWidth: true }
             BusyIndicator { running: backend.busy; visible: running; Layout.preferredWidth: 24; Layout.preferredHeight: 24; Accessible.name: "Processing capture" }
+            UpdateChip {
+                updates: updateBackend
+                enabled: !window.blocked
+                onClicked: aboutDialog.open()
+            }
             PanelToggle {
                 theme: appTheme
                 checked: window.navigationVisible
@@ -119,23 +131,13 @@ ApplicationWindow {
             Label { text: "System follows your desktop appearance.\nPreferences apply to this session."; color: appTheme.muted }
         }
     }
-    Dialog {
+    AboutDialog {
         id: aboutDialog
-        title: "About PNM Viewer Toolkit"
         anchors.centerIn: parent
-        width: 420
-        modal: true
-        standardButtons: Dialog.Close
-        ColumnLayout {
-            anchors.fill: parent
-            spacing: 12
-            Image { source: appTheme.dark ? "qrc:/branding/icon-dark.png" : "qrc:/branding/icon-light.png"; sourceSize.width: 64; sourceSize.height: 64; Layout.alignment: Qt.AlignHCenter }
-            Label { text: "PNM Viewer Toolkit"; color: appTheme.text; font.pixelSize: 20; font.bold: true }
-            Label { text: "Version " + backend.app_version + " · In development"; color: appTheme.muted }
-            Label { text: "Offline inspection of DOCSIS PNM captures."; color: appTheme.text }
-            Label { text: "Desktop: GPL-3.0-only\nCore libraries: Apache-2.0\nAcknowledgment: PyPNM Toolkit"; color: appTheme.muted }
-            Button { text: "GitHub project"; onClicked: Qt.openUrlExternally("https://github.com/PyPNMApps/PNM-Viewer-Toolkit") }
-        }
+        theme: appTheme
+        updates: updateBackend
+        appVersion: backend.app_version
+        onOpenReleaseRequested: address => Qt.openUrlExternally(address)
     }
     RowLayout {
         id: captureSurface

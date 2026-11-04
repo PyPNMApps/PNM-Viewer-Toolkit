@@ -91,6 +91,20 @@ System follows the desktop appearance. This preference lasts for the current
 session. Screenshots follow your documentation viewer's theme.
 
 The panel button at the top right shows or hides the left navigation pane.
-**About** shows the version, development status, licenses and project link.
+**About** shows the installed version, development status, licenses, project
+link and software-update status. A background check runs once per normal launch;
+it does not delay opening captures. Offline or failed checks leave the viewer
+usable. **Check for updates** retries manually and reports the outcome.
+
+When a newer published stable release exists, a compact green **Update** button
+appears near the top-right navigation toggle. Click it to open About, see the
+latest version and open **Release notes and downloads**. Draft releases and tags
+without a published release are not updates. Until a release is published,
+**No published release is available yet** is a normal result.
+
+Installation is manual in this version: the application does not download or
+run installers. **View releases** remains available when checks fail. The check
+sends only a release lookup to this project's GitHub API, not capture contents
+or device metadata. Native automated smoke tests skip the startup request.
 
 Developer details belong in the [Qt guide](../development/qt.md).

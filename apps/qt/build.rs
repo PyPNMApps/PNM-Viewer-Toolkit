@@ -17,9 +17,11 @@ fn main() {
         .qt_module("QuickControls2")
         .qml_module(QmlModule {
             uri: "Pnm.Viewer",
-            rust_files: &["src/backend.rs"],
+            rust_files: &["src/backend.rs", "src/update.rs"],
             qml_files: &[
                 "qml/Main.qml",
+                "qml/AboutDialog.qml",
+                "qml/UpdateChip.qml",
                 "qml/Theme.qml",
                 "qml/MeasurementChart.qml",
                 "qml/IqScatterChart.qml",
