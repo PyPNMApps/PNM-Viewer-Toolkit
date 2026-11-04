@@ -60,6 +60,28 @@ def msvc_environment(environment):
     environment.setdefault('CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER', str(binaries / 'link.exe'))
 
 
+def export_msvc_linker():
+    """Persist the validated Cargo linker for subsequent GitHub Actions steps.
+
+    Read the initialized MSVC environment and append its absolute default linker
+    (or an explicit override) to GITHUB_ENV. No Qt SDK is required. Only the job's
+    environment file changes; the calling process and system PATH stay untouched.
+    Raise ValueError for missing metadata, tools, or unsafe multiline values;
+    propagate filesystem errors before subsequent Cargo commands can run.
+    """
+    environment = os.environ.copy()
+    msvc_environment(environment)
+    destination = environment.get('GITHUB_ENV')
+    if not destination:
+        raise ValueError('GITHUB_ENV missing; this action requires GitHub Actions')
+    linker_key = 'CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER'
+    linker = environment[linker_key]
+    if any(character in linker for character in ('\r', '\n', '\0')):
+        raise ValueError('Cargo linker must be a single-line environment value')
+    with Path(destination).open('a', encoding='utf-8', newline='\n') as output:
+        output.write(f'{linker_key}={linker}\n')
+
+
 def qt_environment():
     """Return a subprocess environment for native Qt/CXX-Qt builds.
 
@@ -134,15 +156,17 @@ def check():
 
 
 def main():
-    """Dispatch setup/check and report platform or process failures clearly."""
+    """Dispatch SDK checks or CI linker export and report failures clearly."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=('setup', 'check'))
+    parser.add_argument('action', choices=('setup', 'check', 'export-msvc-linker'))
     args = parser.parse_args()
     try:
         if args.action == 'setup':
             setup()
-        else:
+        elif args.action == 'check':
             check()
+        else:
+            export_msvc_linker()
     except (ValueError, OSError, subprocess.CalledProcessError) as error:
         parser.exit(1, f'ERROR: {error}\n')
 

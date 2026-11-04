@@ -80,6 +80,47 @@ class QtEnvironmentTests(unittest.TestCase):
                 finally:
                     path.touch()
 
+    def test_ci_export_survives_later_git_bash_path_changes(self):
+        """Persist the absolute linker without requiring Qt or changing the caller."""
+        destination = self.root / 'github environment'
+        destination.write_text('EXISTING=value\n', encoding='utf-8')
+        original = {'PATH': str(self.git), 'VCTOOLSINSTALLDIR': str(self.tools),
+                    'GITHUB_ENV': str(destination)}
+        with patch.dict(os.environ, original, clear=True), \
+                patch.object(QT, 'sdk_path', side_effect=AssertionError('Qt not required')):
+            QT.export_msvc_linker()
+            self.assertEqual(dict(os.environ), original)
+        entries = dict(line.split('=', 1) for line in destination.read_text().splitlines())
+        self.assertEqual(entries['EXISTING'], 'value')
+        self.assertEqual(entries[LINKER_KEY], str(self.binaries / 'link.exe'))
+        # A later Bash step may prepend Git again; Cargo keeps its explicit linker.
+        child = {'PATH': str(self.git), **entries}
+        self.assertTrue(Path(child[LINKER_KEY]).is_file())
+        self.assertNotEqual(child[LINKER_KEY], str(self.git / 'link.exe'))
+
+    def test_ci_export_preserves_override(self):
+        """Persist an intentional linker override including spaces and equals signs."""
+        destination = self.root / 'github environment'
+        override = str(self.root / 'custom tools' / 'link=custom.exe')
+        with patch.dict(os.environ, {'VCTOOLSINSTALLDIR': str(self.tools),
+                                     'GITHUB_ENV': str(destination), LINKER_KEY: override}, clear=True):
+            QT.export_msvc_linker()
+        self.assertEqual(destination.read_text(), f'{LINKER_KEY}={override}\n')
+
+    def test_ci_export_rejects_invalid_input_without_writing(self):
+        """Fail before touching the job file for invalid MSVC or environment values."""
+        destination = self.root / 'github environment'
+        cases = ({'GITHUB_ENV': str(destination)},
+                 {'VCTOOLSINSTALLDIR': str(self.tools)},
+                 {'VCTOOLSINSTALLDIR': str(self.tools), 'GITHUB_ENV': str(destination),
+                  LINKER_KEY: 'link.exe\nINJECTED=value'})
+        for environment in cases:
+            with self.subTest(environment=environment), \
+                    patch.dict(os.environ, environment, clear=True):
+                with self.assertRaises(ValueError):
+                    QT.export_msvc_linker()
+                self.assertFalse(destination.exists())
+
     def test_qt_environment_applies_selection_without_global_changes(self):
         """Qt checks and package builds receive the corrected child environment."""
         original = {'PATH': str(self.git), 'VCTOOLSINSTALLDIR': str(self.tools)}

@@ -31,6 +31,9 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
+      - name: Pin Cargo to the MSVC linker
+        if: runner.os == 'Windows'
+        run: python scripts/qt-sdk.py export-msvc-linker
       - name: Install Linux desktop prerequisites
         if: runner.os == 'Linux'
         run: |

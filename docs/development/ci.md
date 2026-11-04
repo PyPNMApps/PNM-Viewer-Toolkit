@@ -54,6 +54,23 @@ provide the check; repository branch protection must be configured separately.
 Direct pushes can trigger CI after upload; the local
 [push gate](git.md) checks the current host before upload.
 
+## Windows linker selection
+
+After initializing x64 MSVC, both native validation and packaging run
+`python scripts/qt-sdk.py export-msvc-linker` before Rust cache/toolchain or
+build steps. This validates the existing compiler tools and writes Cargo's
+absolute MSVC linker setting to `GITHUB_ENV`; it needs no Qt installation.
+Subsequent Git Bash steps retain that setting even when Bash prepends Git's
+own `usr/bin/link.exe` to PATH. Explicit Cargo linker overrides are preserved.
+
+In [the v0.1.3 run](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/41923732617/job/126905079546),
+Windows workspace tests selected Git's linker and failed with
+`/usr/bin/link: extra operand`. The Qt child-process protection did not cover
+these earlier workspace commands after matrix consolidation. The job-wide export
+extends the same selection logic to them; it does not remove any tests. Local
+synthetic-tool tests cover the export, but hosted Windows validation is still
+required. Re-running the old tag uses its original workflow, without this fix.
+
 ## Caching and runtime
 
 Native validation and package builds cache the pinned Qt SDK under `local/qt`.

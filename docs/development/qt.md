@@ -60,6 +60,12 @@ an explicit caller override is preserved. Windows environment-key casing is
 handled. Qt checks and native package builds use this same helper; global PATH
 and developer tool installations are unchanged.
 
+Before any Cargo steps, Windows CI also runs
+`python scripts/qt-sdk.py export-msvc-linker`. It reuses the same tool validation
+to persist the Cargo linker in the job environment, covering workspace/CLI tests
+outside the Qt helper. This CI action requires `GITHUB_ENV` and does not install
+or access Qt.
+
 If the toolchain is uninitialized or incomplete, setup/check fails with a specific
 MSVC message before compiling. An error mentioning `/usr/bin/link: extra operand`
 indicates the Git utility was selected; reinstalling Visual Studio is not the
