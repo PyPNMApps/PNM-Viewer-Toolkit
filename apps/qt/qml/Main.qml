@@ -38,11 +38,12 @@ ApplicationWindow {
     }
     readonly property var metadata: JSON.parse(backend.metadata_json)
     readonly property var viewport: JSON.parse(backend.viewport_json)
-    readonly property bool blocked: backend.busy || openDialog.visible || saveDialog.visible
+    property bool navigationVisible: false
+    readonly property bool blocked: backend.busy || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible
 
     FileDialog {
         id: openDialog
-        title: "Open RxMER capture"
+        title: "Open PNM capture"
         fileMode: FileDialog.OpenFile
         nameFilters: ["PNM captures (*)"]
         currentFolder: StandardPaths.standardLocations(StandardPaths.HomeLocation)[0]
@@ -59,22 +60,91 @@ ApplicationWindow {
     Shortcut { sequences: [StandardKey.Open]; enabled: !window.blocked; onActivated: openDialog.open() }
     Shortcut { sequences: [StandardKey.Close]; enabled: !window.blocked; onActivated: backend.close_capture() }
 
+
+    header: ToolBar {
+        height: 38
+        background: Rectangle { color: appTheme.sidebar }
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 8
+            anchors.rightMargin: 8
+            spacing: 8
+            ToolButton { text: "Open"; Accessible.name: "Open PNM file"; enabled: !window.blocked; onClicked: openDialog.open() }
+            ToolButton {
+                text: "Settings"
+                enabled: !window.blocked
+                onClicked: settingsMenu.open()
+                Menu { id: settingsMenu; y: parent.height; MenuItem { text: "System…"; onTriggered: systemDialog.open() } }
+            }
+            ToolButton { text: "About"; enabled: !window.blocked; onClicked: aboutDialog.open() }
+            Item { Layout.fillWidth: true }
+            BusyIndicator { running: backend.busy; visible: running; Layout.preferredWidth: 24; Layout.preferredHeight: 24; Accessible.name: "Processing capture" }
+            PanelToggle {
+                theme: appTheme
+                checked: window.navigationVisible
+                Accessible.name: checked ? "Hide navigation" : "Show navigation"
+                onClicked: window.navigationVisible = !window.navigationVisible
+            }
+        }
+    }
+    Dialog {
+        id: systemDialog
+        title: "System settings"
+        anchors.centerIn: parent
+        width: 360
+        modal: true
+        standardButtons: Dialog.Close
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 16
+            Label { text: "Appearance"; color: appTheme.text }
+            ComboBox {
+                objectName: "themeSelector"
+                Accessible.name: "Appearance"
+                model: ["System", "Dark", "Light"]
+                currentIndex: appTheme.preference
+                Layout.fillWidth: true
+                onActivated: appTheme.preference = currentIndex
+            }
+            Label { text: "System follows your desktop appearance.\nPreferences apply to this session."; color: appTheme.muted }
+        }
+    }
+    Dialog {
+        id: aboutDialog
+        title: "About PNM Viewer Toolkit"
+        anchors.centerIn: parent
+        width: 420
+        modal: true
+        standardButtons: Dialog.Close
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 12
+            Image { source: appTheme.dark ? "qrc:/branding/icon-dark.png" : "qrc:/branding/icon-light.png"; sourceSize.width: 64; sourceSize.height: 64; Layout.alignment: Qt.AlignHCenter }
+            Label { text: "PNM Viewer Toolkit"; color: appTheme.text; font.pixelSize: 20; font.bold: true }
+            Label { text: "Version " + backend.app_version + " · In development"; color: appTheme.muted }
+            Label { text: "Offline inspection of DOCSIS PNM captures."; color: appTheme.text }
+            Label { text: "Desktop: GPL-3.0-only\nCore libraries: Apache-2.0\nAcknowledgment: PyPNM Toolkit"; color: appTheme.muted }
+            Button { text: "GitHub project"; onClicked: Qt.openUrlExternally("https://github.com/PyPNMApps/PNM-Viewer-Toolkit") }
+        }
+    }
     RowLayout {
         anchors.fill: parent
         spacing: 0
         Rectangle {
-            Layout.preferredWidth: window.width < 1050 ? 164 : 208
+            visible: window.navigationVisible
+            Layout.preferredWidth: 180
             Layout.fillHeight: true
             color: appTheme.sidebar
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 20
+                anchors.margins: 16
                 spacing: 16
                 Image {
                     id: brandLogo
                     Layout.topMargin: 8
                     Layout.fillWidth: true
-                    Layout.preferredHeight: width * 2 / 3
+                    Layout.preferredHeight: 100
+                    Layout.preferredWidth: 148
                     source: appTheme.dark ? "qrc:/branding/logo-dark.png" : "qrc:/branding/logo-light.png"
                     fillMode: Image.PreserveAspectFit
                     mipmap: true
@@ -118,72 +188,25 @@ ApplicationWindow {
                         }
                     }
                 }
-                Label { Layout.topMargin: 32; text: "WORKSPACE"; font.pixelSize: 10; font.letterSpacing: 1.5; color: appTheme.muted }
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 42
-                    radius: 8
-                    color: appTheme.accentSoft
-                    Label { anchors.centerIn: parent; text: "⌁  RxMER viewer"; color: appTheme.accent }
-                }
+
+                Label { text: "WORKSPACE"; color: appTheme.muted; font.pixelSize: 10 }
+                Label { text: backend.loaded ? "Downstream RxMER" : "Home"; color: appTheme.accent }
                 Item { Layout.fillHeight: true }
             }
         }
-        Rectangle { Layout.preferredWidth: 1; Layout.fillHeight: true; color: appTheme.line }
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 0
-            Rectangle {
+            Layout.margins: 4
+            spacing: 10
+            Label {
+                visible: backend.error_message.length > 0
+                text: backend.error_message
+                color: appTheme.dark ? "#ffb4ab" : "#a92b26"
+                wrapMode: Text.Wrap
                 Layout.fillWidth: true
-                Layout.preferredHeight: 64
-                color: appTheme.background
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 28
-                    anchors.rightMargin: 28
-                    Label { text: "Measurements  /  Downstream RxMER"; color: appTheme.text; font.pixelSize: 12; Layout.fillWidth: true }
-                    Label { text: "Appearance"; color: appTheme.muted; font.pixelSize: 12 }
-                    ComboBox {
-                        objectName: "themeSelector"
-                        model: ["System", "Dark", "Light"]
-                        Accessible.name: "Appearance"
-                        Layout.preferredWidth: 112
-                        onActivated: appTheme.preference = currentIndex
-                    }
-                }
-                Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: appTheme.line }
+                Accessible.role: Accessible.AlertMessage
             }
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.margins: 24
-                spacing: 14
-                RowLayout {
-                    Layout.fillWidth: true
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 7
-                        Label { text: "SIGNAL EXPLORER"; color: appTheme.accent; font.pixelSize: 10; font.letterSpacing: 2; font.bold: true }
-                        Label { text: "Downstream RxMER"; color: appTheme.text; font.pixelSize: 27; font.bold: true }
-                        Label { text: "Receive modulation error ratio across OFDM subcarriers."; color: appTheme.muted; font.pixelSize: 12 }
-                    }
-                    Button {
-                        text: "＋ Open PNM file"
-                        Accessible.name: "Open PNM file"
-                        enabled: !window.blocked
-                        highlighted: true
-                        onClicked: openDialog.open()
-                    }
-                }
-                Label {
-                    visible: backend.error_message.length > 0
-                    text: backend.error_message
-                    color: appTheme.dark ? "#ffb4ab" : "#a92b26"
-                    wrapMode: Text.Wrap
-                    Layout.fillWidth: true
-                    Accessible.role: Accessible.AlertMessage
-                }
                 Rectangle {
                     visible: !backend.loaded
                     Layout.fillWidth: true
@@ -196,57 +219,10 @@ ApplicationWindow {
                         spacing: 20
                         Label { text: "∿"; color: appTheme.accent; font.pixelSize: 64; Layout.alignment: Qt.AlignHCenter }
                         Label { text: "YOUR CAPTURE, ON YOUR DESKTOP"; color: appTheme.accent; font.pixelSize: 10; font.letterSpacing: 1.6; Layout.alignment: Qt.AlignHCenter }
-                        Label { text: "A clearer view of your signal."; color: appTheme.text; font.pixelSize: 26; font.bold: true; Layout.alignment: Qt.AlignHCenter }
-                        Label { text: "Open a local RxMER PNM file to inspect its channel,\nexplore exact readings, and export decoded JSON."; color: appTheme.muted; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
-                        Button { text: "Open RxMER capture"; enabled: !window.blocked; highlighted: true; Layout.alignment: Qt.AlignHCenter; onClicked: openDialog.open() }
-                        Label { text: "Local processing  ·  RxMER format 1.0  ·  No server required"; color: appTheme.muted; font.pixelSize: 11; Layout.alignment: Qt.AlignHCenter }
-                    }
-                }
-                Rectangle {
-                    visible: backend.loaded
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 52
-                    color: appTheme.panel
-                    border.color: appTheme.line
-                    radius: 10
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 10
-                        spacing: 12
-                        Label { text: "▤"; color: appTheme.accent; font.pixelSize: 23 }
-                        Label { text: window.metadata.filename || ""; color: appTheme.text; font.bold: true; elide: Text.ElideMiddle; Layout.fillWidth: true }
-                        Label { text: "RxMER 1.0"; color: appTheme.accent; font.pixelSize: 10 }
-                        Button { text: "Close"; enabled: !window.blocked; onClicked: backend.close_capture() }
-                    }
-                }
-                RowLayout {
-                    visible: backend.loaded
-                    Layout.fillWidth: true
-                    spacing: 12
-                    Repeater {
-                        model: [
-                            {label: "CHANNEL", value: window.metadata.channel_id},
-                            {label: "MAC ADDRESS", value: window.metadata.mac_address},
-                            {label: "SUBCARRIERS", value: window.metadata.sample_count},
-                            {label: "SPACING", value: (window.metadata.spacing_khz || 0) + " kHz"}
-                        ]
-                        Rectangle {
-                            required property var modelData
-                            required property int index
-                            Layout.fillWidth: true
-                            Layout.preferredWidth: index === 1 ? 230 : 150
-                            Layout.preferredHeight: 72
-                            color: appTheme.panel
-                            border.color: appTheme.line
-                            radius: 10
-                            Column {
-                                anchors.fill: parent
-                                anchors.margins: 12
-                                spacing: 8
-                                Label { text: modelData.label; color: appTheme.muted; font.pixelSize: 9; font.letterSpacing: 1.3 }
-                                Label { text: modelData.value === undefined ? "" : modelData.value.toString(); color: appTheme.text; font.pixelSize: index === 1 ? 14 : 22; font.bold: true }
-                            }
-                        }
+                        Label { text: "Explore a PNM capture"; color: appTheme.text; font.pixelSize: 26; font.bold: true; Layout.alignment: Qt.AlignHCenter }
+                        Label { text: "Choose a local capture to view measurement details,\ninspect its graph, and export decoded JSON."; color: appTheme.muted; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
+                        Button { text: "Open capture"; enabled: !window.blocked; highlighted: true; Layout.alignment: Qt.AlignHCenter; onClicked: openDialog.open() }
+                        Label { text: "Currently supported: Downstream RxMER (format 1.0)"; color: appTheme.muted; font.pixelSize: 11; Layout.alignment: Qt.AlignHCenter }
                     }
                 }
                 Rectangle {
@@ -259,17 +235,18 @@ ApplicationWindow {
                     radius: 12
                     ColumnLayout {
                         anchors.fill: parent
-                        anchors.margins: 18
+                        anchors.margins: 10
                         spacing: 8
                         RowLayout {
                             Layout.fillWidth: true
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: 6
-                                Label { text: "RxMER by frequency"; color: appTheme.text; font.pixelSize: 17; font.bold: true }
-                                Label { text: "●  Exact samples · missing readings remain gaps"; color: appTheme.muted; font.pixelSize: 11 }
+                                Label { text: "RxMER · " + (window.metadata.filename || ""); elide: Text.ElideMiddle; Layout.fillWidth: true; color: appTheme.text; font.pixelSize: 17; font.bold: true }
+                                Label { text: "Channel " + window.metadata.channel_id + " · " + window.metadata.mac_address + " · " + window.metadata.spacing_khz + " kHz"; color: appTheme.muted; font.pixelSize: 11 }
                             }
-                            Button { text: "Export JSON ↗"; enabled: !window.blocked; onClicked: saveDialog.open() }
+                            Button { text: "Export JSON"; enabled: !window.blocked; onClicked: saveDialog.open() }
+                            Button { text: "Close capture"; enabled: !window.blocked; onClicked: backend.close_capture() }
                         }
                         RxMerChart { theme: appTheme; viewport: window.viewport; Layout.fillWidth: true; Layout.fillHeight: true }
                         Rectangle { Layout.fillWidth: true; height: 1; color: appTheme.line }
@@ -286,21 +263,7 @@ ApplicationWindow {
                         }
                     }
                 }
-                Label { visible: backend.loaded; text: "Up to 1,024 original samples per window. JSON export includes every sample."; color: appTheme.muted; font.pixelSize: 10 }
-            }
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 32
-                color: appTheme.sidebar
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 24
-                    anchors.rightMargin: 24
-                    BusyIndicator { running: backend.busy; visible: running; Layout.preferredWidth: 22; Layout.preferredHeight: 22 }
-                    Label { text: backend.status; color: appTheme.muted; font.pixelSize: 10; Layout.fillWidth: true }
-                    Label { text: "PNM Viewer Toolkit · Qt prototype"; color: appTheme.muted; font.pixelSize: 10 }
-                }
-            }
+
         }
     }
 }

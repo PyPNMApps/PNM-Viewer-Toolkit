@@ -27,6 +27,11 @@ scripts/qt-desktop.sh check
 
 ## Workflow
 
+The initial Home page is measurement-neutral. Choose Open capture or Open PNM
+file; RxMER format 1.0 is currently the only supported UI measurement. A valid
+capture opens the Downstream RxMER view, and Close returns to Home. Other file
+types retain the existing unsupported-viewer diagnostic.
+
 Open a local RxMER capture, for example
 `tests/fixtures/pypnm/tests/files/rxmer.bin`. Detection uses file contents.
 Inspect channel, MAC, sample count and spacing. The chart pages through up to
@@ -130,3 +135,14 @@ Both desktop icon PNGs have transparent backgrounds outside their rounded cyan
 outline. White areas inside the light icon remain part of the artwork. Matching
 multi-resolution dark/light ICO favicons are available in `docs/images/` for the
 retained web frontend; Qt continues to use the PNG window icons.
+
+## Compact workspace
+
+The top row is Open, Settings and About, left-aligned, with the navigation toggle
+at the far right. Open launches the native file chooser; Settings → System
+contains appearance. About shows version, licenses and the project link.
+Navigation starts hidden. There is no right panel or bottom status bar; the
+main content fills the available space with minimal margins. Capture metadata,
+Export JSON and Close capture are in the chart header. Busy work is indicated
+in the toolbar and errors remain visible in the content area. Preferences are
+session-only.

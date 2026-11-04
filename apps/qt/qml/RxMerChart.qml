@@ -124,10 +124,11 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         spacing: 12
-        Label { text: "Inspect sample"; color: chart.theme.muted; font.pixelSize: 11 }
+        Label { visible: chart.width >= 600; text: "Inspect sample"; color: chart.theme.muted; font.pixelSize: 11 }
         Slider {
             objectName: "sampleSlider"
             Layout.fillWidth: true
+            Layout.minimumWidth: 40
             from: 0
             to: Math.max(0, chart.pointCount - 1)
             stepSize: 1
@@ -143,6 +144,9 @@ ColumnLayout {
             font.family: "monospace"
             font.pixelSize: 11
             Layout.preferredWidth: 295
+            Layout.minimumWidth: 0
+            elide: Text.ElideRight
+            Accessible.name: chart.reading
         }
     }
 }

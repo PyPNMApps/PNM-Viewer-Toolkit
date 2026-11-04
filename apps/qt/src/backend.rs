@@ -17,6 +17,7 @@ mod bridge {
     extern "RustQt" {
         #[qobject]
         #[qml_element]
+        #[qproperty(QString, app_version)]
         #[qproperty(bool, busy)]
         #[qproperty(bool, loaded)]
         #[qproperty(QString, metadata_json)]
@@ -59,6 +60,7 @@ use viewer::{Capture, Diagnostic};
 
 /// Rust-owned state; only small strings and UI status cross the Qt boundary.
 pub struct ViewerBackendRust {
+    app_version: QString,
     busy: bool,
     loaded: bool,
     metadata_json: QString,
@@ -79,6 +81,7 @@ impl Default for ViewerBackendRust {
     /// Idle state and valid empty JSON presentation objects.
     fn default() -> Self {
         Self {
+            app_version: QString::from(env!("CARGO_PKG_VERSION")),
             busy: false,
             loaded: false,
             metadata_json: QString::from("{}"),

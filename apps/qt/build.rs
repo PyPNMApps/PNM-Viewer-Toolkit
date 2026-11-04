@@ -18,7 +18,12 @@ fn main() {
         .qml_module(QmlModule {
             uri: "Pnm.Viewer",
             rust_files: &["src/backend.rs"],
-            qml_files: &["qml/Main.qml", "qml/Theme.qml", "qml/RxMerChart.qml"],
+            qml_files: &[
+                "qml/Main.qml",
+                "qml/Theme.qml",
+                "qml/RxMerChart.qml",
+                "qml/PanelToggle.qml",
+            ],
             ..Default::default()
         })
         .build();
