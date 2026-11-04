@@ -104,11 +104,11 @@ fn local_path(url: &QUrl) -> Result<PathBuf, Diagnostic> {
 }
 fn load_capture(path: PathBuf) -> Result<LoadedCapture, Diagnostic> {
     let capture = Arc::new(Capture::read(&path)?);
-    let metadata = serde_json::to_string(&capture.metadata()?)
+    let chart_metadata = capture.chart_metadata()?;
+    let metadata =
+        serde_json::to_string(&chart_metadata).map_err(|error| Diagnostic::new("Json", error))?;
+    let viewport = serde_json::to_string(&capture.chart_range(0, chart_metadata.sample_count)?)
         .map_err(|error| Diagnostic::new("Json", error))?;
-    let viewport =
-        serde_json::to_string(&capture.range_viewport(0, capture.metadata()?.sample_count)?)
-            .map_err(|error| Diagnostic::new("Json", error))?;
     Ok(LoadedCapture {
         capture,
         metadata,
@@ -237,7 +237,7 @@ impl bridge::ViewerBackend {
             return;
         };
         match capture
-            .range_viewport(start as usize, count as usize)
+            .chart_range(start as usize, count as usize)
             .and_then(|viewport| {
                 serde_json::to_string(&viewport).map_err(|error| Diagnostic::new("Json", error))
             }) {

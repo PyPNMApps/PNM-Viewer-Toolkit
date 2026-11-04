@@ -21,7 +21,7 @@ fn main() {
             qml_files: &[
                 "qml/Main.qml",
                 "qml/Theme.qml",
-                "qml/RxMerChart.qml",
+                "qml/MeasurementChart.qml",
                 "qml/PanelToggle.qml",
             ],
             ..Default::default()

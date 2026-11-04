@@ -24,12 +24,14 @@ objects, and human-readable JSON exports.
 
 **In the dev phase:** the Rust parsing libraries and development tools are
 implemented, including the standalone CLI and Linux source installer. The
-first desktop slice opens RxMER captures, graphs exact samples and exports JSON.
+Qt desktop opens RxMER and Spectrum Analyzer captures with zoomable graphs
+and JSON export; the retained Tauri prototype supports RxMER.
 Desktop installers remain planned. See [run the viewer](docs/development/ui.md).
 
 ## What works today
 
-- Open RxMER files in the desktop viewer, inspect sample windows and export JSON.
+- Open RxMER and Spectrum Analyzer files in Qt, zoom into frequency ranges,
+  and export JSON.
 - Choose System, Dark or Light appearance, including live system-theme changes.
 
 - Decode RxMER, channel estimates, constellation samples, histograms, upstream
@@ -75,7 +77,8 @@ See the [desktop viewer guide and remaining work](docs/development/ui.md).
 ## Qt desktop prototype
 
 The Qt Quick/Rust prototype lives alongside the retained Tauri app. It opens
-RxMER captures, plots samples, exports JSON, and offers System/Dark/Light themes.
+RxMER and Spectrum Analyzer captures, plots full-range overviews with drag zoom,
+exports JSON, and offers System/Dark/Light themes.
 See [Qt setup and launch instructions](docs/development/qt.md). Both prototypes
 remain in development; desktop installers are not yet available.
 

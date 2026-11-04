@@ -7,14 +7,14 @@ import QtTest
 import "../qml"
 
 TestCase {
-    name: "RxMerPresentation"
+    name: "MeasurementPresentation"
     when: windowShown
     visible: true
     width: 900
     height: 450
     Theme { id: appearance }
     property var sourcePoints: []
-    RxMerChart {
+    MeasurementChart {
         id: chart
         theme: appearance
         width: 850
@@ -24,6 +24,10 @@ TestCase {
         }
     }
     function init() {
+        chart.unit = "dB"
+        chart.axisLabel = "RxMER"
+        chart.minimum = 0
+        chart.maximum = 64
         appearance.preference = 0
         appearance.systemScheme = Qt.Light
         chart.viewport = {start: 0, total: 0, points: []}
@@ -42,8 +46,8 @@ TestCase {
     }
     function test_missing_and_page_readings() {
         chart.viewport = {start: 1024, total: 7480, points: [
-            {frequency_hz: 665600000, rxmer_db: 42.75},
-            {frequency_hz: 665625000, rxmer_db: null}
+            {frequency_hz: 665600000, value: 42.75},
+            {frequency_hz: 665625000, value: null}
         ]}
         verify(chart.reading.indexOf("#1024") >= 0)
         verify(chart.reading.indexOf("665.600 MHz") >= 0)
@@ -54,13 +58,26 @@ TestCase {
         compare(chart.selectedIndex, 0)
         compare(chart.reading, "No samples in this capture")
     }
+    function test_spectrum_units_and_negative_values() {
+        chart.unit = "dBmV"
+        chart.axisLabel = "Amplitude"
+        chart.minimum = -100
+        chart.maximum = 10
+        chart.viewport = {start: 0, count: 2, total: 2, points: [
+            {sample_index: 0, frequency_hz: 296264648, value: -22.8},
+            {sample_index: 1, frequency_hz: 296293945, value: -77.3}
+        ]}
+        verify(chart.reading.indexOf("-22.80 dBmV") >= 0)
+        chart.selectedIndex = 1
+        verify(chart.reading.indexOf("-77.30 dBmV") >= 0)
+    }
     function test_drag_frequency_selection() {
         sourcePoints = []
         for (let index = 0; index < 100; index++) {
-            sourcePoints.push({frequency_hz: 640000000 + index * 25000, rxmer_db: 43})
+            sourcePoints.push({frequency_hz: 640000000 + index * 25000, value: 43})
         }
         chart.viewport = {start: 0, count: 100, total: 100, points: sourcePoints}
-        const plot = findChild(chart, "rxmerPlot")
+        const plot = findChild(chart, "measurementPlot")
         const plotWidth = plot.width - plot.leftMargin - plot.rightMargin
         const left = plot.leftMargin + plotWidth * 0.25
         const right = plot.leftMargin + plotWidth * 0.75
@@ -84,11 +101,11 @@ TestCase {
     function test_mouse_zoom_and_reset() {
         const points = []
         for (let index = 0; index < 100; index++) {
-            points.push({frequency_hz: 640000000 + index * 25000, rxmer_db: index === 50 ? null : 43})
+            points.push({frequency_hz: 640000000 + index * 25000, value: index === 50 ? null : 43})
         }
         sourcePoints = points
         chart.viewport = {start: 0, count: 100, total: 100, points: points}
-        const plot = findChild(chart, "rxmerPlot")
+        const plot = findChild(chart, "measurementPlot")
         mouseWheel(plot, plot.width / 2, plot.height / 2, 0, 120)
         tryCompare(chart, "visibleCount", 80)
         verify(chart.visibleStart > 0)

@@ -190,7 +190,7 @@ ApplicationWindow {
                 }
 
                 Label { text: "WORKSPACE"; color: appTheme.muted; font.pixelSize: 10 }
-                Label { text: backend.loaded ? "Downstream RxMER" : "Home"; color: appTheme.accent }
+                Label { text: backend.loaded ? (window.metadata.title || "Measurement") : "Home"; color: appTheme.accent }
                 Item { Layout.fillHeight: true }
             }
         }
@@ -245,16 +245,11 @@ ApplicationWindow {
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: 6
-                                Label { text: "Downstream RxMER"; elide: Text.ElideMiddle; Layout.fillWidth: true; color: appTheme.text; font.pixelSize: 17; font.bold: true }
+                                Label { text: (window.metadata.title || "Measurement"); elide: Text.ElideMiddle; Layout.fillWidth: true; color: appTheme.text; font.pixelSize: 17; font.bold: true }
                                 RowLayout {
                                     spacing: 8
                                     Repeater {
-                                        model: [
-                                            { title: "Channel", value: window.metadata.channel_id },
-                                            { title: "MAC", value: window.metadata.mac_address },
-                                            { title: "Subcarriers", value: window.metadata.sample_count },
-                                            { title: "Spacing", value: (window.metadata.spacing_khz || 0) + " kHz" }
-                                        ]
+                                        model: window.metadata.chips || []
                                         Rectangle {
                                             required property var modelData
                                             implicitWidth: chipContent.implicitWidth + 24
@@ -276,7 +271,11 @@ ApplicationWindow {
                             ToolButton { text: "⇩"; font.pixelSize: 22; Layout.preferredWidth: 32; Layout.preferredHeight: 32; Accessible.name: "Export JSON"; ToolTip.visible: hovered; ToolTip.text: "Export JSON"; enabled: !window.blocked; onClicked: saveDialog.open() }
                             ToolButton { text: "×"; font.pixelSize: 22; Layout.preferredWidth: 32; Layout.preferredHeight: 32; Accessible.name: "Close capture"; ToolTip.visible: hovered; ToolTip.text: "Close capture"; enabled: !window.blocked; onClicked: backend.close_capture() }
                         }
-                        RxMerChart {
+                        MeasurementChart {
+                            unit: window.metadata.unit || "dB"
+                            axisLabel: window.metadata.axis_label || "Amplitude"
+                            minimum: window.metadata.minimum === undefined ? 0 : window.metadata.minimum
+                            maximum: window.metadata.maximum === undefined ? 64 : window.metadata.maximum
                             theme: appTheme
                             viewport: window.viewport
                             Layout.fillWidth: true

@@ -10,6 +10,10 @@ ColumnLayout {
     id: chart
     required property Theme theme
     property var viewport: ({start: 0, total: 0, points: []})
+    property string unit: "dB"
+    property string axisLabel: "RxMER"
+    property real minimum: 0
+    property real maximum: 64
     property int selectedIndex: 0
     readonly property int pointCount: viewport.points.length
     readonly property real hzPerMhz: 1000000
@@ -18,7 +22,7 @@ ColumnLayout {
         if (!selectedPoint) {
             return "No samples in this capture"
         }
-        const value = selectedPoint.rxmer_db === null ? "Unavailable" : selectedPoint.rxmer_db.toFixed(2) + " dB"
+        const value = selectedPoint.value === null ? "Unavailable" : selectedPoint.value.toFixed(2) + " " + unit
         return "#" + ((selectedPoint.sample_index === undefined ? viewport.start + Math.min(selectedIndex, pointCount - 1) : selectedPoint.sample_index)) + "  ·  "
             + (selectedPoint.frequency_hz / hzPerMhz).toFixed(3) + " MHz  ·  " + value
     }
@@ -55,18 +59,22 @@ ColumnLayout {
     }
     onViewportChanged: { selection.dragging = false; selectedIndex = 0; plot.requestPaint() }
     onSelectedIndexChanged: plot.requestPaint()
+    onMinimumChanged: plot.requestPaint()
+    onMaximumChanged: plot.requestPaint()
+    onUnitChanged: plot.requestPaint()
+    onAxisLabelChanged: plot.requestPaint()
     spacing: 10
 
     // Qt Quick Canvas is rendered by Qt; no HTML document or WebView is used.
     Canvas {
         id: plot
-        objectName: "rxmerPlot"
+        objectName: "measurementPlot"
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.minimumHeight: 180
         Layout.preferredHeight: 280
         Accessible.role: Accessible.Graphic
-        Accessible.name: "RxMER in dB versus frequency in MHz; missing readings appear as gaps"
+        Accessible.name: chart.axisLabel + " in " + chart.unit + " versus frequency in MHz; drag to zoom, double-click to reset"
         property real leftMargin: 48
         property real rightMargin: 18
         property real topMargin: 22
@@ -90,8 +98,8 @@ ColumnLayout {
             context.fillStyle = chart.theme.muted
             context.lineWidth = 1
             for (let tick = 0; tick <= 4; tick++) {
-                const level = tick * 16
-                const vertical = topMargin + (64 - level) / 64 * plotHeight
+                const level = chart.minimum + tick / 4 * (chart.maximum - chart.minimum)
+                const vertical = topMargin + (chart.maximum - level) / (chart.maximum - chart.minimum) * plotHeight
                 context.beginPath()
                 context.moveTo(leftMargin, vertical)
                 context.lineTo(width - rightMargin, vertical)
@@ -104,7 +112,7 @@ ColumnLayout {
                 context.fillText((frequency / chart.hzPerMhz).toFixed(2), leftMargin + fraction * plotWidth, height - 23)
             }
             context.textAlign = "left"
-            context.fillText("RxMER · dB", leftMargin, 12)
+            context.fillText(chart.axisLabel + " · " + chart.unit, leftMargin, 12)
             context.textAlign = "center"
             context.fillText("Frequency · MHz", width / 2, height - 3)
             context.strokeStyle = chart.theme.accent
@@ -113,13 +121,13 @@ ColumnLayout {
             let connected = false
             for (let index = 0; index < points.length; index++) {
                 const point = points[index]
-                if (point.rxmer_db === null) {
+                if (point.value === null) {
                     connected = false
                     continue
                 }
                 const horizontal = lastHz === firstHz ? leftMargin + plotWidth / 2
                     : leftMargin + (point.frequency_hz - firstHz) / (lastHz - firstHz) * plotWidth
-                const vertical = topMargin + (64 - point.rxmer_db) / 64 * plotHeight
+                const vertical = topMargin + (chart.maximum - point.value) / (chart.maximum - chart.minimum) * plotHeight
                 if (connected) {
                     context.lineTo(horizontal, vertical)
                 } else {
@@ -131,12 +139,12 @@ ColumnLayout {
             context.fillStyle = chart.theme.accent
             for (let index = 0; index < points.length; index++) {
                 const point = points[index]
-                const isolated = (index === 0 || points[index - 1].rxmer_db === null)
-                    && (index === points.length - 1 || points[index + 1].rxmer_db === null)
-                if (point.rxmer_db !== null && (isolated || index === chart.selectedIndex)) {
+                const isolated = (index === 0 || points[index - 1].value === null)
+                    && (index === points.length - 1 || points[index + 1].value === null)
+                if (point.value !== null && (isolated || index === chart.selectedIndex)) {
                     const horizontal = lastHz === firstHz ? leftMargin + plotWidth / 2
                         : leftMargin + (point.frequency_hz - firstHz) / (lastHz - firstHz) * plotWidth
-                    const vertical = topMargin + (64 - point.rxmer_db) / 64 * plotHeight
+                    const vertical = topMargin + (chart.maximum - point.value) / (chart.maximum - chart.minimum) * plotHeight
                     context.beginPath()
                     context.arc(horizontal, vertical, 3, 0, Math.PI * 2)
                     context.fill()
@@ -182,9 +190,6 @@ ColumnLayout {
             }
             onCanceled: dragging = false
             hoverEnabled: true
-            ToolTip.visible: containsMouse && !dragging && chart.pointCount > 0
-            ToolTip.delay: 500
-            ToolTip.text: chart.reading
             onWheel: wheel => {
                 const fraction = (wheel.x - plot.leftMargin) / (plot.width - plot.leftMargin - plot.rightMargin)
                 chart.zoomAt(fraction, wheel.angleDelta.y > 0)

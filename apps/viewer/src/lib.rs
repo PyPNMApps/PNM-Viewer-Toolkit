@@ -2,7 +2,9 @@
  * Copyright 2026 PNM Viewer contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
-//! Bounded capture ownership and exact RxMER viewport data.
+//! Bounded capture ownership and desktop chart data.
+pub mod chart;
+pub mod spectrum_analysis;
 use pnm::pnm::data_type::{ChannelId, FrequencyHz, RxMerDb, SubcarrierSpacingKhz};
 use pnm::pnm::parser::{
     cm_ds_ofdm_rx_mer::{CmDsOfdmRxMer, ParseLimits},
@@ -82,7 +84,7 @@ impl Capture {
     /// # Arguments
     /// * `path` - Path chosen by the native file dialog.
     /// # Returns
-    /// A validated RxMER capture owning its original bytes.
+    /// A validated supported capture owning its original bytes.
     /// # Errors
     /// Reports I/O, byte limits, unsupported types or parser diagnostics.
     pub fn read(path: &Path) -> Result<Self, Diagnostic> {
@@ -110,13 +112,13 @@ impl Capture {
     /// # Returns
     /// A capture holding one copy of the bytes.
     /// # Errors
-    /// Rejects oversized, invalid or non-RxMER captures.
+    /// Rejects oversized, invalid or unsupported captures.
     pub fn from_bytes(bytes: Vec<u8>, filename: String) -> Result<Self, Diagnostic> {
         if bytes.len() > MAX_INPUT_BYTES {
             return Err(Diagnostic::new("LimitExceeded", "File exceeds 16 MiB."));
         }
         let capture = Self { bytes, filename };
-        capture.parsed()?;
+        capture.decoded()?;
         Ok(capture)
     }
     /// Exports complete decoded JSON to a newly created destination.
@@ -146,6 +148,13 @@ impl Capture {
             return Err(Diagnostic::new("Export", error));
         }
         Ok(())
+    }
+    fn decoded(&self) -> Result<DecodedPnm<'_>, Diagnostic> {
+        let decoded = PnmFile::from_bytes(&self.bytes).decode(ParseLimits::default())?;
+        match decoded {
+            DecodedPnm::RxMer(_) | DecodedPnm::SpectrumAnalysis(_) => Ok(decoded),
+            _ => Err(Diagnostic::new("UnsupportedViewer", "This viewer supports RxMER and Spectrum Analyzer captures. Other formats remain available in pnm-decode.")),
+        }
     }
     fn parsed(&self) -> Result<CmDsOfdmRxMer<'_>, Diagnostic> {
         match PnmFile::from_bytes(&self.bytes).decode(ParseLimits::default())? {
@@ -221,70 +230,42 @@ impl Capture {
     /// # Errors
     /// Rejects ranges outside the capture and propagates parser errors.
     pub fn range_viewport(&self, start: usize, count: usize) -> Result<Viewport, Diagnostic> {
-        let parsed = self.parsed()?;
-        let total = parsed.raw_values().len();
-        let end = start
-            .checked_add(count)
-            .filter(|end| *end <= total)
-            .ok_or_else(|| {
-                Diagnostic::new("InvalidRange", "Zoom range is outside this capture.")
-            })?;
-        let samples: Vec<Point> = parsed
-            .frequencies_hz()?
-            .zip(parsed.values_db())
-            .enumerate()
-            .skip(start)
-            .take(end - start)
-            .map(|(sample_index, (frequency_hz, rxmer_db))| Point {
-                sample_index,
-                frequency_hz,
-                rxmer_db,
-            })
-            .collect();
-        let points = if samples.len() <= MAX_VIEW_SAMPLES {
-            samples
-        } else {
-            let bucket_count = (MAX_VIEW_SAMPLES - 2) / 2;
-            let bucket_size = samples.len().div_ceil(bucket_count);
-            let mut overview = Vec::with_capacity(MAX_VIEW_SAMPLES);
-            overview.push(samples[0].clone());
-            for bucket in samples.chunks(bucket_size) {
-                if let Some(missing) = bucket.iter().find(|point| point.rxmer_db.is_none()) {
-                    overview.push(missing.clone());
-                } else {
-                    let minimum = bucket
-                        .iter()
-                        .min_by(|left, right| left.rxmer_db.partial_cmp(&right.rxmer_db).unwrap())
-                        .unwrap();
-                    let maximum = bucket
-                        .iter()
-                        .max_by(|left, right| left.rxmer_db.partial_cmp(&right.rxmer_db).unwrap())
-                        .unwrap();
-                    let mut extrema = [minimum, maximum];
-                    extrema.sort_by_key(|point| point.sample_index);
-                    overview.extend(extrema.into_iter().cloned());
-                }
-            }
-            overview.push(samples[samples.len() - 1].clone());
-            overview.dedup_by_key(|point| point.sample_index);
-            overview
-        };
+        self.parsed()?;
+        let view = self.chart_range(start, count)?;
         Ok(Viewport {
-            start,
-            count,
-            total,
-            points,
+            start: view.start,
+            count: view.count,
+            total: view.total,
+            points: view
+                .points
+                .into_iter()
+                .map(|point| Point {
+                    sample_index: point.sample_index,
+                    frequency_hz: point.frequency_hz,
+                    rxmer_db: point.value,
+                })
+                .collect(),
         })
     }
+
     /// Generates full-resolution core JSON for a file export, never a viewport.
     /// # Returns
-    /// The parser's existing PyPNM-aligned JSON with null missing values.
+    /// The parser's JSON with null missing values; Spectrum also includes derived bandwidth analysis.
     /// # Errors
     /// Reports parsing or the 16 MiB JSON serialization limit.
     pub fn json(&self) -> Result<String, Diagnostic> {
-        self.parsed()?
-            .to_json(pnm::common::json::DEFAULT_MAX_JSON_BYTES)
-            .map_err(|error| Diagnostic::new("Json", error))
+        let decoded = self.decoded()?;
+        let result = match &decoded {
+            DecodedPnm::SpectrumAnalysis(capture) => {
+                let export = spectrum_analysis::SpectrumExport {
+                    capture,
+                    spectrum_analysis: spectrum_analysis::SpectrumAnalysis::from_capture(capture)?,
+                };
+                pnm::common::json::to_json(&export, pnm::common::json::DEFAULT_MAX_JSON_BYTES)
+            }
+            _ => decoded.to_json(pnm::common::json::DEFAULT_MAX_JSON_BYTES),
+        };
+        result.map_err(|error| Diagnostic::new("Json", error))
     }
 }
 #[cfg(test)]

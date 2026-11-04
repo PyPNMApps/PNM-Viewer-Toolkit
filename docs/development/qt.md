@@ -28,15 +28,16 @@ scripts/qt-desktop.sh check
 ## Workflow
 
 The initial Home page shows its title and a centered Open capture button. Choose
-Open capture or Open in the toolbar; RxMER format 1.0 is currently the only supported UI measurement. A valid
-capture opens the Downstream RxMER view, and Close returns to Home. Other file
-types retain the existing unsupported-viewer diagnostic.
+Open capture or Open in the toolbar. RxMER and Spectrum Analyzer format 1.0
+captures are detected by file contents and open their matching chart. Close
+returns to Home. Other measurements retain the unsupported-viewer diagnostic.
 
-Open a local RxMER capture, for example
-`tests/fixtures/pypnm/tests/files/rxmer.bin`. Detection uses file contents.
-Inspect labeled chips for channel, MAC, sample count and spacing. The chart fills
-the center workspace and starts at the full frequency range. Hover for readings;
-missing readings appear as gaps and are labeled unavailable.
+Try `tests/fixtures/pypnm/tests/files/rxmer.bin` or `spectrum_analyzer.bin` in
+that same directory. Both charts use labeled chips, full-range overviews,
+drag selection, mouse-wheel zoom, double-click reset, and a frequency-range readout.
+Spectrum shows amplitude in dBmV with automatic vertical bounds; RxMER uses dB.
+Spectrum chips show MAC and calculated RBW. Its
+channel ID is not meaningful and is therefore not displayed.
 
 Export JSON saves the entire decoded capture to a new file. Inputs and existing
 destinations are never overwritten. File work runs on a Rust worker; overlapping
@@ -147,7 +148,7 @@ Export JSON and Close capture are in the chart header. Busy work is indicated
 in the toolbar and errors remain visible in the content area. Preferences are
 session-only.
 
-The RxMER chart fills the available height below slim inline metadata chips.
+Each measurement chart fills the available height below slim inline metadata chips.
 Drag across the plot to select a frequency range and release to zoom into it.
 The bottom-left readout shows the selected frequency range in MHz, updating
 while you drag. Scroll also zooms around the pointer; double-click resets the
@@ -158,9 +159,55 @@ Rust returns at most 1,024 plotted points per zoom range. Wide views retain
 ordered bucket minima/maxima and range endpoints. Buckets containing missing
 readings appear as gaps, conservatively hiding neighboring valid readings until
 you zoom in. Ranges of 1,024 samples or fewer show every original reading.
-Hover reports original sample indices, and JSON export always includes all samples.
+The graph has no hover tooltip. JSON export always includes all samples.
 
 Metadata chips follow the PyPNM-WebUi single-capture presentation: pill borders,
 subtle theme-aware fill, and an accent label beside its value. The Qt controls
 are implemented locally; the reference now lives in
 [PyPNM-CMTS-WebUI](https://github.com/PyPNMApps/PyPNM-CMTS-WebUI/blob/main/src/assets/styles.css).
+
+## Spectrum frequency interpretation
+
+The existing core Spectrum parser supplies signed hundredths of dBmV. The
+viewer uses contiguous segments advancing by SegmentFrequencySpan, including
+truncated final segments, per CM-OSSI 3.1 I27 and 4.0 I13 D.2.4.1.5 and the
+Spectrum file tables (58 and 91). Bin-center placement follows PyPNM's analysis
+convention, with each rational position rounded down to integer Hz instead of
+rounding the spacing first. This avoids accumulating frequency drift. Short
+captures are not stretched to the configured last segment. Invalid grids are
+reported rather than plotted. No smoothing or total-channel-power calculation
+is applied. Specification checks used versioned text extracts, not rendered PDFs.
+
+The shared Qt chart is `MeasurementChart.qml`; Rust owns chart metadata, frequency
+mapping, vertical bounds, and bounded overviews in `apps/viewer/src/chart.rs`.
+The retained Tauri UI remains RxMER-only and keeps its existing DTO contract.
+
+Spectrum native validation on Ubuntu: the fixture displayed 20,736 bins across
+296.264648–903.735351 MHz. Dark/light display, drag zoom/reset, JSON export,
+close, and retaining the active chart after an unsupported open all passed.
+Export preserved 81 segments of 256 bins with endpoints -22.8 and -77.3 dBmV.
+
+## Spectrum bandwidth analysis
+
+Rust calculates RBW as bin spacing multiplied by the normalized ENBW factor.
+The raw DOCSIS ENBW field is in hundredths of bin spacing, so divide it by 100
+before calling `common::signal_processing::spectrum::resolution_bandwidth_hz`.
+Bandwidth calculations retain fractional Hz; they do not alter integer-Hz
+frequency fields. Zero/nonfinite bandwidth inputs are rejected.
+
+The viewer's chart metadata and JSON export include:
+
+```json
+{
+  "spectrum_analysis": {
+    "bin_spacing_hz": 29296.875,
+    "equivalent_noise_bandwidth_factor": 1.1,
+    "resolution_bandwidth_hz": 32226.5625
+  }
+}
+```
+
+These are derived fields alongside the original decoded file fields. Floating
+point serialization can include insignificant trailing digits. The chip displays
+`RBW 32.227 kHz`. Core parser/CLI JSON remains raw decoded data; RxMER export is
+unchanged. The pure DSP function has no DOCSIS, JSON or UI dependency.
