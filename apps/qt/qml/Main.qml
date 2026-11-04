@@ -250,23 +250,24 @@ ApplicationWindow {
                                     spacing: 8
                                     Repeater {
                                         model: [
-                                            { title: "CHANNEL", value: window.metadata.channel_id },
-                                            { title: "MAC ADDRESS", value: window.metadata.mac_address },
-                                            { title: "SUBCARRIERS", value: window.metadata.sample_count },
-                                            { title: "SPACING", value: (window.metadata.spacing_khz || 0) + " kHz" }
+                                            { title: "Channel", value: window.metadata.channel_id },
+                                            { title: "MAC", value: window.metadata.mac_address },
+                                            { title: "Subcarriers", value: window.metadata.sample_count },
+                                            { title: "Spacing", value: (window.metadata.spacing_khz || 0) + " kHz" }
                                         ]
                                         Rectangle {
                                             required property var modelData
-                                            implicitWidth: Math.max(110, chipValue.implicitWidth + 24)
-                                            implicitHeight: 54
-                                            radius: 7
-                                            color: appTheme.accentSoft
-                                            Column {
-                                                anchors.fill: parent
-                                                anchors.margins: 10
-                                                spacing: 5
-                                                Label { text: modelData.title; color: appTheme.muted; font.pixelSize: 9; font.letterSpacing: 1 }
-                                                Label { id: chipValue; text: modelData.value === undefined ? "" : modelData.value.toString(); color: appTheme.text; font.pixelSize: 14; font.bold: true }
+                                            implicitWidth: chipContent.implicitWidth + 24
+                                            implicitHeight: 30
+                                            radius: height / 2
+                                            color: appTheme.dark ? "#0affffff" : "#06000000"
+                                            border.color: appTheme.line
+                                            Row {
+                                                id: chipContent
+                                                anchors.centerIn: parent
+                                                spacing: 8
+                                                Label { text: modelData.title; color: appTheme.accent; font.pixelSize: 12; font.bold: true }
+                                                Label { text: modelData.value === undefined ? "" : modelData.value.toString(); color: appTheme.text; font.pixelSize: 12 }
                                             }
                                         }
                                     }

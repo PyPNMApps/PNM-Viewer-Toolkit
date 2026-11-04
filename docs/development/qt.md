@@ -34,7 +34,7 @@ types retain the existing unsupported-viewer diagnostic.
 
 Open a local RxMER capture, for example
 `tests/fixtures/pypnm/tests/files/rxmer.bin`. Detection uses file contents.
-Inspect titled cards for channel, MAC, sample count and spacing. The chart fills
+Inspect labeled chips for channel, MAC, sample count and spacing. The chart fills
 the center workspace and starts at the full frequency range. Hover for readings;
 missing readings appear as gaps and are labeled unavailable.
 
@@ -147,7 +147,7 @@ Export JSON and Close capture are in the chart header. Busy work is indicated
 in the toolbar and errors remain visible in the content area. Preferences are
 session-only.
 
-The RxMER chart fills the available height below compact titled metadata cards.
+The RxMER chart fills the available height below slim inline metadata chips.
 Drag across the plot to select a frequency range and release to zoom into it.
 The bottom-left readout shows the selected frequency range in MHz, updating
 while you drag. Scroll also zooms around the pointer; double-click resets the
@@ -159,3 +159,8 @@ ordered bucket minima/maxima and range endpoints. Buckets containing missing
 readings appear as gaps, conservatively hiding neighboring valid readings until
 you zoom in. Ranges of 1,024 samples or fewer show every original reading.
 Hover reports original sample indices, and JSON export always includes all samples.
+
+Metadata chips follow the PyPNM-WebUi single-capture presentation: pill borders,
+subtle theme-aware fill, and an accent label beside its value. The Qt controls
+are implemented locally; the reference now lives in
+[PyPNM-CMTS-WebUI](https://github.com/PyPNMApps/PyPNM-CMTS-WebUI/blob/main/src/assets/styles.css).
