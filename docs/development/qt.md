@@ -27,15 +27,15 @@ scripts/qt-desktop.sh check
 
 ## Workflow
 
-The initial Home page is measurement-neutral. Choose Open capture or Open PNM
-file; RxMER format 1.0 is currently the only supported UI measurement. A valid
+The initial Home page shows its title and a centered Open capture button. Choose
+Open capture or Open in the toolbar; RxMER format 1.0 is currently the only supported UI measurement. A valid
 capture opens the Downstream RxMER view, and Close returns to Home. Other file
 types retain the existing unsupported-viewer diagnostic.
 
 Open a local RxMER capture, for example
 `tests/fixtures/pypnm/tests/files/rxmer.bin`. Detection uses file contents.
-Inspect channel, MAC, sample count and spacing. The chart pages through up to
-1,024 exact samples. Hover or use the keyboard-accessible sample slider;
+Inspect titled cards for channel, MAC, sample count and spacing. The chart fills
+the center workspace and starts at the full frequency range. Hover for readings;
 missing readings appear as gaps and are labeled unavailable.
 
 Export JSON saves the entire decoded capture to a new file. Inputs and existing
@@ -64,7 +64,7 @@ remain pending. The development binary requires Qt runtime dependencies.
 ## Validation
 
 The check runs Rust formatting, adapter tests, Clippy, a native build and
-Qt Quick tests for themes, missing readings, page coordinates and keyboard
+Qt Quick tests for themes, missing readings, sample coordinates and mouse zoom
 inspection. Shared capture tests cover fixtures, JSON and safe export. The
 pre-push gate checks both shells. Native file pickers and platform theme behavior
 also need desktop smoke tests; offscreen tests alone cannot verify OS integration.
@@ -146,3 +146,16 @@ main content fills the available space with minimal margins. Capture metadata,
 Export JSON and Close capture are in the chart header. Busy work is indicated
 in the toolbar and errors remain visible in the content area. Preferences are
 session-only.
+
+The RxMER chart fills the available height below compact titled metadata cards.
+Drag across the plot to select a frequency range and release to zoom into it.
+The bottom-left readout shows the selected frequency range in MHz, updating
+while you drag. Scroll also zooms around the pointer; double-click resets the
+full capture. The heading identifies the measurement without a filename. There are no paging buttons or sample slider. The download and × icon buttons export
+JSON and close the capture; tooltips identify both actions.
+
+Rust returns at most 1,024 plotted points per zoom range. Wide views retain
+ordered bucket minima/maxima and range endpoints. Buckets containing missing
+readings appear as gaps, conservatively hiding neighboring valid readings until
+you zoom in. Ranges of 1,024 samples or fewer show every original reading.
+Hover reports original sample indices, and JSON export always includes all samples.

@@ -217,12 +217,15 @@ ApplicationWindow {
                     ColumnLayout {
                         anchors.centerIn: parent
                         spacing: 20
-                        Label { text: "∿"; color: appTheme.accent; font.pixelSize: 64; Layout.alignment: Qt.AlignHCenter }
                         Label { text: "YOUR CAPTURE, ON YOUR DESKTOP"; color: appTheme.accent; font.pixelSize: 10; font.letterSpacing: 1.6; Layout.alignment: Qt.AlignHCenter }
                         Label { text: "Explore a PNM capture"; color: appTheme.text; font.pixelSize: 26; font.bold: true; Layout.alignment: Qt.AlignHCenter }
-                        Label { text: "Choose a local capture to view measurement details,\ninspect its graph, and export decoded JSON."; color: appTheme.muted; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
-                        Button { text: "Open capture"; enabled: !window.blocked; highlighted: true; Layout.alignment: Qt.AlignHCenter; onClicked: openDialog.open() }
-                        Label { text: "Currently supported: Downstream RxMER (format 1.0)"; color: appTheme.muted; font.pixelSize: 11; Layout.alignment: Qt.AlignHCenter }
+                        Button {
+                            text: "Open capture"
+                            enabled: !window.blocked
+                            highlighted: true
+                            Layout.alignment: Qt.AlignHCenter
+                            onClicked: openDialog.open()
+                        }
                     }
                 }
                 Rectangle {
@@ -242,24 +245,42 @@ ApplicationWindow {
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: 6
-                                Label { text: "RxMER · " + (window.metadata.filename || ""); elide: Text.ElideMiddle; Layout.fillWidth: true; color: appTheme.text; font.pixelSize: 17; font.bold: true }
-                                Label { text: "Channel " + window.metadata.channel_id + " · " + window.metadata.mac_address + " · " + window.metadata.spacing_khz + " kHz"; color: appTheme.muted; font.pixelSize: 11 }
+                                Label { text: "Downstream RxMER"; elide: Text.ElideMiddle; Layout.fillWidth: true; color: appTheme.text; font.pixelSize: 17; font.bold: true }
+                                RowLayout {
+                                    spacing: 8
+                                    Repeater {
+                                        model: [
+                                            { title: "CHANNEL", value: window.metadata.channel_id },
+                                            { title: "MAC ADDRESS", value: window.metadata.mac_address },
+                                            { title: "SUBCARRIERS", value: window.metadata.sample_count },
+                                            { title: "SPACING", value: (window.metadata.spacing_khz || 0) + " kHz" }
+                                        ]
+                                        Rectangle {
+                                            required property var modelData
+                                            implicitWidth: Math.max(110, chipValue.implicitWidth + 24)
+                                            implicitHeight: 54
+                                            radius: 7
+                                            color: appTheme.accentSoft
+                                            Column {
+                                                anchors.fill: parent
+                                                anchors.margins: 10
+                                                spacing: 5
+                                                Label { text: modelData.title; color: appTheme.muted; font.pixelSize: 9; font.letterSpacing: 1 }
+                                                Label { id: chipValue; text: modelData.value === undefined ? "" : modelData.value.toString(); color: appTheme.text; font.pixelSize: 14; font.bold: true }
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                            Button { text: "Export JSON"; enabled: !window.blocked; onClicked: saveDialog.open() }
-                            Button { text: "Close capture"; enabled: !window.blocked; onClicked: backend.close_capture() }
+                            ToolButton { text: "⇩"; font.pixelSize: 22; Layout.preferredWidth: 32; Layout.preferredHeight: 32; Accessible.name: "Export JSON"; ToolTip.visible: hovered; ToolTip.text: "Export JSON"; enabled: !window.blocked; onClicked: saveDialog.open() }
+                            ToolButton { text: "×"; font.pixelSize: 22; Layout.preferredWidth: 32; Layout.preferredHeight: 32; Accessible.name: "Close capture"; ToolTip.visible: hovered; ToolTip.text: "Close capture"; enabled: !window.blocked; onClicked: backend.close_capture() }
                         }
-                        RxMerChart { theme: appTheme; viewport: window.viewport; Layout.fillWidth: true; Layout.fillHeight: true }
-                        Rectangle { Layout.fillWidth: true; height: 1; color: appTheme.line }
-                        RowLayout {
+                        RxMerChart {
+                            theme: appTheme
+                            viewport: window.viewport
                             Layout.fillWidth: true
-                            Label {
-                                Layout.fillWidth: true
-                                text: window.viewport.total === 0 ? "No samples" : "Samples " + window.viewport.start + "–" + (window.viewport.start + window.viewport.points.length - 1) + " of " + window.viewport.total
-                                color: appTheme.muted
-                                font.pixelSize: 11
-                            }
-                            Button { text: "← Previous"; enabled: !window.blocked && window.viewport.start > 0; onClicked: backend.show_page(Math.max(0, window.viewport.start - 1024)) }
-                            Button { text: "Next →"; enabled: !window.blocked && window.viewport.start + window.viewport.points.length < window.viewport.total; onClicked: backend.show_page(window.viewport.start + window.viewport.points.length) }
+                            Layout.fillHeight: true
+                            onRangeRequested: (start, count) => backend.show_range(start, count)
                         }
                     }
                 }

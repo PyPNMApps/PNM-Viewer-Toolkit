@@ -41,10 +41,10 @@ mod bridge {
         #[qinvokable]
         fn export_json(self: Pin<&mut ViewerBackend>, url: &QUrl);
 
-        /// Fetches an exact bounded viewport starting at `start` sample index.
+        /// Fetches a bounded overview or exact detail for the requested range.
         /// Out-of-range requests leave the previous viewport intact.
         #[qinvokable]
-        fn show_page(self: Pin<&mut ViewerBackend>, start: u32);
+        fn show_range(self: Pin<&mut ViewerBackend>, start: u32, count: u32);
 
         /// Releases the active capture when no file operation is running.
         /// Busy calls do nothing; native dialog cancellation never calls this.
@@ -106,8 +106,9 @@ fn load_capture(path: PathBuf) -> Result<LoadedCapture, Diagnostic> {
     let capture = Arc::new(Capture::read(&path)?);
     let metadata = serde_json::to_string(&capture.metadata()?)
         .map_err(|error| Diagnostic::new("Json", error))?;
-    let viewport = serde_json::to_string(&capture.viewport(0)?)
-        .map_err(|error| Diagnostic::new("Json", error))?;
+    let viewport =
+        serde_json::to_string(&capture.range_viewport(0, capture.metadata()?.sample_count)?)
+            .map_err(|error| Diagnostic::new("Json", error))?;
     Ok(LoadedCapture {
         capture,
         metadata,
@@ -224,19 +225,22 @@ impl bridge::ViewerBackend {
     ///
     /// # Arguments
     /// * `start` - Zero-based sample index, validated by the shared capture layer.
+    /// * `count` - Sample range length; large ranges use a bounded overview.
     /// # Returns
     /// Updates bounded viewport JSON or reports an error; never serializes the
     /// complete capture. Calls during file operations are ignored.
-    pub fn show_page(mut self: Pin<&mut Self>, start: u32) {
+    pub fn show_range(mut self: Pin<&mut Self>, start: u32, count: u32) {
         if *self.busy() {
             return;
         }
         let Some(capture) = self.rust().capture.clone() else {
             return;
         };
-        match capture.viewport(start as usize).and_then(|viewport| {
-            serde_json::to_string(&viewport).map_err(|error| Diagnostic::new("Json", error))
-        }) {
+        match capture
+            .range_viewport(start as usize, count as usize)
+            .and_then(|viewport| {
+                serde_json::to_string(&viewport).map_err(|error| Diagnostic::new("Json", error))
+            }) {
             Ok(json) => {
                 self.as_mut().set_error_message(QString::default());
                 self.as_mut().set_viewport_json(QString::from(&json));

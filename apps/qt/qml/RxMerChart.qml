@@ -19,10 +19,41 @@ ColumnLayout {
             return "No samples in this capture"
         }
         const value = selectedPoint.rxmer_db === null ? "Unavailable" : selectedPoint.rxmer_db.toFixed(2) + " dB"
-        return "#" + (viewport.start + Math.min(selectedIndex, pointCount - 1)) + "  ·  "
+        return "#" + ((selectedPoint.sample_index === undefined ? viewport.start + Math.min(selectedIndex, pointCount - 1) : selectedPoint.sample_index)) + "  ·  "
             + (selectedPoint.frequency_hz / hzPerMhz).toFixed(3) + " MHz  ·  " + value
     }
-    onViewportChanged: { selectedIndex = 0; plot.requestPaint() }
+    readonly property int visibleStart: viewport.start || 0
+    readonly property int visibleCount: viewport.count === undefined ? pointCount : viewport.count
+    signal rangeRequested(int start, int count)
+    function resetZoom() {
+        rangeRequested(0, viewport.total)
+    }
+    function zoomAt(fraction, zoomIn) {
+        if (viewport.total < 2) { return }
+        const anchor = Math.max(0, Math.min(1, fraction))
+        const nextCount = Math.max(2, Math.min(viewport.total, Math.round(visibleCount * (zoomIn ? 0.8 : 1.25))))
+        const nextStart = Math.max(0, Math.min(viewport.total - nextCount, Math.round(visibleStart + anchor * (visibleCount - nextCount))))
+        rangeRequested(nextStart, nextCount)
+    }
+    readonly property string frequencySelection: {
+        const points = viewport.points
+        if (!points.length) { return "No frequency selection" }
+        const first = points[0].frequency_hz
+        const span = points[points.length - 1].frequency_hz - first
+        const lower = selection.dragging ? Math.min(selection.startFraction, selection.endFraction) : 0
+        const upper = selection.dragging ? Math.max(selection.startFraction, selection.endFraction) : 1
+        return "Frequency selection: " + ((first + lower * span) / hzPerMhz).toFixed(3)
+            + " – " + ((first + upper * span) / hzPerMhz).toFixed(3) + " MHz"
+    }
+    function selectRange(firstFraction, lastFraction) {
+        if (visibleCount < 2) { return }
+        const lower = Math.max(0, Math.min(1, Math.min(firstFraction, lastFraction)))
+        const upper = Math.max(0, Math.min(1, Math.max(firstFraction, lastFraction)))
+        const first = Math.floor(lower * (visibleCount - 1))
+        const last = Math.ceil(upper * (visibleCount - 1))
+        rangeRequested(visibleStart + first, Math.max(2, last - first + 1))
+    }
+    onViewportChanged: { selection.dragging = false; selectedIndex = 0; plot.requestPaint() }
     onSelectedIndexChanged: plot.requestPaint()
     spacing: 10
 
@@ -112,41 +143,78 @@ ColumnLayout {
                 }
             }
         }
+        Rectangle {
+            visible: selection.dragging
+            x: plot.leftMargin + Math.min(selection.startFraction, selection.endFraction) * (plot.width - plot.leftMargin - plot.rightMargin)
+            y: plot.topMargin
+            width: Math.abs(selection.endFraction - selection.startFraction) * (plot.width - plot.leftMargin - plot.rightMargin)
+            height: plot.height - plot.topMargin - plot.bottomMargin
+            color: chart.theme.accent
+            opacity: 0.2
+            border.color: chart.theme.text
+        }
         MouseArea {
+            id: selection
             anchors.fill: parent
+            property bool dragging: false
+            property real startFraction: 0
+            property real endFraction: 0
+            cursorShape: Qt.CrossCursor
+            function fractionAt(horizontal) {
+                return Math.max(0, Math.min(1, (horizontal - plot.leftMargin) / (plot.width - plot.leftMargin - plot.rightMargin)))
+            }
+            onPressed: mouse => {
+                if (mouse.x < plot.leftMargin || mouse.x > plot.width - plot.rightMargin
+                    || mouse.y < plot.topMargin || mouse.y > plot.height - plot.bottomMargin) {
+                    mouse.accepted = false
+                    return
+                }
+                startFraction = fractionAt(mouse.x)
+                endFraction = startFraction
+                dragging = true
+            }
+            onReleased: mouse => {
+                if (!dragging) { return }
+                endFraction = fractionAt(mouse.x)
+                const distance = Math.abs(endFraction - startFraction) * (plot.width - plot.leftMargin - plot.rightMargin)
+                dragging = false
+                if (distance >= 6) { chart.selectRange(startFraction, endFraction) }
+            }
+            onCanceled: dragging = false
             hoverEnabled: true
+            ToolTip.visible: containsMouse && !dragging && chart.pointCount > 0
+            ToolTip.delay: 500
+            ToolTip.text: chart.reading
+            onWheel: wheel => {
+                const fraction = (wheel.x - plot.leftMargin) / (plot.width - plot.leftMargin - plot.rightMargin)
+                chart.zoomAt(fraction, wheel.angleDelta.y > 0)
+                wheel.accepted = true
+            }
+            onDoubleClicked: { dragging = false; chart.resetZoom() }
             onPositionChanged: mouse => {
+                if (dragging) { endFraction = fractionAt(mouse.x) }
                 const fraction = (mouse.x - plot.leftMargin) / (plot.width - plot.leftMargin - plot.rightMargin)
-                chart.selectedIndex = Math.max(0, Math.min(chart.pointCount - 1, Math.round(fraction * (chart.pointCount - 1))))
+                const points = chart.viewport.points
+                if (!points.length) { return }
+                const frequency = points[0].frequency_hz + fraction * (points[points.length - 1].frequency_hz - points[0].frequency_hz)
+                let nearest = 0
+                for (let index = 1; index < points.length; index++) {
+                    if (Math.abs(points[index].frequency_hz - frequency) < Math.abs(points[nearest].frequency_hz - frequency)) {
+                        nearest = index
+                    }
+                }
+                chart.selectedIndex = nearest
             }
         }
     }
-    RowLayout {
+    Label {
+        objectName: "sampleReading"
+        text: chart.frequencySelection
+        color: chart.theme.muted
+        font.family: "monospace"
+        font.pixelSize: 11
         Layout.fillWidth: true
-        spacing: 12
-        Label { visible: chart.width >= 600; text: "Inspect sample"; color: chart.theme.muted; font.pixelSize: 11 }
-        Slider {
-            objectName: "sampleSlider"
-            Layout.fillWidth: true
-            Layout.minimumWidth: 40
-            from: 0
-            to: Math.max(0, chart.pointCount - 1)
-            stepSize: 1
-            value: chart.selectedIndex
-            enabled: chart.pointCount > 0
-            Accessible.name: "Inspect sample"
-            onMoved: chart.selectedIndex = Math.round(value)
-        }
-        Label {
-            objectName: "sampleReading"
-            text: chart.reading
-            color: chart.theme.muted
-            font.family: "monospace"
-            font.pixelSize: 11
-            Layout.preferredWidth: 295
-            Layout.minimumWidth: 0
-            elide: Text.ElideRight
-            Accessible.name: chart.reading
-        }
+        elide: Text.ElideRight
+        Accessible.name: chart.frequencySelection
     }
 }

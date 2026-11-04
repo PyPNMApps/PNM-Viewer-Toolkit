@@ -60,13 +60,15 @@ pub struct Metadata {
     pub sample_count: usize,
     pub spacing_khz: SubcarrierSpacingKhz,
 }
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 pub struct Point {
+    pub sample_index: usize,
     pub frequency_hz: FrequencyHz,
     pub rxmer_db: Option<RxMerDb>,
 }
 #[derive(Serialize)]
 pub struct Viewport {
+    pub count: usize,
     pub start: usize,
     pub total: usize,
     pub points: Vec<Point>,
@@ -187,18 +189,89 @@ impl Capture {
                 "Sample window is outside this capture.",
             ));
         }
-        let points = parsed
+        let points: Vec<Point> = parsed
             .frequencies_hz()?
             .zip(parsed.values_db())
             .skip(start)
             .take(MAX_VIEW_SAMPLES)
-            .map(|(frequency_hz, rxmer_db)| Point {
+            .enumerate()
+            .map(|(index, (frequency_hz, rxmer_db))| Point {
+                sample_index: start + index,
                 frequency_hz,
                 rxmer_db,
             })
             .collect();
         Ok(Viewport {
+            count: points.len(),
             start,
+            total,
+            points,
+        })
+    }
+    /// Returns a bounded overview of any sample range for interactive zoom.
+    ///
+    /// # Arguments
+    /// * `start` - First sample index.
+    /// * `count` - Number of samples in the requested range.
+    /// # Returns
+    /// At most 1024 points with original sample indices. Small ranges are exact.
+    /// Larger ranges retain ordered bucket extrema and both range endpoints.
+    /// A bucket containing missing data is represented by a gap, conservatively
+    /// hiding its valid values until zoomed rather than bridging missing data.
+    /// # Errors
+    /// Rejects ranges outside the capture and propagates parser errors.
+    pub fn range_viewport(&self, start: usize, count: usize) -> Result<Viewport, Diagnostic> {
+        let parsed = self.parsed()?;
+        let total = parsed.raw_values().len();
+        let end = start
+            .checked_add(count)
+            .filter(|end| *end <= total)
+            .ok_or_else(|| {
+                Diagnostic::new("InvalidRange", "Zoom range is outside this capture.")
+            })?;
+        let samples: Vec<Point> = parsed
+            .frequencies_hz()?
+            .zip(parsed.values_db())
+            .enumerate()
+            .skip(start)
+            .take(end - start)
+            .map(|(sample_index, (frequency_hz, rxmer_db))| Point {
+                sample_index,
+                frequency_hz,
+                rxmer_db,
+            })
+            .collect();
+        let points = if samples.len() <= MAX_VIEW_SAMPLES {
+            samples
+        } else {
+            let bucket_count = (MAX_VIEW_SAMPLES - 2) / 2;
+            let bucket_size = samples.len().div_ceil(bucket_count);
+            let mut overview = Vec::with_capacity(MAX_VIEW_SAMPLES);
+            overview.push(samples[0].clone());
+            for bucket in samples.chunks(bucket_size) {
+                if let Some(missing) = bucket.iter().find(|point| point.rxmer_db.is_none()) {
+                    overview.push(missing.clone());
+                } else {
+                    let minimum = bucket
+                        .iter()
+                        .min_by(|left, right| left.rxmer_db.partial_cmp(&right.rxmer_db).unwrap())
+                        .unwrap();
+                    let maximum = bucket
+                        .iter()
+                        .max_by(|left, right| left.rxmer_db.partial_cmp(&right.rxmer_db).unwrap())
+                        .unwrap();
+                    let mut extrema = [minimum, maximum];
+                    extrema.sort_by_key(|point| point.sample_index);
+                    overview.extend(extrema.into_iter().cloned());
+                }
+            }
+            overview.push(samples[samples.len() - 1].clone());
+            overview.dedup_by_key(|point| point.sample_index);
+            overview
+        };
+        Ok(Viewport {
+            start,
+            count,
             total,
             points,
         })
@@ -217,6 +290,54 @@ impl Capture {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn full_range_overview_and_zoom_are_bounded() {
+        let capture =
+            Capture::from_bytes(pnm_fixtures::RXMER.to_vec(), "rxmer.bin".into()).unwrap();
+        let overview = capture.range_viewport(0, 7480).unwrap();
+        assert_eq!(overview.count, 7480);
+        assert!(overview.points.len() <= MAX_VIEW_SAMPLES);
+        assert_eq!(overview.points.first().unwrap().frequency_hz, 640_000_000);
+        assert_eq!(overview.points.last().unwrap().frequency_hz, 826_975_000);
+        assert!(overview
+            .points
+            .windows(2)
+            .all(|pair| pair[0].sample_index < pair[1].sample_index));
+        let detail = capture.range_viewport(7000, 480).unwrap();
+        assert_eq!(detail.points.len(), 480);
+        assert_eq!(detail.points[0].sample_index, 7000);
+        assert_eq!(detail.points[479].sample_index, 7479);
+        assert!(capture.range_viewport(7480, 0).unwrap().points.is_empty());
+        assert!(capture.range_viewport(7480, 1).is_err());
+        assert!(capture.range_viewport(usize::MAX, 2).is_err());
+    }
+    #[test]
+    fn overview_preserves_extrema_and_does_not_bridge_gaps() {
+        let mut bytes = pnm_fixtures::RXMER.to_vec();
+        let payload_start = bytes.len() - 7480;
+        bytes[payload_start..].fill(160);
+        bytes[payload_start + 105] = 0;
+        bytes[payload_start + 106] = 240;
+        bytes[payload_start + 205] = 255;
+        let capture = Capture::from_bytes(bytes, "synthetic.bin".into()).unwrap();
+        let overview = capture.range_viewport(0, 7480).unwrap();
+        assert!(overview
+            .points
+            .iter()
+            .any(|point| point.sample_index == 105 && point.rxmer_db == Some(0.0)));
+        assert!(overview
+            .points
+            .iter()
+            .any(|point| point.sample_index == 106 && point.rxmer_db == Some(60.0)));
+        assert!(overview
+            .points
+            .iter()
+            .any(|point| point.sample_index == 205 && point.rxmer_db.is_none()));
+        let detail = capture.range_viewport(200, 10).unwrap();
+        assert_eq!(detail.points.len(), 10);
+        assert_eq!(detail.points[5].rxmer_db, None);
+        assert_eq!(detail.points[6].rxmer_db, Some(40.0));
+    }
     #[test]
     fn export_preserves_existing_files_and_original_capture() {
         let folder = tempfile::tempdir().unwrap();
