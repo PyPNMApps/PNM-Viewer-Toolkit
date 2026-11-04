@@ -105,7 +105,7 @@ ColumnLayout {
                 context.lineTo(width - rightMargin, vertical)
                 context.stroke()
                 context.textAlign = "right"
-                context.fillText(level.toString(), leftMargin - 12, vertical + 4)
+                context.fillText(Number(level.toFixed(3)).toString(), leftMargin - 12, vertical + 4)
                 const fraction = tick / 4
                 const frequency = firstHz + fraction * (lastHz - firstHz)
                 context.textAlign = "center"

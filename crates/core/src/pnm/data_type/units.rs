@@ -21,3 +21,6 @@ pub const S2_13_UNITS_PER_UNIT: f64 = 8192.0;
 
 /// Fixed-point counts per unit for signed s1.14 components.
 pub const S1_14_UNITS_PER_UNIT: f64 = 16384.0;
+
+/// Number of microseconds in one second.
+pub const MICROSECONDS_PER_SECOND: f64 = 1_000_000.0;

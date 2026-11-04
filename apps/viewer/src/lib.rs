@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 //! Bounded capture ownership and desktop chart data.
+pub mod channel_estimation;
 pub mod chart;
 pub mod spectrum_analysis;
 use pnm::pnm::data_type::{ChannelId, FrequencyHz, RxMerDb, SubcarrierSpacingKhz};
@@ -152,8 +153,8 @@ impl Capture {
     fn decoded(&self) -> Result<DecodedPnm<'_>, Diagnostic> {
         let decoded = PnmFile::from_bytes(&self.bytes).decode(ParseLimits::default())?;
         match decoded {
-            DecodedPnm::RxMer(_) | DecodedPnm::SpectrumAnalysis(_) => Ok(decoded),
-            _ => Err(Diagnostic::new("UnsupportedViewer", "This viewer supports RxMER and Spectrum Analyzer captures. Other formats remain available in pnm-decode.")),
+            DecodedPnm::RxMer(_) | DecodedPnm::SpectrumAnalysis(_) | DecodedPnm::ChannelEstimate(_) => Ok(decoded),
+            _ => Err(Diagnostic::new("UnsupportedViewer", "This viewer supports RxMER, Spectrum Analyzer and DS Channel Estimation captures. Other formats remain available in pnm-decode.")),
         }
     }
     fn parsed(&self) -> Result<CmDsOfdmRxMer<'_>, Diagnostic> {
@@ -250,12 +251,21 @@ impl Capture {
 
     /// Generates full-resolution core JSON for a file export, never a viewport.
     /// # Returns
-    /// The parser's JSON with null missing values; Spectrum also includes derived bandwidth analysis.
+    /// The parser's JSON with null missing values, plus derived spectrum bandwidth
+    /// or channel-estimation analysis for those measurement types.
     /// # Errors
     /// Reports parsing or the 16 MiB JSON serialization limit.
     pub fn json(&self) -> Result<String, Diagnostic> {
         let decoded = self.decoded()?;
         let result = match &decoded {
+            DecodedPnm::ChannelEstimate(capture) => {
+                let export = channel_estimation::ChannelEstimationExport {
+                    capture,
+                    channel_estimation_analysis:
+                        channel_estimation::ChannelEstimationAnalysis::from_capture(capture)?,
+                };
+                pnm::common::json::to_json(&export, pnm::common::json::DEFAULT_MAX_JSON_BYTES)
+            }
             DecodedPnm::SpectrumAnalysis(capture) => {
                 let export = spectrum_analysis::SpectrumExport {
                     capture,

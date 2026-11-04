@@ -46,6 +46,11 @@ mod bridge {
         #[qinvokable]
         fn show_range(self: Pin<&mut ViewerBackend>, start: u32, count: u32);
 
+        /// Selects a supported measurement tab and resets its displayed range.
+        /// Invalid tabs leave the prior presentation intact.
+        #[qinvokable]
+        fn select_view(self: Pin<&mut ViewerBackend>, index: u32);
+
         /// Releases the active capture when no file operation is running.
         /// Busy calls do nothing; native dialog cancellation never calls this.
         #[qinvokable]
@@ -56,7 +61,7 @@ mod bridge {
 use cxx_qt::{CxxQtType, Threading};
 use cxx_qt_lib::{QString, QUrl};
 use std::{path::PathBuf, pin::Pin, sync::Arc};
-use viewer::{Capture, Diagnostic};
+use viewer::{chart::MeasurementView, Capture, Diagnostic};
 
 /// Rust-owned state; only small strings and UI status cross the Qt boundary.
 pub struct ViewerBackendRust {
@@ -68,6 +73,7 @@ pub struct ViewerBackendRust {
     status: QString,
     error_message: QString,
     capture: Option<Arc<Capture>>,
+    view: MeasurementView,
 }
 struct LoadedCapture {
     capture: Arc<Capture>,
@@ -89,6 +95,7 @@ impl Default for ViewerBackendRust {
             status: QString::from("Ready to open a local capture"),
             error_message: QString::default(),
             capture: None,
+            view: MeasurementView::Default,
         }
     }
 }
@@ -156,6 +163,7 @@ impl bridge::ViewerBackend {
                     match result {
                         Ok(loaded) => {
                             backend.as_mut().rust_mut().capture = Some(loaded.capture);
+                            backend.as_mut().rust_mut().view = MeasurementView::Default;
                             backend
                                 .as_mut()
                                 .set_metadata_json(QString::from(&loaded.metadata));
@@ -237,7 +245,7 @@ impl bridge::ViewerBackend {
             return;
         };
         match capture
-            .chart_range(start as usize, count as usize)
+            .chart_range_for(self.rust().view, start as usize, count as usize)
             .and_then(|viewport| {
                 serde_json::to_string(&viewport).map_err(|error| Diagnostic::new("Json", error))
             }) {
@@ -249,6 +257,51 @@ impl bridge::ViewerBackend {
             Err(error) => self.fail(error),
         }
     }
+    /// Changes a channel-estimation tab only after both payloads validate.
+    /// # Arguments
+    /// * `index` - Zero for the default chart, one for delay, two for I/Q.
+    /// # Returns
+    /// Updates metadata and a bounded full-range viewport. Invalid or busy calls
+    /// preserve the current view; errors appear in the existing diagnostic area.
+    pub fn select_view(mut self: Pin<&mut Self>, index: u32) {
+        if *self.busy() {
+            return;
+        }
+        let Some(capture) = self.rust().capture.clone() else {
+            return;
+        };
+        let view = match index {
+            0 => MeasurementView::Default,
+            1 => MeasurementView::GroupDelay,
+            2 => MeasurementView::IqScatter,
+            _ => {
+                self.fail(Diagnostic::new(
+                    "UnsupportedView",
+                    "Unknown measurement tab.",
+                ));
+                return;
+            }
+        };
+        let result = (|| {
+            let metadata = capture.chart_metadata_for(view)?;
+            let viewport = capture.chart_range_for(view, 0, metadata.sample_count)?;
+            let metadata_json =
+                serde_json::to_string(&metadata).map_err(|error| Diagnostic::new("Json", error))?;
+            let viewport_json =
+                serde_json::to_string(&viewport).map_err(|error| Diagnostic::new("Json", error))?;
+            Ok::<_, Diagnostic>((metadata_json, viewport_json))
+        })();
+        match result {
+            Ok((metadata, viewport)) => {
+                self.as_mut().rust_mut().view = view;
+                self.as_mut().set_viewport_json(QString::from(&viewport));
+                self.as_mut().set_metadata_json(QString::from(&metadata));
+                self.as_mut().set_error_message(QString::default());
+            }
+            Err(error) => self.fail(error),
+        }
+    }
+
     /// Drops the active capture after a completed operation.
     ///
     /// # Returns
@@ -258,6 +311,7 @@ impl bridge::ViewerBackend {
             return;
         }
         self.as_mut().rust_mut().capture = None;
+        self.as_mut().rust_mut().view = MeasurementView::Default;
         self.as_mut().set_loaded(false);
         self.as_mut().set_metadata_json(QString::from("{}"));
         self.as_mut()

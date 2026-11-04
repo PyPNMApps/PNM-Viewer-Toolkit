@@ -23,6 +23,37 @@ TestCase {
             chart.viewport = {start: start, count: count, total: sourcePoints.length, points: sourcePoints.slice(start, start + count)}
         }
     }
+    IqScatterChart {
+        id: scatter
+        theme: appearance
+        visible: false
+        width: 850
+        height: 400
+    }
+    function test_channel_delay_and_density_presentation() {
+        chart.unit = "µs"
+        chart.axisLabel = "Group delay"
+        chart.minimum = -0.1
+        chart.maximum = 0.2
+        chart.viewport = {start: 0, count: 2, total: 2, points: [
+            {sample_index: 0, frequency_hz: 640000000, value: -0.025},
+            {sample_index: 1, frequency_hz: 640025000, value: null}
+        ]}
+        verify(chart.reading.indexOf("µs") >= 0)
+        chart.selectedIndex = 1
+        verify(chart.reading.indexOf("Unavailable") >= 0)
+        scatter.density = {minimum: -1, maximum: 1, grid_side: 32, valid_count: 5,
+            excluded_count: 1, maximum_cell_count: 5, cells: [{column: 16, row: 16, count: 5}]}
+        scatter.visible = true
+        wait(50)
+        verify(findChild(scatter, "iqDensityPlot").width > 0)
+        appearance.preference = 1
+        wait(50)
+        scatter.density = {minimum: -1, maximum: 1, grid_side: 32, valid_count: 0,
+            excluded_count: 0, maximum_cell_count: 0, cells: []}
+        wait(50)
+        scatter.visible = false
+    }
     function init() {
         chart.unit = "dB"
         chart.axisLabel = "RxMER"

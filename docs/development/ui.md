@@ -1,8 +1,8 @@
 # RxMER desktop viewer
 
-A parallel [Qt Quick prototype](qt.md) implements the same workflow without a
-WebView. Both shells share Rust capture behavior in apps/viewer; Tauri remains
-available.
+The [Qt Quick prototype](qt.md) supports RxMER, Spectrum Analyzer and DS Channel
+Estimation without a WebView. Both shells share Rust capture behavior in
+apps/viewer. This page describes the retained Tauri RxMER prototype.
 
 The first desktop slice lives under `apps/desktop/`: Tauri 2, React/TypeScript
 and the existing Rust parser. It remains in the dev phase. Installable desktop
@@ -32,7 +32,7 @@ production embeds those assets and uses native IPC, with no HTTP backend.
 Choose **Open PNM file**, then select an RxMER format 1.0 capture. The repository's
 `tests/fixtures/pypnm/tests/files/rxmer.bin` is a preserved example. Detection uses
 file contents, not its extension. Other measurements remain supported by the CLI
-but do not yet have desktop charts.
+but do not yet have charts in the Tauri prototype.
 
 - Inspect channel, MAC address, sample count and subcarrier spacing.
 - Move through exact windows of up to 1,024 samples using Previous and Next.

@@ -28,12 +28,12 @@ scripts/qt-desktop.sh check
 ## Workflow
 
 The initial Home page shows its title and a centered Open capture button. Choose
-Open capture or Open in the toolbar. RxMER and Spectrum Analyzer format 1.0
+Open capture or Open in the toolbar. RxMER, Spectrum Analyzer and DS Channel Estimation format 1.0
 captures are detected by file contents and open their matching chart. Close
 returns to Home. Other measurements retain the unsupported-viewer diagnostic.
 
 Try `tests/fixtures/pypnm/tests/files/rxmer.bin` or `spectrum_analyzer.bin` in
-that same directory. Both charts use labeled chips, full-range overviews,
+that same directory. Frequency charts use labeled chips, full-range overviews,
 drag selection, mouse-wheel zoom, double-click reset, and a frequency-range readout.
 Spectrum shows amplitude in dBmV with automatic vertical bounds; RxMER uses dB.
 Spectrum chips show MAC and calculated RBW. Its
@@ -211,3 +211,49 @@ These are derived fields alongside the original decoded file fields. Floating
 point serialization can include insignificant trailing digits. The chip displays
 `RBW 32.227 kHz`. Core parser/CLI JSON remains raw decoded data; RxMER export is
 unchanged. The pure DSP function has no DOCSIS, JSON or UI dependency.
+
+## Downstream channel estimation
+
+Open `tests/fixtures/pypnm/tests/files/channel_estimation.bin`. The 7,480-carrier
+fixture opens with Magnitude, Group delay and I/Q scatter tabs, inspired by
+[PyPNM-WebUI's channel-estimation view](https://github.com/PyPNMApps/PyPNM-CMTS-WebUI/blob/25f40bda432f3c72df1e606bb229ffc5ba4eacf8/src/pw/features/operations/SingleChannelEstCoeffCaptureView.tsx). Switching tabs resets to
+the full capture. Magnitude and delay retain drag selection, wheel zoom and
+double-click reset. Neither plot displays hover tooltips.
+
+Rust calculates unsmoothed magnitude as `20 log10(hypot(I, Q))` in dB and group
+delay as `-d(phase)/df / (2*pi)` in seconds, converted to microseconds for display. Phase is unwrapped independently
+within contiguous valid runs. Excluded, nonfinite and zero pairs produce null
+magnitude/delay rather than artificial values; isolated valid carriers have no
+delay. Interior derivatives are central, edges use second-order differences for
+three or more carriers, and two-carrier runs use their shared slope. Phase steps
+larger than pi are ambiguous; these plots do not recover absolute cable delay.
+No echo detection, cable-distance estimate or smoothing is included yet.
+
+I/Q scatter is a 32-by-32 density overview with equal I/Q scales. Every valid
+pair contributes to one cell; color intensity indicates relative count. Zero pairs
+remain valid here. The footer reports valid and excluded counts. This view
+shows the full capture and has no frequency zoom or individual-sample tooltip.
+At most 1,024 occupied cells cross the UI boundary.
+
+Desktop JSON export preserves every raw parser field, including the full `iq`
+array, and adds this section (arrays align with the original carrier indices):
+
+```json
+{
+  "channel_estimation_analysis": {
+    "frequencies_hz": [640000000, 640025000],
+    "magnitude_db": [0.0, null],
+    "group_delay": [
+      {"frequency_hz": 640000000, "delay_s": 2.154e-6},
+      {"frequency_hz": 640025000, "delay_s": null}
+    ]
+  }
+}
+```
+
+Delay is exported as numeric seconds, using scientific notation for small
+values; JSON readers may show equivalent decimals. Qt displays microseconds.
+The numbers above illustrate the schema, not the fixture. Core parser and
+`pnm-decode` JSON remain raw; the desktop export adds derived analysis. The
+reusable math lives in `crates/core/src/common/signal_processing/channel_response.rs`;
+`apps/viewer/src/channel_estimation.rs` owns capture mapping and presentation.

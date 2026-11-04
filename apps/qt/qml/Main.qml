@@ -190,7 +190,7 @@ ApplicationWindow {
                 }
 
                 Label { text: "WORKSPACE"; color: appTheme.muted; font.pixelSize: 10 }
-                Label { text: backend.loaded ? (window.metadata.title || "Measurement") : "Home"; color: appTheme.accent }
+                Label { text: backend.loaded ? (window.metadata.title || "Measurement") : "Home"; color: appTheme.accent; Layout.fillWidth: true; wrapMode: Text.Wrap }
                 Item { Layout.fillHeight: true }
             }
         }
@@ -271,7 +271,37 @@ ApplicationWindow {
                             ToolButton { text: "⇩"; font.pixelSize: 22; Layout.preferredWidth: 32; Layout.preferredHeight: 32; Accessible.name: "Export JSON"; ToolTip.visible: hovered; ToolTip.text: "Export JSON"; enabled: !window.blocked; onClicked: saveDialog.open() }
                             ToolButton { text: "×"; font.pixelSize: 22; Layout.preferredWidth: 32; Layout.preferredHeight: 32; Accessible.name: "Close capture"; ToolTip.visible: hovered; ToolTip.text: "Close capture"; enabled: !window.blocked; onClicked: backend.close_capture() }
                         }
+                        RowLayout {
+                            visible: (window.metadata.views || []).length > 0
+                            spacing: 6
+                            Repeater {
+                                model: window.metadata.views || []
+                                ToolButton {
+                                    required property string modelData
+                                    required property int index
+                                    text: modelData
+                                    Accessible.name: modelData
+                                    readonly property bool selected: window.metadata.view_index === index
+                                    Accessible.description: selected ? "Selected view" : "Show " + modelData
+                                    enabled: !window.blocked
+                                    onClicked: backend.select_view(index)
+                                    background: Rectangle {
+                                        radius: 6
+                                        color: parent.selected ? appTheme.button : "transparent"
+                                        border.color: parent.selected ? appTheme.accent : appTheme.line
+                                    }
+                                }
+                            }
+                        }
+                        IqScatterChart {
+                            visible: window.metadata.view_index === 2
+                            theme: appTheme
+                            density: window.viewport.iq_density || ({})
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                        }
                         MeasurementChart {
+                            visible: window.metadata.view_index !== 2
                             unit: window.metadata.unit || "dB"
                             axisLabel: window.metadata.axis_label || "Amplitude"
                             minimum: window.metadata.minimum === undefined ? 0 : window.metadata.minimum

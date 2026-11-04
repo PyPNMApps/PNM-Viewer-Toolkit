@@ -10,6 +10,15 @@ use pnm::pnm::{
 };
 use serde::Serialize;
 
+/// Measurement tab; the default is magnitude for channel estimation.
+#[derive(Clone, Copy, Default, PartialEq, Eq)]
+pub enum MeasurementView {
+    #[default]
+    Default = 0,
+    GroupDelay = 1,
+    IqScatter = 2,
+}
+
 /// Display label and formatted value for one metadata pill.
 #[derive(Serialize)]
 pub struct Chip {
@@ -17,7 +26,13 @@ pub struct Chip {
     pub value: String,
 }
 impl Chip {
-    fn new(title: &str, value: impl ToString) -> Self {
+    /// Formats one small metadata chip.
+    /// # Arguments
+    /// * `title` - Human-readable field name.
+    /// * `value` - Display value, including units where applicable.
+    /// # Returns
+    /// An owned label/value pair for UI serialization.
+    pub(crate) fn new(title: &str, value: impl ToString) -> Self {
         Self {
             title: title.into(),
             value: value.to_string(),
@@ -27,6 +42,8 @@ impl Chip {
 /// Small chart configuration; vertical bounds use the declared measurement unit.
 #[derive(Serialize)]
 pub struct ChartMetadata {
+    pub views: Vec<&'static str>,
+    pub view_index: u32,
     pub title: &'static str,
     pub unit: &'static str,
     pub axis_label: &'static str,
@@ -47,6 +64,8 @@ pub struct ChartPoint {
 /// Selected source range and bounded display points for that range.
 #[derive(Serialize)]
 pub struct ChartViewport {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub iq_density: Option<crate::channel_estimation::IqDensity>,
     pub start: usize,
     pub count: usize,
     pub total: usize,
@@ -56,14 +75,31 @@ impl Capture {
     /// Builds measurement-specific labels, units and full-capture vertical bounds.
     ///
     /// # Returns
-    /// Small metadata and inline chips for RxMER or Spectrum Analyzer.
+    /// Small metadata and inline chips for the default measurement view.
     /// # Errors
     /// Propagates invalid captures or unsupported frequency grids.
     pub fn chart_metadata(&self) -> Result<ChartMetadata, Diagnostic> {
-        match self.decoded()? {
+        self.chart_metadata_for(MeasurementView::Default)
+    }
+    /// Builds metadata for a selected tab, rejecting tabs unavailable for a capture.
+    /// # Arguments
+    /// * `view` - Default measurement, group delay or I/Q scatter.
+    /// # Returns
+    /// Bounded configuration and tab names, without full sample arrays.
+    /// # Errors
+    /// Propagates parser/grid errors or an unsupported tab.
+    pub fn chart_metadata_for(&self, view: MeasurementView) -> Result<ChartMetadata, Diagnostic> {
+        let decoded = self.decoded()?;
+        validate_view(&decoded, view)?;
+        match decoded {
+            DecodedPnm::ChannelEstimate(capture) => {
+                crate::channel_estimation::metadata(&capture, view)
+            }
             DecodedPnm::RxMer(_) => {
                 let metadata = self.metadata()?;
                 Ok(ChartMetadata {
+                    views: vec![],
+                    view_index: 0,
                     spectrum_analysis: None,
                     title: "Downstream RxMER",
                     unit: "dB",
@@ -80,7 +116,7 @@ impl Capture {
                 })
             }
             DecodedPnm::SpectrumAnalysis(spectrum) => {
-                let points = self.chart_points()?;
+                let points = self.chart_points(MeasurementView::Default)?;
                 let analysis = SpectrumAnalysis::from_capture(&spectrum)?;
                 let minimum = points
                     .iter()
@@ -97,6 +133,8 @@ impl Capture {
                     .collect::<Vec<_>>()
                     .join(":");
                 Ok(ChartMetadata {
+                    views: vec![],
+                    view_index: 0,
                     title: "Spectrum Analyzer",
                     unit: "dBmV",
                     axis_label: "Amplitude",
@@ -122,8 +160,30 @@ impl Capture {
             )),
         }
     }
-    fn chart_points(&self) -> Result<Vec<ChartPoint>, Diagnostic> {
-        match self.decoded()? {
+    fn chart_points(&self, view: MeasurementView) -> Result<Vec<ChartPoint>, Diagnostic> {
+        let decoded = self.decoded()?;
+        validate_view(&decoded, view)?;
+        match decoded {
+            DecodedPnm::ChannelEstimate(capture) => {
+                let analysis =
+                    crate::channel_estimation::ChannelEstimationAnalysis::from_capture(&capture)?;
+                let values = if view == MeasurementView::GroupDelay {
+                    analysis.group_delay_us()
+                } else {
+                    analysis.magnitude_db
+                };
+                Ok(analysis
+                    .frequencies_hz
+                    .into_iter()
+                    .zip(values)
+                    .enumerate()
+                    .map(|(sample_index, (frequency_hz, value))| ChartPoint {
+                        sample_index,
+                        frequency_hz,
+                        value,
+                    })
+                    .collect())
+            }
             DecodedPnm::RxMer(capture) => Ok(capture
                 .frequencies_hz()?
                 .zip(capture.values_db())
@@ -187,7 +247,7 @@ impl Capture {
             )),
         }
     }
-    /// Returns bounded full-range overviews or exact zoom detail for either chart.
+    /// Returns bounded full-range overviews or exact zoom detail for the default chart.
     ///
     /// # Arguments
     /// * `start` - Zero-based first sample.
@@ -197,7 +257,44 @@ impl Capture {
     /// # Errors
     /// Rejects invalid ranges, captures or frequency grids.
     pub fn chart_range(&self, start: usize, count: usize) -> Result<ChartViewport, Diagnostic> {
-        let samples = self.chart_points()?;
+        self.chart_range_for(MeasurementView::Default, start, count)
+    }
+    /// Queries a bounded view for a selected measurement tab.
+    /// # Arguments
+    /// * `view` - Frequency plot or full-capture I/Q density overview.
+    /// * `start` - First source sample; I/Q requires zero.
+    /// * `count` - Source sample count; I/Q requires the full capture.
+    /// # Returns
+    /// At most 1024 plot points or occupied I/Q cells.
+    /// # Errors
+    /// Rejects unsupported tabs, invalid ranges and frequency grids.
+    pub fn chart_range_for(
+        &self,
+        view: MeasurementView,
+        start: usize,
+        count: usize,
+    ) -> Result<ChartViewport, Diagnostic> {
+        if view == MeasurementView::IqScatter {
+            let decoded = self.decoded()?;
+            validate_view(&decoded, view)?;
+            if let DecodedPnm::ChannelEstimate(capture) = decoded {
+                let samples: Vec<_> = capture.iq().collect();
+                if start != 0 || count != samples.len() {
+                    return Err(Diagnostic::new(
+                        "InvalidRange",
+                        "I/Q overview requires the full capture.",
+                    ));
+                }
+                return Ok(ChartViewport {
+                    start,
+                    count,
+                    total: samples.len(),
+                    points: vec![],
+                    iq_density: Some(crate::channel_estimation::IqDensity::from_samples(&samples)),
+                });
+            }
+        }
+        let samples = self.chart_points(view)?;
         let total = samples.len();
         let end = start
             .checked_add(count)
@@ -207,6 +304,7 @@ impl Capture {
             })?;
         let points = overview(&samples[start..end]);
         Ok(ChartViewport {
+            iq_density: None,
             start,
             count,
             total,
@@ -242,4 +340,14 @@ fn overview(samples: &[ChartPoint]) -> Vec<ChartPoint> {
     points.push(samples[samples.len() - 1].clone());
     points.dedup_by_key(|point| point.sample_index);
     points
+}
+
+fn validate_view(decoded: &DecodedPnm<'_>, view: MeasurementView) -> Result<(), Diagnostic> {
+    if view != MeasurementView::Default && !matches!(decoded, DecodedPnm::ChannelEstimate(_)) {
+        return Err(Diagnostic::new(
+            "UnsupportedView",
+            "This capture does not support that view.",
+        ));
+    }
+    Ok(())
 }
