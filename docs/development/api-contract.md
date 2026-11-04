@@ -65,3 +65,10 @@ Errors serialize `code`, `message`, optional `field` and `offset`. Parser offset
 refer to original file bytes. The frontend retains its previous capture on errors.
 Rust tests verify bounds/nulls/core JSON parity and stale sessions; frontend tests
 exercise theme changes, errors, dialog cancellation, paging, export and close.
+
+## Parallel Qt shell
+
+`apps/qt/src/backend.rs` exposes local-file open, JSON export, page selection and
+close through a CXX-Qt QObject. Properties carry metadata, bounded viewports,
+status, busy state and error text. Capture bytes stay in `apps/viewer`, shared
+with Tauri. The Qt adapter accepts local QUrl paths and queues worker completions.

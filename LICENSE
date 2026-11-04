@@ -12,7 +12,8 @@ are licensed under the Apache License, Version 2.0. The full license is in:
 
 GNU General Public License, Version 3 only (SPDX: GPL-3.0-only)
 -----------------------------------------------------------
-The desktop shell and React/TypeScript UI under apps/desktop/ are licensed
+The desktop shells and UIs under apps/desktop/ and apps/qt/, and their shared
+capture layer under apps/viewer/, are licensed
 GPL-3.0-only, as identified by their package metadata and source headers.
 The full license is in:
 

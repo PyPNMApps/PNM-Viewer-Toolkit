@@ -3,16 +3,12 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 #![forbid(unsafe_code)]
-mod capture;
-use capture::{Capture, Diagnostic, Metadata, Viewport};
 use serde::Serialize;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::{
-    io::Write,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 use tauri::{Manager, State};
 use tauri_plugin_dialog::DialogExt;
+use viewer::{Capture, Diagnostic, Metadata, Viewport};
 
 #[derive(Default)]
 struct OperationGate(Arc<AtomicBool>);
@@ -137,22 +133,7 @@ async fn export_json(app: tauri::AppHandle, session_id: u32) -> Result<bool, Dia
         let path = path
             .into_path()
             .map_err(|error| Diagnostic::new("Io", error))?;
-        let json = capture.json()?;
-        let mut output = std::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&path)
-            .map_err(|error| {
-                Diagnostic::new("Export", format!("Choose a new destination. {error}"))
-            })?;
-        if let Err(error) = output
-            .write_all(json.as_bytes())
-            .and_then(|()| output.sync_all())
-        {
-            drop(output);
-            let _cleanup = std::fs::remove_file(&path);
-            return Err(Diagnostic::new("Export", error));
-        }
+        capture.write_json_new(&path)?;
         Ok(true)
     })
     .await

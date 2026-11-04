@@ -9,7 +9,11 @@ use pnm::pnm::parser::{
     pnm_file::{DecodedPnm, PnmFile},
 };
 use serde::Serialize;
-use std::{fs::File, io::Read, path::Path};
+use std::{
+    fs::File,
+    io::{Read, Write},
+    path::Path,
+};
 
 pub const MAX_INPUT_BYTES: usize = 16 * 1024 * 1024;
 pub const MAX_VIEW_SAMPLES: usize = 1024;
@@ -113,6 +117,34 @@ impl Capture {
         capture.parsed()?;
         Ok(capture)
     }
+    /// Exports complete decoded JSON to a newly created destination.
+    ///
+    /// # Arguments
+    /// * `path` - Destination; existing files are never replaced.
+    /// # Returns
+    /// Completion after writing and syncing all JSON bytes.
+    /// # Errors
+    /// Reports serialization, existing destination and I/O failures. A partial
+    /// file created by this operation is removed after a write failure.
+    pub fn write_json_new(&self, path: &Path) -> Result<(), Diagnostic> {
+        let json = self.json()?;
+        let mut output = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(path)
+            .map_err(|error| {
+                Diagnostic::new("Export", format!("Choose a new destination. {error}"))
+            })?;
+        if let Err(error) = output
+            .write_all(json.as_bytes())
+            .and_then(|()| output.sync_all())
+        {
+            drop(output);
+            let _cleanup = std::fs::remove_file(path);
+            return Err(Diagnostic::new("Export", error));
+        }
+        Ok(())
+    }
     fn parsed(&self) -> Result<CmDsOfdmRxMer<'_>, Diagnostic> {
         match PnmFile::from_bytes(&self.bytes).decode(ParseLimits::default())? {
             DecodedPnm::RxMer(capture) => Ok(capture),
@@ -185,6 +217,22 @@ impl Capture {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn export_preserves_existing_files_and_original_capture() {
+        let folder = tempfile::tempdir().unwrap();
+        let input = folder.path().join("capture.bin");
+        std::fs::write(&input, pnm_fixtures::RXMER).unwrap();
+        let capture = Capture::read(&input).unwrap();
+        assert!(capture.write_json_new(&input).is_err());
+        assert_eq!(std::fs::read(&input).unwrap(), pnm_fixtures::RXMER);
+        let output = folder.path().join("capture.json");
+        capture.write_json_new(&output).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(&output).unwrap(),
+            capture.json().unwrap()
+        );
+        assert!(capture.write_json_new(&output).is_err());
+    }
     #[test]
     fn fixture_viewport_and_export_are_consistent() {
         let capture =

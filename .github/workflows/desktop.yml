@@ -33,3 +33,18 @@ jobs:
       - name: Check frontend and native desktop
         shell: bash
         run: bash scripts/check-desktop.sh
+  qt-linux:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Install Qt build prerequisites
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake python3-venv libgl1-mesa-dev
+      - name: Load pinned Rust toolchain
+        run: rustup show
+      - name: Prepare repository-local Qt SDK
+        run: scripts/setup-qt.sh
+      - name: Check Qt adapter and presentation
+        run: scripts/qt-desktop.sh check

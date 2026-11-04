@@ -1,5 +1,9 @@
 # RxMER desktop viewer
 
+A parallel [Qt Quick prototype](qt.md) implements the same workflow without a
+WebView. Both shells share Rust capture behavior in apps/viewer; Tauri remains
+available.
+
 The first desktop slice lives under `apps/desktop/`: Tauri 2, React/TypeScript
 and the existing Rust parser. It remains in the dev phase. Installable desktop
 packages and distribution testing are still future work.
@@ -49,11 +53,12 @@ but do not yet have desktop charts.
 apps/desktop/
   src/                     React shell, theme selector, chart and typed IPC adapter
   src-tauri/
-    src/capture.rs         Original bytes, bounded reads and viewport/export DTOs
     src/main.rs            Native dialogs, session lifecycle and Tauri commands
     Cargo.toml             Separate desktop workspace and native dependencies
     Cargo.lock             Locked desktop dependency graph
-crates/core/               Reusable parsing; no Tauri dependency
+apps/viewer/src/lib.rs     Shared bytes, bounded reads and viewport/export DTOs
+apps/qt/                  Qt Quick shell and CXX-Qt adapter
+crates/core/               Reusable parsing; no UI dependency
 crates/cli/                Independently buildable pnm-decode
 ```
 
@@ -86,10 +91,14 @@ in the desktop application.
 ## Validation on this PC
 
 Ubuntu 22.04 x86_64: frontend typecheck/lint/four tests/production build, desktop
-Rust formatting/five tests/Clippy/native build, and the full pre-push gate passed.
+Rust formatting/tests/Clippy/native build, and the full pre-push gate passed.
 An isolated X display exercised the actual bundled native executable with the
 preserved RxMER fixture: native open dialog, channel/MAC metadata, Dark/Light
 selection, sample paging, native JSON save dialog and session close. The exported
 JSON contained 7,480 readings, first value 42.75 dB, and was 78,925 bytes.
 System-theme change behavior is covered by frontend tests; the host's OS settings
 were not changed. Windows/macOS runtime and installed-package checks remain unrun.
+
+The frontend includes dark/light ICO favicons from `docs/images/`, selected by
+browser/system color preference. Each contains 16, 32, 48, 64, 128 and 256 pixel
+variants with transparent outer corners. Vite bundles these assets for offline use.

@@ -39,3 +39,5 @@ Detailed working plans and private specification evidence remain in the separate
 ignored repository-root `development/`. They are not part of downloaded checkouts.
 This structure follows PyPNM's topic-oriented docs and Oscar's separation of
 usage, reference, and historical material; it does not copy their runtime design.
+
+- [Qt Quick desktop prototype](development/qt.md): setup, launch and tests.

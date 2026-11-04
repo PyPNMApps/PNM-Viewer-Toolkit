@@ -17,7 +17,7 @@
 [![Component licenses](https://img.shields.io/badge/license-Apache--2.0%20%2F%20GPL--3.0--only-blue)](LICENSE)
 
 An offline desktop viewer for DOCSIS Proactive Network Maintenance (PNM) capture
-files, with a Rust backend and an initial Tauri 2 + React/TypeScript interface.
+files, with a Rust backend and parallel Qt Quick and Tauri/React prototypes.
 The repository is `PNM-Viewer-Toolkit`; the standalone CLI is `pnm-decode`.
 The parser design follows PyPNM, with shared file headers, typed measurement
 objects, and human-readable JSON exports.
@@ -72,11 +72,19 @@ Contributors can follow [development setup](docs/install/development.md),
 [parser examples](crates/core/examples/README.md).
 See the [desktop viewer guide and remaining work](docs/development/ui.md).
 
+## Qt desktop prototype
+
+The Qt Quick/Rust prototype lives alongside the retained Tauri app. It opens
+RxMER captures, plots samples, exports JSON, and offers System/Dark/Light themes.
+See [Qt setup and launch instructions](docs/development/qt.md). Both prototypes
+remain in development; desktop installers are not yet available.
+
 ## Design direction
 
 Rust owns binary decoding, numerical processing, exports, and future analysis
-and storage. The React interface presents results through Tauri's system
-WebView, without a local HTTP backend. Optional retrieval of existing PyPNM
+and storage. Qt Quick renders directly through Qt; the retained React interface
+uses Tauri's system WebView. Both share the same Rust capture layer and work
+without a local HTTP backend. Optional retrieval of existing PyPNM
 captures is planned; modem control, capture initiation, SNMP/TFTP, Python
 sidecars, and remote analysis are outside the viewer's scope.
 
@@ -84,6 +92,9 @@ sidecars, and remote analysis are outside the viewer's scope.
 
 | Path | Purpose |
 | --- | --- |
+| `apps/qt/` | Qt Quick/QML desktop and Rust adapter |
+| `apps/desktop/` | Retained Tauri/React desktop |
+| `apps/viewer/` | Shared Rust desktop capture and JSON export layer |
 | `crates/cli/` | Standalone `pnm-decode` command and man page |
 | `crates/core/` | Rust `pnm` package: parsers, shared types, Q-format math and utilities |
 | `crates/logging/` | Application logging setup |
@@ -113,7 +124,7 @@ See [LICENSE](LICENSE) for the component-specific licensing:
 
 - Reusable Rust libraries and project-owned development tooling:
   [Apache-2.0](LICENSES/Apache-2.0.txt).
-- Desktop shell and React/TypeScript UI:
+- Desktop shells, UIs and shared desktop capture layer:
   [GPL-3.0-only](LICENSES/GPL-3.0-only.txt).
 
 Third-party material retains its original terms and notices.

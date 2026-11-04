@@ -49,3 +49,9 @@ architectures. Linux installs native GTK/WebKit development prerequisites. The
 local pre-push gate now also requires the desktop dependencies (`npm ci` in
 `apps/desktop`) and all desktop checks. These are build/test jobs, not installer
 or interactive GUI validation. CLI-only build commands remain independent.
+
+The desktop workflow also checks the parallel Qt prototype on Ubuntu 22.04:
+pinned local Qt SDK setup, Rust tests/Clippy/build and offscreen QML tests.
+Qt Windows/macOS native CI and distribution jobs remain future work; the
+existing Tauri platform matrix is retained. The local pre-push gate requires
+both desktop toolchains and runs both checks without installing dependencies.

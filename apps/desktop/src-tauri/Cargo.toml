@@ -16,9 +16,8 @@ tauri-build = { version = "=2.5.3", features = [] }
 [dependencies]
 tauri = { version = "=2.9.5", features = [] }
 tauri-plugin-dialog = "=2.4.2"
-pnm = { path = "../../../crates/core" }
+viewer = { path = "../../viewer" }
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
 
 [dev-dependencies]
 pnm-fixtures = { path = "../../../tests/fixtures" }

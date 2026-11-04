@@ -1,10 +1,11 @@
 # Permanent project guidance
 
-Build PNM Viewer Toolkit with Tauri 2, React/TypeScript presentation and Rust backend behavior.
+Build PNM Viewer Toolkit with Rust backend behavior and parallel desktop prototypes:
+Tauri 2/React under apps/desktop and Qt Quick/QML under apps/qt. Preserve both.
 
 - Work only in this viewer repository. PyPNM is read-only reference material. Do not change its files, configuration, dependencies or services, or run capture/startup code.
 - No SNMP, TFTP, modem controls, capture initiation, Python sidecars, Node production runtime or remote analysis. Optional PyPNM HTTP retrieval runs in Rust and retrieves existing files only.
-- React renders charts, navigation and transient interaction state. Rust owns filesystem access, parsing, scientific interpretation, analysis, aggregation, persistence, downloads, exports and decimation.
+- React and QML render charts, navigation and transient interaction state. Rust owns filesystem access, parsing, scientific interpretation, analysis, aggregation, persistence, downloads, exports and decimation.
 - Domain/parser libraries must not depend on Tauri, HTTP or app crates. Separate decoding from analysis, aggregation, storage and transport. Keep Cargo dependencies acyclic.
 - Reusable libraries are Apache-2.0. Desktop shell and UI are GPL-3.0-only. Set package licenses explicitly; preserve third-party licenses, copyrights and applicable NOTICE content.
 - Use separate project skills for DOCSIS 3.1 and 4.0 OSSI work. The user authorized clear versioned text extracts for RxMER; request PDFs for ambiguous layouts and never claim rendered-PDF verification. Do not substitute MULPI configuration TLVs, MIB objects or API JSON schemas for PNM binary layouts.
@@ -29,7 +30,10 @@ Existing Cargo library names and copyright notices retain their current identiti
 ## Project status and guidance
 
 The user adopted the bundle's Tauri/Rust stack on 2026-11-02, superseding the
-initial Java plan. The project remains in the dev phase; the initial RxMER desktop slice is implemented under apps/desktop/. Native packaging remains pending. The core reader/header foundation is implemented.
+initial Java plan. On 2026-11-03 the user requested a parallel Qt prototype while retaining Tauri.
+Shared GPL desktop capture behavior lives under apps/viewer; Qt uses CXX-Qt at
+the adapter boundary only. Core parsers remain safe Rust.
+The project remains in the dev phase; the initial RxMER desktop slice is implemented under apps/desktop/. Native packaging remains pending. The core reader/header foundation is implemented.
 Use development/requirements.md, development/architecture.md, development/checklist.md and
 development/development-guide.md together. Maintain the docs as work lands.
 Original bootstrap references live in skills/pnm-viewer-development/references/;
@@ -103,3 +107,6 @@ under docs/cli/, format contracts under docs/reference/, contributor and UI
 plans under docs/development/, packaging/versioning under docs/release/, and
 historical investigations under docs/history/. Keep root development/ ignored
 for working plans. Update relative links whenever documents move.
+
+Qt setup and validation: docs/development/qt.md. Run scripts/qt-desktop.sh check
+for Qt changes and shared capture changes; preserve Tauri regression checks.

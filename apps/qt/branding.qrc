@@ -1,0 +1,8 @@
+<RCC>
+  <qresource prefix="/branding">
+    <file alias="logo-dark.png">../../docs/images/pnm-viewer-toolkit-logo-dark.png</file>
+    <file alias="logo-light.png">../../docs/images/pnm-viewer-toolkit-logo-light.png</file>
+    <file alias="icon-dark.png">../../docs/images/desktop-icon-dark.png</file>
+    <file alias="icon-light.png">../../docs/images/desktop-icon-light.png</file>
+  </qresource>
+</RCC>
