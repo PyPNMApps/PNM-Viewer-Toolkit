@@ -79,7 +79,7 @@ promise pristine-host offline installation or claim external prerequisites fit
 inside the artifact budget. Report those prerequisites separately.
 
 Native lifecycle tests validate artifact hashes before installation. They open,
-render and export RxMER, Spectrum Analyzer, DS Channel Estimation Histogram and FEC Summary
+render and export RxMER, Spectrum Analyzer, DS Channel Estimation Histogram, FEC Summary and Modulation Profile
 through the actual Qt backend, comparing raw fields against the CLI. Development
 Qt environment paths are removed. Linux uses Xvfb/XCB. Native test logs are
 retained even on failure. Offscreen QML tests alone do not establish installed

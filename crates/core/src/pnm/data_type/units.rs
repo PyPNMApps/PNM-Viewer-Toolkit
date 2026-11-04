@@ -24,3 +24,6 @@ pub const S1_14_UNITS_PER_UNIT: f64 = 16384.0;
 
 /// Number of microseconds in one second.
 pub const MICROSECONDS_PER_SECOND: f64 = 1_000_000.0;
+
+/// Number of bits in one decimal megabit; divide bit/s by this to show Mbit/s.
+pub const BITS_PER_MEGABIT: super::BitRateBps = 1_000_000;

@@ -324,3 +324,56 @@ accepts CopyAction, never MoveAction, to preserve the source file. Busy operatio
 dialogs and the settings menu disable drops. Rejected inputs retain the capture.
 QML tests cover routing, copy semantics, URL/cardinality filters and blocked state.
 Native file-manager drag integration still requires verification on each OS.
+
+## Modulation Profile
+
+`apps/viewer/src/modulation_profile.rs` expands bounded range/skip assignments
+using the existing decoder and the shared Shannon helper in
+`crates/core/src/common/signal_processing/shannon.rs`. QML reuses the common
+frequency chart with step rendering and adds profile toggles, All and metric
+controls. Selected source indices live in Rust; metadata exposes selected_indices
+and viewport.modulation_profiles.series carries bounded traces with stable
+source indices and IDs. Empty selections keep the shared frequency axes.
+Source indices identify profiles even when IDs repeat. Channel-estimation/FEC
+views reject modulation-specific selections. All expanded work is bounded by
+ParseLimits (65,536 carrier assignments across selected profiles) and checked
+u32 Hz arithmetic. All traces share 1,024 display points plus two axis anchors.
+The full longest-profile frequency window stays independent of selection;
+shorter traces are clipped to their own data. JSON export includes all original
+profiles regardless of display selection.
+
+See the [measurement guide](../ui/measurements.md#modulation-profile) for theoretical
+metric limits, special assignments and the explicit PyPNM frequency convention.
+Independent Shannon tests live in `test_shannon.rs`; dedicated viewer tests cover
+fixtures, skip parity, special codes, expansion limits, ranges and overflow.
+
+
+### Modulation carrier presentation and capacity
+
+`MeasurementToggle.qml` gives profile, carrier and All buttons a shared size and
+style. `ModulationControls.qml` aligns the short Y axis selector with both toggle
+rows; explanatory/count prose is omitted from the controls. The chart's vertical
+title is dB or Bit loading.
+
+Rust owns carrier classification/filtering and viewport grouping. The viewport
+includes `carrier_lanes` plus `markers` with profile identity, carrier type,
+first/last Hz and count. At most 4,096 special-carrier markers accompany the
+shared 1,024 data points and two axis anchors. Groups report actual type counts
+in their interval, preserving gaps and never substituting a fake data value.
+QML draws these in categorical lanes and formats hover details. Data, profile
+and metric selections stay independent and persist across each other's changes.
+
+Core `pnm::analysis::modulation_profile` computes ideal capacity from compressed
+schemes and shared `common::signal_processing::ofdm` arithmetic. CLI and viewer
+exports use the same capture serializer. See the
+[JSON capacity contract](../reference/formats.md#per-profile-ideal-capacity-analysis)
+for formulas, null handling, evidence and excluded overheads.
+
+
+The **Profile BW** chip is implemented by `ProfileBandwidth.qml`. It opens a
+modal, scrollable profile/bandwidth grid without changing selection or rate
+values. The chip and grid consume `ProfileChoice.bandwidth_bps`,
+`bandwidth_text` and `bandwidth_summary`, calculated/formatted in Rust using the
+same core analysis as `profiles[].bandwidth_bps`. No scientific arithmetic or
+JSON mutation is performed in QML. Metadata replacement closes the popup;
+modal display blocks file drops and main-window file actions.

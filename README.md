@@ -39,6 +39,7 @@ The current viewer supports:
 | DS Channel Estimation | Magnitude, group delay and I/Q density |
 | Histogram | Hit counts by bin index |
 | FEC Summary | Per-profile interval codewords over UTC time |
+| Modulation Profile | Ideal Shannon minimum MER and bit loading by frequency |
 
 Choose System, Dark or Light appearance. Drag across a graph to zoom and
 double-click to reset; the I/Q density view shows the full capture.
@@ -50,7 +51,8 @@ platform matrix remain pending.
 
 ## CLI and development
 
-- [Build the standalone `pnm-decode` CLI](docs/install/source.md) · [CLI usage](docs/cli/usage.md)
+- [Build the standalone `pnm-decode` CLI](docs/install/source.md) · [CLI user guide](docs/cli/usage.md)
+- [JSON examples for each PNM file type](docs/cli/usage.md#json-examples-by-file-type)
 - [Supported formats and limits](docs/reference/formats.md)
 - [Development setup](docs/install/development.md) · [Qt build and checks](docs/development/qt.md)
 - [Rust APIs and examples](docs/development/rust.md)

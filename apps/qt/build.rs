@@ -28,6 +28,9 @@ fn main() {
                 "qml/PanelToggle.qml",
                 "qml/SmokeTest.qml",
                 "qml/CaptureDropArea.qml",
+                "qml/ModulationControls.qml",
+                "qml/MeasurementToggle.qml",
+                "qml/ProfileBandwidth.qml",
             ],
             ..Default::default()
         })

@@ -85,6 +85,226 @@ TestCase {
         fecChart.visible = false
         appearance.preference = 1
     }
+    ModulationControls {
+        id: modulationControls
+        theme: appearance
+        width: 850
+        visible: false
+        property int profileRequest: -1
+        property int metricRequest: -1
+        property int allRequests: 0
+        property int carrierRequest: -1
+        property int allCarrierRequests: 0
+        onProfileRequested: index => {
+            profileRequest = index
+            const selected = (metadata.selected_indices || []).slice()
+            const position = selected.indexOf(index)
+            if (position < 0) { selected.push(index) } else { selected.splice(position, 1) }
+            metadata = Object.assign({}, metadata, {selected_indices: selected})
+        }
+        onAllRequested: {
+            allRequests++
+            metadata = Object.assign({}, metadata, {selected_indices: metadata.profiles.map((profile, index) => index)})
+        }
+        onCarrierRequested: index => {
+            carrierRequest = index
+            const selected = (metadata.selected_carrier_types || []).slice()
+            const kind = metadata.carrier_types[index].kind
+            const position = selected.indexOf(kind)
+            if (position < 0) { selected.push(kind) } else { selected.splice(position, 1) }
+            metadata = Object.assign({}, metadata, {selected_carrier_types: selected})
+        }
+        onAllCarriersRequested: {
+            allCarrierRequests++
+            metadata = Object.assign({}, metadata, {selected_carrier_types: metadata.carrier_types.map(choice => choice.kind)})
+        }
+        onMetricRequested: index => metricRequest = index
+    }
+    function test_modulation_profile_metric_controls_and_step_chart() {
+        modulationControls.visible = true
+        modulationControls.metadata = {profiles: [{profile_id: 3}, {profile_id: 0}], selected_indices: [1], metric_index: 0,
+            assignment_summary: "256-QAM: 7408 · Pilots: 56 · PLC: 16"}
+        const first = findChild(modulationControls, "modulationProfileToggle0")
+        const second = findChild(modulationControls, "modulationProfileToggle1")
+        const all = findChild(modulationControls, "modulationAllProfiles")
+        wait(50)
+        verify(!first.checked)
+        verify(second.checked)
+        mouseClick(first)
+        tryCompare(modulationControls, "profileRequest", 0)
+        verify(first.checked && second.checked)
+        mouseClick(second)
+        verify(first.checked && !second.checked)
+        mouseClick(first)
+        verify(!first.checked && !second.checked)
+        all.forceActiveFocus()
+        keyClick(Qt.Key_Space)
+        tryCompare(modulationControls, "allRequests", 1)
+        verify(first.checked && second.checked)
+        verify(all.highlighted)
+        compare(first.width, all.width)
+        compare(first.height, all.height)
+        const metric = findChild(modulationControls, "modulationMetricSelector")
+        compare(Math.round(metric.mapToItem(modulationControls, 0, 0).x), Math.round(first.mapToItem(modulationControls, 0, 0).x))
+        metric.forceActiveFocus()
+        keyClick(Qt.Key_End)
+        keyClick(Qt.Key_Return)
+        tryCompare(modulationControls, "metricRequest", 1)
+        modulationControls.visible = false
+        chart.visible = true
+        chart.stepPlot = true
+        chart.unit = "bits/symbol"
+        chart.axisLabel = "Bit loading"
+        chart.minimum = 0
+        chart.maximum = 15
+        chart.viewport = {start: 0, count: 4, total: 4, points: [
+            {sample_index: 0, frequency_hz: 640000000, value: 8},
+            {sample_index: 1, frequency_hz: 640025000, value: 10},
+            {sample_index: 2, frequency_hz: 640050000, value: null},
+            {sample_index: 3, frequency_hz: 640075000, value: 0}]}
+        verify(chart.reading.indexOf("bits/symbol") >= 0)
+        appearance.preference = 2
+        wait(50)
+        chart.stepPlot = false
+        chart.unit = "dB"
+        chart.axisLabel = "RxMER"
+        chart.maximum = 64
+        appearance.preference = 1
+    }
+    function test_modulation_overlay_rendering_and_empty_selection() {
+        chart.visible = true
+        chart.stepPlot = true
+        chart.maximum = 15
+        chart.unit = "bits/symbol"
+        chart.axisLabel = "Bit loading"
+        const anchors = [{sample_index: 0, frequency_hz: 640000000, value: null},
+                         {sample_index: 3, frequency_hz: 640075000, value: null}]
+        const series = [{profile_index: 0, profile_id: 3, points: [
+            {sample_index: 0, frequency_hz: 640000000, value: 12},
+            {sample_index: 3, frequency_hz: 640075000, value: 12}]},
+            {profile_index: 3, profile_id: 0, points: [
+            {sample_index: 0, frequency_hz: 640000000, value: 8},
+            {sample_index: 3, frequency_hz: 640075000, value: 8}]}]
+        chart.viewport = {start: 0, count: 4, total: 4, points: anchors, modulation_profiles: {series: series}}
+        for (const preference of [1, 2]) {
+            appearance.preference = preference
+            wait(50)
+            const plot = findChild(chart, "measurementPlot")
+            const image = grabImage(plot)
+            const horizontal = Math.round((plot.width + plot.leftMargin - plot.rightMargin) / 2)
+            for (const trace of series) {
+                const vertical = Math.round(plot.topMargin + (15 - trace.points[0].value) / 15 * (plot.height - plot.topMargin - plot.bottomMargin))
+                // Canvas antialiasing blends subpixel strokes with the surface.
+                const hex = appearance.profileColor(trace.profile_id)
+                const expected = Qt.rgba(parseInt(hex.slice(1, 3), 16) / 255,
+                    parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255, 1)
+                let distance = 3
+                for (let offset = -1; offset <= 1; offset++) {
+                    const pixel = image.pixel(horizontal, vertical + offset)
+                    distance = Math.min(distance, Math.abs(pixel.r - expected.r)
+                        + Math.abs(pixel.g - expected.g) + Math.abs(pixel.b - expected.b))
+                }
+                verify(distance < 0.6, "Expected profile trace color " + hex + " at its bit-loading level")
+            }
+        }
+        chart.viewport = {start: 0, count: 4, total: 4, points: anchors, modulation_profiles: {series: []}}
+        wait(50)
+        verify(chart.frequencySelection.indexOf("640.075") >= 0)
+        appearance.preference = 1
+        chart.stepPlot = false
+        chart.maximum = 64
+        chart.unit = "dB"
+        chart.axisLabel = "RxMER"
+    }
+    function test_carrier_buttons_lanes_and_hover() {
+        modulationControls.visible = true
+        modulationControls.metadata = {profiles: [{profile_id: 0}], selected_indices: [0], metric_index: 0,
+            carrier_types: [{kind: "data", label: "Data", count: 10}, {kind: "continuous_pilot", label: "Pilots", count: 2},
+                            {kind: "exclusion", label: "Excluded", count: 0}],
+            selected_carrier_types: ["data", "continuous_pilot", "exclusion"]}
+        wait(50)
+        const pilot = findChild(modulationControls, "modulationCarrierToggle1")
+        const data = findChild(modulationControls, "modulationCarrierToggle0")
+        const all = findChild(modulationControls, "modulationAllCarriers")
+        const profile = findChild(modulationControls, "modulationProfileToggle0")
+        compare(pilot.width, profile.width)
+        compare(pilot.height, all.height)
+        compare(pilot.width, all.width)
+        verify(!findChild(modulationControls, "modulationCarrierToggle2").enabled)
+        mouseClick(pilot)
+        tryCompare(modulationControls, "carrierRequest", 1)
+        verify(!pilot.checked && data.checked)
+        mouseClick(all)
+        tryCompare(modulationControls, "allCarrierRequests", 1)
+        verify(pilot.checked && data.checked)
+        modulationControls.visible = false
+        chart.visible = true
+        chart.unit = "dB"
+        chart.stepPlot = true
+        chart.viewport = {start: 0, count: 3, total: 3,
+            points: [{sample_index: 0, frequency_hz: 640000000, value: null}, {sample_index: 2, frequency_hz: 640050000, value: null}],
+            modulation_profiles: {series: [], carrier_lanes: ["continuous_pilot"], markers: [
+                {profile_id: 0, profile_index: 0, carrier_type: "continuous_pilot", first_frequency_hz: 640025000, last_frequency_hz: 640025000, count: 1}]}}
+        compare(chart.verticalTitle, "dB")
+        const plot = findChild(chart, "measurementPlot")
+        wait(50)
+        const horizontal = (plot.width + plot.leftMargin - plot.rightMargin) / 2
+        mouseMove(plot, horizontal, plot.laneCenter("continuous_pilot"))
+        tryCompare(chart, "carrierHoverText", "Profile 0 · Pilot · 640.025 MHz")
+        const tooltip = findChild(chart, "carrierTypeTooltip")
+        tryCompare(tooltip, "visible", true)
+        chart.unit = "bits/symbol"
+        compare(chart.verticalTitle, "Bit loading")
+        chart.viewport = Object.assign({}, chart.viewport, {modulation_profiles: {series: [], carrier_lanes: ["plc"], markers: [
+            {profile_id: 3, profile_index: 0, carrier_type: "plc", first_frequency_hz: 640000000, last_frequency_hz: 640050000, count: 2}]}})
+        wait(50)
+        mouseMove(plot, horizontal + 2, plot.laneCenter("plc"))
+        tryCompare(chart, "carrierHoverText", "Profile 3 · PLC · 640.000–640.050 MHz · 2 carriers (grouped)")
+        chart.viewport = {start: 0, total: 0, points: []}
+        compare(chart.carrierHoverText, "")
+        chart.stepPlot = false
+        chart.unit = "dB"
+    }
+    ProfileBandwidth {
+        id: bandwidthChip
+        theme: appearance
+        visible: false
+    }
+    function test_profile_bandwidth_chip_grid_and_refresh() {
+        bandwidthChip.visible = true
+        chart.visible = false
+        bandwidthChip.metadata = {bandwidth_summary: "0 · 1481.600 Mbit/s", selected_indices: [1], profiles: [
+            {profile_id: 3, bandwidth_bps: 2222400000, bandwidth_text: "2222.400 Mbit/s"},
+            {profile_id: 0, bandwidth_bps: 1481600000, bandwidth_text: "1481.600 Mbit/s"}]}
+        for (const preference of [1, 2]) {
+            appearance.preference = preference
+            wait(50)
+            mouseClick(bandwidthChip)
+            tryCompare(bandwidthChip, "popupVisible", true)
+            const dialog = findChild(bandwidthChip, "profileBandwidthDialog")
+            verify(dialog.modal)
+            wait(50)
+            compare(findChild(dialog.contentItem, "profileBandwidthRate0").text, "2222.400 Mbit/s")
+            compare(findChild(dialog.contentItem, "profileBandwidthRate1").text, "1481.600 Mbit/s")
+            keyClick(Qt.Key_Escape)
+            tryCompare(bandwidthChip, "popupVisible", false)
+        }
+        bandwidthChip.forceActiveFocus()
+        keyClick(Qt.Key_Space)
+        tryCompare(bandwidthChip, "popupVisible", true)
+        bandwidthChip.metadata = {bandwidth_summary: "3 · Unavailable", selected_indices: [0], profiles: [
+            {profile_id: 3, bandwidth_bps: null, bandwidth_text: "Unavailable"}]}
+        tryCompare(bandwidthChip, "popupVisible", false)
+        mouseClick(bandwidthChip)
+        tryCompare(bandwidthChip, "popupVisible", true)
+        wait(50)
+        compare(findChild(findChild(bandwidthChip, "profileBandwidthDialog").contentItem, "profileBandwidthRate0").text, "Unavailable")
+        keyClick(Qt.Key_Escape)
+        tryCompare(bandwidthChip, "popupVisible", false)
+        bandwidthChip.visible = false
+        chart.visible = true
+        appearance.preference = 1
+    }
     function test_channel_delay_and_density_presentation() {
         chart.unit = "µs"
         chart.axisLabel = "Group delay"

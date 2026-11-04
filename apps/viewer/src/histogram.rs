@@ -41,6 +41,7 @@ pub(crate) fn metadata(capture: &CmDsHist<'_>) -> ChartMetadata {
         .collect::<Vec<_>>()
         .join(":");
     ChartMetadata {
+        modulation_profile: None,
         fec_summary: None,
         histogram: true,
         views: vec![],
@@ -93,6 +94,7 @@ pub(crate) fn viewport(
         .max(1);
     let total_hits = bars.iter().map(|bar| bar.hit_count).sum();
     Ok(ChartViewport {
+        modulation_profiles: None,
         fec_summary: None,
         start,
         count,

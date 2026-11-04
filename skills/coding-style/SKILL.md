@@ -165,6 +165,21 @@ UpperCamelCase types. Parsing consumes bytes and returns models without file/net
 I/O, derived statistics or Tauri dependencies. Share PnmHeader behavior through
 composition and HasPnmHeader. Keep unsafe code forbidden in pnm.
 
+## JSON contracts and calculation ownership
+
+Implement measurement JSON changes in the Rust parser serializer or a shared
+Rust serialization/analysis helper. CLI and desktop exports must use that same
+contract; do not add, rename or calculate measurement fields in Qt/QML, React
+or CLI-specific post-processing. Reuse the existing analysis before adding a
+second calculation. All measurement math, derived rates, unit conversions and
+scientific aggregation belong in Rust; UI code presents the supplied values.
+Transient selection and layout arithmetic remain UI concerns.
+
+For JSON changes, verify both core serialization and actual CLI output, keep
+unavailable values explicit, and regenerate the linked JSON examples. Expose
+Rust-derived metadata to UI components rather than reading values back from
+exported JSON or recomputing them for chips/tables.
+
 ## UI component ownership
 
 Give each substantial pane/dialog a cohesive React component or feature module.

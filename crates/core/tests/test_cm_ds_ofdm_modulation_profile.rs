@@ -30,7 +30,9 @@ fn golden_fixture() {
     assert_eq!(profiles[0]["profile_id"], 3);
     assert_eq!(
         profiles[0]["schemes"][0],
-        json!({"schema_type":"range","modulation_order":12,"num_subcarriers":110})
+        json!({"schema_type":"range","modulation_order":"qam_4096",
+            "modulation_order_code":12,"bit_loading":12,"carrier_type":"data",
+            "num_subcarriers":110})
     );
 }
 #[test]
@@ -52,11 +54,155 @@ fn synthetic_skip_modulation_preserves_unknown_assignments() {
     let output = json_capture(&bytes);
     assert_eq!(
         output["profiles"][0]["schemes"][0],
-        json!({"schema_type":"skip","main_modulation_order":255,"skip_modulation_order":2,"num_subcarriers":9})
+        json!({"schema_type":"skip","main_modulation_order":"unknown",
+            "main_modulation_order_code":255,"main_bit_loading":null,"main_carrier_type":"unknown",
+            "skip_modulation_order":"qpsk","skip_modulation_order_code":2,
+            "skip_bit_loading":2,"skip_carrier_type":"data","num_subcarriers":9})
     );
+    assert!(output["profiles"][0]["bandwidth_bps"].is_null());
     for end in 29..bytes.len() {
         assert!(PnmFile::from_bytes(&bytes[..end])
             .decode(ParseLimits::default())
             .is_err());
     }
+}
+
+#[test]
+fn assignment_json_covers_ossi_roles_and_all_wire_codes() {
+    use pnm::pnm::parser::cm_ds_ofdm_modulation_profile::ModulationScheme;
+    // Independent expected assignments from I27 / I13 D.2.1.7. Nulls avoid
+    // inferring data bit loading for pilots, PLC or reserved assignments.
+    let known = [
+        (0, "zero_bit_loaded", Some(0), "zero_bit_loaded"),
+        (1, "continuous_pilot", None, "continuous_pilot"),
+        (2, "qpsk", Some(2), "data"),
+        (3, "reserved_3", None, "reserved"),
+        (4, "qam_16", Some(4), "data"),
+        (5, "reserved_5", None, "reserved"),
+        (6, "qam_64", Some(6), "data"),
+        (7, "qam_128", Some(7), "data"),
+        (8, "qam_256", Some(8), "data"),
+        (9, "qam_512", Some(9), "data"),
+        (10, "qam_1024", Some(10), "data"),
+        (11, "qam_2048", Some(11), "data"),
+        (12, "qam_4096", Some(12), "data"),
+        (13, "qam_8192", Some(13), "data"),
+        (14, "qam_16384", Some(14), "data"),
+        (16, "exclusion", None, "exclusion"),
+        (20, "plc", None, "plc"),
+    ];
+    for code in u8::MIN..=u8::MAX {
+        let (_, name, bits, carrier) = known
+            .iter()
+            .find(|entry| entry.0 == code)
+            .copied()
+            .unwrap_or((code, "unknown", None, "unknown"));
+        let range = serde_json::to_value(ModulationScheme::Range {
+            modulation_order: code,
+            num_subcarriers: 7,
+        })
+        .unwrap();
+        assert_eq!(
+            range,
+            json!({"schema_type":"range","modulation_order":name,
+            "modulation_order_code":code,"bit_loading":bits,"carrier_type":carrier,
+            "num_subcarriers":7})
+        );
+        let skip = serde_json::to_value(ModulationScheme::Skip {
+            main_modulation_order: code,
+            skip_modulation_order: code,
+            num_subcarriers: 7,
+        })
+        .unwrap();
+        assert_eq!(
+            skip,
+            json!({"schema_type":"skip","main_modulation_order":name,
+            "main_modulation_order_code":code,"main_bit_loading":bits,"main_carrier_type":carrier,
+            "skip_modulation_order":name,"skip_modulation_order_code":code,
+            "skip_bit_loading":bits,"skip_carrier_type":carrier,"num_subcarriers":7})
+        );
+    }
+}
+
+#[test]
+fn profile_capacity_json_matches_independent_fixture_totals() {
+    let output = json_capture(MODULATION);
+    for (profile, (bits, rate)) in output["profiles"].as_array().unwrap().iter().zip([
+        (88_896, 2_222_400_000_u64),
+        (81_488, 2_037_200_000),
+        (74_080, 1_852_000_000),
+        (59_264, 1_481_600_000),
+    ]) {
+        let analysis = &profile["analysis"];
+        assert_eq!(analysis["data_subcarrier_count"], 7408);
+        assert_eq!(analysis["data_bits_per_symbol"], bits);
+        assert_eq!(analysis["data_bandwidth_hz"], 185_200_000);
+        assert_eq!(analysis["theoretical_throughput_bps"], rate);
+        assert_eq!(profile["bandwidth_bps"], rate);
+        assert_eq!(analysis["useful_symbol_duration_s"], 0.00004);
+        assert_eq!(analysis["complete"], true);
+        assert_eq!(analysis["unclassified_subcarrier_count"], 0);
+        assert_eq!(analysis["basis"], "ideal_gross_useful_symbol");
+    }
+}
+#[test]
+fn compressed_capacity_handles_odd_skip_specials_and_unknowns() {
+    use pnm::pnm::{
+        analysis::modulation_profile::ModulationProfileAnalysis,
+        parser::cm_ds_ofdm_modulation_profile::{ModulationProfile, ModulationScheme},
+    };
+    let mut profile = ModulationProfile {
+        profile_id: 0,
+        schemes: vec![
+            ModulationScheme::Skip {
+                main_modulation_order: 8,
+                skip_modulation_order: 10,
+                num_subcarriers: 5,
+            },
+            ModulationScheme::Range {
+                modulation_order: 1,
+                num_subcarriers: 50,
+            },
+            ModulationScheme::Range {
+                modulation_order: 20,
+                num_subcarriers: 16,
+            },
+            ModulationScheme::Range {
+                modulation_order: 16,
+                num_subcarriers: 4,
+            },
+            ModulationScheme::Range {
+                modulation_order: 0,
+                num_subcarriers: 7,
+            },
+        ],
+    };
+    let analysis = ModulationProfileAnalysis::calculate(&profile, 25);
+    assert_eq!(analysis.data_subcarrier_count, 5);
+    assert_eq!(analysis.data_bits_per_symbol, 44); // 3*8 + 2*10.
+    assert_eq!(analysis.data_bandwidth_hz, Some(125_000));
+    assert_eq!(analysis.theoretical_throughput_bps, Some(1_100_000));
+    assert!(analysis.complete);
+    profile.schemes.push(ModulationScheme::Skip {
+        main_modulation_order: 255,
+        skip_modulation_order: 3,
+        num_subcarriers: 3,
+    });
+    let unknown = ModulationProfileAnalysis::calculate(&profile, 25);
+    assert!(!unknown.complete);
+    assert_eq!(unknown.unclassified_subcarrier_count, 3);
+    assert_eq!(unknown.theoretical_throughput_bps, None);
+    assert_eq!(unknown.data_subcarrier_count, 5);
+    assert_eq!(
+        ModulationProfileAnalysis::calculate(&profile, 0).useful_symbol_duration_s,
+        None
+    );
+    let empty = ModulationProfile {
+        profile_id: 0,
+        schemes: vec![],
+    };
+    assert_eq!(
+        ModulationProfileAnalysis::calculate(&empty, 50).theoretical_throughput_bps,
+        Some(0)
+    );
 }

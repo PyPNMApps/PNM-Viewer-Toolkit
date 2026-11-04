@@ -1,0 +1,6 @@
+/*
+ * Copyright 2026 PNM Viewer contributors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+//! Derived PNM analysis, separate from binary decoding.
+pub mod modulation_profile;

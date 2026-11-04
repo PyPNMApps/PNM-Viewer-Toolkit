@@ -40,7 +40,7 @@ ApplicationWindow {
     readonly property var metadata: JSON.parse(backend.metadata_json)
     readonly property var viewport: JSON.parse(backend.viewport_json)
     property bool navigationVisible: false
-    readonly property bool blocked: backend.busy || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible
+    readonly property bool blocked: backend.busy || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible || profileBandwidth.popupVisible
 
     CaptureDropArea {
         parent: Overlay.overlay
@@ -277,6 +277,13 @@ ApplicationWindow {
                                             }
                                         }
                                     }
+                                    ProfileBandwidth {
+                                        id: profileBandwidth
+                                        visible: window.metadata.modulation_profile !== undefined
+                                        theme: appTheme
+                                        metadata: window.metadata.modulation_profile || ({profiles: []})
+                                        enabled: !backend.busy
+                                    }
                                 }
                             }
                             ToolButton { text: "⇩"; font.pixelSize: 22; Layout.preferredWidth: 32; Layout.preferredHeight: 32; Accessible.name: "Export JSON"; ToolTip.visible: hovered; ToolTip.text: "Export JSON"; enabled: !window.blocked; onClicked: saveDialog.open() }
@@ -303,6 +310,17 @@ ApplicationWindow {
                                     }
                                 }
                             }
+                        }
+                        ModulationControls {
+                            visible: window.metadata.modulation_profile !== undefined
+                            theme: appTheme
+                            metadata: window.metadata.modulation_profile || ({profiles: []})
+                            Layout.fillWidth: true
+                            onProfileRequested: index => backend.toggle_modulation_profile(index)
+                            onMetricRequested: index => backend.select_modulation_metric(index)
+                            onAllRequested: backend.select_all_modulation_profiles()
+                            onCarrierRequested: index => backend.toggle_modulation_carrier(index)
+                            onAllCarriersRequested: backend.select_all_modulation_carriers()
                         }
                         IqScatterChart {
                             visible: window.metadata.view_index === 2
@@ -332,6 +350,7 @@ ApplicationWindow {
                         }
                         MeasurementChart {
                             visible: window.metadata.view_index !== 2 && window.metadata.histogram !== true && window.metadata.fec_summary === undefined
+                            stepPlot: window.metadata.modulation_profile !== undefined
                             unit: window.metadata.unit || "dB"
                             axisLabel: window.metadata.axis_label || "Amplitude"
                             minimum: window.metadata.minimum === undefined ? 0 : window.metadata.minimum

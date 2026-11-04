@@ -11,7 +11,8 @@ downloads are not available yet.
 
 - [Installation and binary availability](install/README.md)
 - [Build only the CLI from source](install/source.md)
-- [CLI commands, output and errors](cli/usage.md)
+- [CLI user guide, output and errors](cli/usage.md)
+- [JSON examples for each PNM file type](cli/usage.md#json-examples-by-file-type)
 - [Supported file formats](reference/formats.md)
 - [Man page](../crates/cli/man/pnm-decode.1)
 

@@ -41,6 +41,17 @@ newline). Decode budget is 65536 items. These are application policies.
 .SH OUTPUT
 JSON uses the core parser representation, including null for missing values
 and iq pairs ordered as in-phase then quadrature. Diagnostics use standard error.
+Modulation profiles include textual assignments, encoded assignment codes,
+bit_loading and carrier_type (main_/skip_ fields for skip schemes).
+Each profile includes bandwidth_bps beside profile_id and schemes, calculated
+from data-carrier bit loading only. It is emitted for normal file output and
+--stdout. The shared Rust helper also provides analysis with RF data-carrier
+bandwidth in Hz and an
+ideal gross theoretical_throughput_bps. The estimate excludes cyclic-prefix,
+FEC and other PHY/MAC overhead; it is not measured application throughput.
+Reserved or unknown assignments make the theoretical rate null.
+The source documentation at docs/cli/usage.md links complete JSON examples for
+each measurement family; latency and symbol-header examples are synthetic.
 File output is published using a hard link from a complete temporary sibling.
 Filesystems without hard-link support fail safely; use --stdout or another
 filesystem. Normal failures clean up temporary files; forced termination may

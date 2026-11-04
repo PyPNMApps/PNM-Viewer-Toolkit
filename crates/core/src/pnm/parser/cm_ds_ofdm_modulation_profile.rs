@@ -13,22 +13,19 @@ use super::{
     },
 };
 use crate::common::reader::Reader;
+use crate::pnm::data_type::modulation::ModulationAssignment;
 use crate::{diagnostic::ParseError, pnm::data_type::*};
-use serde::Serialize;
+use serde::{ser::SerializeMap, Serialize, Serializer};
 
 /// Decoded measurement retaining its common header and original payload.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CmDsOfdmModulationProfile<'input> {
-    #[serde(rename = "pnm_header", serialize_with = "serialize_header")]
     header: PnmHeader<'input>,
     pub channel_id: ChannelId,
-    #[serde(serialize_with = "serialize_mac")]
     pub mac_address: MacAddress,
     pub num_profiles: ProfileCount,
-    #[serde(rename = "subcarrier_zero_frequency")]
     pub subcarrier_zero_frequency_hz: FrequencyHz,
     pub first_active_subcarrier_index: SubcarrierIdx,
-    #[serde(rename = "subcarrier_spacing", serialize_with = "serialize_spacing")]
     pub subcarrier_spacing_khz: SubcarrierSpacingKhz,
     pub profile_data_length_bytes: DataLengthBytes,
     pub profiles: Vec<ModulationProfile>,
@@ -159,19 +156,151 @@ pub struct ModulationProfile {
     pub profile_id: ProfileId,
     pub schemes: Vec<ModulationScheme>,
 }
-/// Encoded assignments; numeric modulation values preserve unknown/reserved values.
-#[derive(Debug, Clone, PartialEq, Serialize)]
-#[serde(tag = "schema_type")]
+/// Encoded assignments; JSON adds semantic fields while retaining numeric codes.
+#[derive(Debug, Clone, PartialEq)]
 pub enum ModulationScheme {
-    #[serde(rename = "range")]
     Range {
         modulation_order: ModulationOrder,
         num_subcarriers: SubcarrierIdx,
     },
-    #[serde(rename = "skip")]
     Skip {
         main_modulation_order: ModulationOrder,
         skip_modulation_order: ModulationOrder,
         num_subcarriers: SubcarrierIdx,
     },
+}
+
+impl Serialize for ModulationScheme {
+    /// Serializes compact schemes with textual assignments and original codes.
+    ///
+    /// # Arguments
+    /// * `serializer` - Destination for the JSON-compatible scheme fields.
+    /// # Returns
+    /// Serialized range or skip scheme, with nullable data bit loading.
+    /// # Errors
+    /// Propagates destination serialization errors.
+    fn serialize<Destination: Serializer>(
+        &self,
+        serializer: Destination,
+    ) -> Result<Destination::Ok, Destination::Error> {
+        match *self {
+            Self::Range {
+                modulation_order,
+                num_subcarriers,
+            } => {
+                let assignment = ModulationAssignment::from_code(modulation_order);
+                let mut fields = serializer.serialize_map(Some(6))?;
+                fields.serialize_entry("schema_type", "range")?;
+                fields.serialize_entry("modulation_order", assignment.modulation_order)?;
+                fields.serialize_entry("modulation_order_code", &modulation_order)?;
+                fields.serialize_entry("bit_loading", &assignment.bit_loading)?;
+                fields.serialize_entry("carrier_type", &assignment.carrier_type)?;
+                fields.serialize_entry("num_subcarriers", &num_subcarriers)?;
+                fields.end()
+            }
+            Self::Skip {
+                main_modulation_order,
+                skip_modulation_order,
+                num_subcarriers,
+            } => {
+                let main = ModulationAssignment::from_code(main_modulation_order);
+                let skip = ModulationAssignment::from_code(skip_modulation_order);
+                let mut fields = serializer.serialize_map(Some(10))?;
+                fields.serialize_entry("schema_type", "skip")?;
+                fields.serialize_entry("main_modulation_order", main.modulation_order)?;
+                fields.serialize_entry("main_modulation_order_code", &main_modulation_order)?;
+                fields.serialize_entry("main_bit_loading", &main.bit_loading)?;
+                fields.serialize_entry("main_carrier_type", &main.carrier_type)?;
+                fields.serialize_entry("skip_modulation_order", skip.modulation_order)?;
+                fields.serialize_entry("skip_modulation_order_code", &skip_modulation_order)?;
+                fields.serialize_entry("skip_bit_loading", &skip.bit_loading)?;
+                fields.serialize_entry("skip_carrier_type", &skip.carrier_type)?;
+                fields.serialize_entry("num_subcarriers", &num_subcarriers)?;
+                fields.end()
+            }
+        }
+    }
+}
+
+impl Serialize for CmDsOfdmModulationProfile<'_> {
+    /// Exports raw profile schemes with shared Rust capacity analysis.
+    /// # Arguments
+    /// * `serializer` - Destination used by both CLI and desktop exports.
+    /// # Returns
+    /// Borrowed capture fields plus one derived analysis object per profile.
+    /// # Errors
+    /// Propagates serialization/output-limit errors without copying capture bytes.
+    fn serialize<Output: Serializer>(
+        &self,
+        serializer: Output,
+    ) -> Result<Output::Ok, Output::Error> {
+        #[derive(Serialize)]
+        struct CaptureJson<'capture, 'input> {
+            #[serde(serialize_with = "serialize_header")]
+            pnm_header: &'capture PnmHeader<'input>,
+            channel_id: ChannelId,
+            #[serde(serialize_with = "serialize_mac")]
+            mac_address: &'capture MacAddress,
+            num_profiles: ProfileCount,
+            subcarrier_zero_frequency: FrequencyHz,
+            first_active_subcarrier_index: SubcarrierIdx,
+            #[serde(serialize_with = "serialize_spacing")]
+            subcarrier_spacing: SubcarrierSpacingKhz,
+            profile_data_length_bytes: DataLengthBytes,
+            profiles: ProfilesJson<'capture>,
+        }
+        CaptureJson {
+            pnm_header: &self.header,
+            channel_id: self.channel_id,
+            mac_address: &self.mac_address,
+            num_profiles: self.num_profiles,
+            subcarrier_zero_frequency: self.subcarrier_zero_frequency_hz,
+            first_active_subcarrier_index: self.first_active_subcarrier_index,
+            subcarrier_spacing: self.subcarrier_spacing_khz,
+            profile_data_length_bytes: self.profile_data_length_bytes,
+            profiles: ProfilesJson {
+                profiles: &self.profiles,
+                spacing: self.subcarrier_spacing_khz,
+            },
+        }
+        .serialize(serializer)
+    }
+}
+struct ProfilesJson<'capture> {
+    profiles: &'capture [ModulationProfile],
+    spacing: SubcarrierSpacingKhz,
+}
+impl Serialize for ProfilesJson<'_> {
+    /// Streams profiles and derived summaries without cloning scheme storage.
+    /// # Arguments
+    /// * `serializer` - Sequence destination.
+    /// # Returns
+    /// Profile identities, borrowed schemes and shared derived analysis.
+    /// # Errors
+    /// Propagates serialization failures.
+    fn serialize<Output: Serializer>(
+        &self,
+        serializer: Output,
+    ) -> Result<Output::Ok, Output::Error> {
+        use crate::pnm::analysis::modulation_profile::ModulationProfileAnalysis;
+        use serde::ser::SerializeSeq;
+        #[derive(Serialize)]
+        struct ProfileJson<'profile> {
+            profile_id: ProfileId,
+            bandwidth_bps: Option<BitRateBps>,
+            schemes: &'profile [ModulationScheme],
+            analysis: ModulationProfileAnalysis,
+        }
+        let mut sequence = serializer.serialize_seq(Some(self.profiles.len()))?;
+        for profile in self.profiles {
+            let analysis = ModulationProfileAnalysis::calculate(profile, self.spacing);
+            sequence.serialize_element(&ProfileJson {
+                profile_id: profile.profile_id,
+                bandwidth_bps: analysis.theoretical_throughput_bps,
+                schemes: &profile.schemes,
+                analysis,
+            })?;
+        }
+        sequence.end()
+    }
 }

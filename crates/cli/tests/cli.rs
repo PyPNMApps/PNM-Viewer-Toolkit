@@ -140,3 +140,36 @@ fn usage_errors_limits_and_header_only() {
     oversized.set_len(16 * 1024 * 1024 + 1).unwrap();
     assert_eq!(workspace.run(&["oversized"]).status.code(), Some(4));
 }
+
+#[test]
+fn modulation_cli_exports_shared_profile_capacity() {
+    let workspace = Workspace::new();
+    fs::write(
+        workspace.0.join("modulation.bin"),
+        pnm_fixtures::MODULATION_PROFILE,
+    )
+    .unwrap();
+    let result = workspace.run(&["modulation.bin", "--stdout"]);
+    assert!(result.status.success());
+    let output: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(
+        output["profiles"][0]["analysis"]["theoretical_throughput_bps"],
+        2_222_400_000_u64
+    );
+    assert_eq!(
+        output["profiles"][3]["analysis"]["theoretical_throughput_bps"],
+        1_481_600_000_u64
+    );
+    assert_eq!(
+        output["profiles"][0]["analysis"]["data_bandwidth_hz"],
+        185_200_000
+    );
+    assert_eq!(output["profiles"][0]["bandwidth_bps"], 2_222_400_000_u64);
+    assert_eq!(output["profiles"][3]["bandwidth_bps"], 1_481_600_000_u64);
+    for profile in output["profiles"].as_array().unwrap() {
+        assert_eq!(
+            profile["bandwidth_bps"],
+            profile["analysis"]["theoretical_throughput_bps"]
+        );
+    }
+}

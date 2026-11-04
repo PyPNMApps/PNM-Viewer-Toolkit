@@ -1,0 +1,55 @@
+{
+  "pnm_header": {
+    "file_type": "LLD",
+    "file_type_version": 1,
+    "major_version": 1,
+    "minor_version": 0,
+    "capture_time": null
+  },
+  "mac_address": "01:02:03:04:05:06",
+  "num_latency_objects": 1,
+  "latency_data": [
+    {
+      "sf_id": 1050,
+      "sf_label_bytes": [
+        76,
+        76,
+        83,
+        101,
+        114,
+        118,
+        105,
+        99,
+        101,
+        49,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "bin_edges_hundredths_ms": [
+        100
+      ],
+      "first_snapshot_start_timestamp": 1456252718,
+      "snapshots": [
+        {
+          "snapshot_end_timestamp": 1456252719,
+          "bin_counts": [
+            18446744073709551615,
+            10
+          ],
+          "max_latency_us": 57,
+          "num_histogram_updates": 2575,
+          "sanctioned_pkts": 9,
+          "dropped_pkts": 3,
+          "total_ect0_pkts": 4,
+          "reserved": 0,
+          "total_ect1_pkts": 5,
+          "ce_marked_ect1_pkts": 6
+        }
+      ]
+    }
+  ]
+}

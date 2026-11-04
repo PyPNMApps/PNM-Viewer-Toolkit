@@ -7,6 +7,7 @@ pub mod channel_estimation;
 pub mod chart;
 pub mod fec_summary;
 pub mod histogram;
+pub mod modulation_profile;
 pub mod spectrum_analysis;
 use pnm::pnm::data_type::{ChannelId, FrequencyHz, RxMerDb, SubcarrierSpacingKhz};
 use pnm::pnm::parser::{
@@ -155,8 +156,8 @@ impl Capture {
     fn decoded(&self) -> Result<DecodedPnm<'_>, Diagnostic> {
         let decoded = PnmFile::from_bytes(&self.bytes).decode(ParseLimits::default())?;
         match decoded {
-            DecodedPnm::RxMer(_) | DecodedPnm::SpectrumAnalysis(_) | DecodedPnm::ChannelEstimate(_) | DecodedPnm::Histogram(_) | DecodedPnm::FecSummary(_) => Ok(decoded),
-            _ => Err(Diagnostic::new("UnsupportedViewer", "This viewer supports RxMER, Spectrum Analyzer, DS Channel Estimation, Histogram and FEC Summary captures. Other formats remain available in pnm-decode.")),
+            DecodedPnm::RxMer(_) | DecodedPnm::SpectrumAnalysis(_) | DecodedPnm::ChannelEstimate(_) | DecodedPnm::Histogram(_) | DecodedPnm::FecSummary(_) | DecodedPnm::ModulationProfile(_) => Ok(decoded),
+            _ => Err(Diagnostic::new("UnsupportedViewer", "This viewer supports RxMER, Spectrum Analyzer, DS Channel Estimation, Histogram, FEC Summary and Modulation Profile captures. Other formats remain available in pnm-decode.")),
         }
     }
     fn parsed(&self) -> Result<CmDsOfdmRxMer<'_>, Diagnostic> {

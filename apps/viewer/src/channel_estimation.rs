@@ -216,6 +216,7 @@ pub(crate) fn metadata(
         .collect::<Vec<_>>()
         .join(":");
     Ok(ChartMetadata {
+        modulation_profile: None,
         fec_summary: None,
         histogram: false,
         title: "Downstream Channel Estimation",

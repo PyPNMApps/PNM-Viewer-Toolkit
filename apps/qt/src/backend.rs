@@ -56,6 +56,30 @@ mod bridge {
         #[qinvokable]
         fn select_fec_profile(self: Pin<&mut ViewerBackend>, index: u32);
 
+        /// Toggles one modulation profile while preserving its metric.
+        /// Invalid requests retain the previous capture view.
+        #[qinvokable]
+        fn toggle_modulation_profile(self: Pin<&mut ViewerBackend>, index: u32);
+
+        /// Enables every source modulation profile, retaining the current metric.
+        /// Invalid or busy calls leave the previous view intact.
+        #[qinvokable]
+        fn select_all_modulation_profiles(self: Pin<&mut ViewerBackend>);
+
+        /// Toggles a carrier classification by its stable metadata index.
+        /// Preserves selected profiles and metric; invalid calls retain state.
+        #[qinvokable]
+        fn toggle_modulation_carrier(self: Pin<&mut ViewerBackend>, index: u32);
+
+        /// Enables every carrier classification while retaining profile selection.
+        #[qinvokable]
+        fn select_all_modulation_carriers(self: Pin<&mut ViewerBackend>);
+
+        /// Selects Shannon (0) or bit loading (1) for the current profile.
+        /// Resets the frequency zoom after validation.
+        #[qinvokable]
+        fn select_modulation_metric(self: Pin<&mut ViewerBackend>, index: u32);
+
         /// Queries an inclusive UTC time range for the selected FEC profile.
         /// Epoch-second bounds are normalized and processed in Rust.
         #[qinvokable]
@@ -255,7 +279,7 @@ impl bridge::ViewerBackend {
             return;
         };
         match capture
-            .chart_range_for(self.rust().view, start as usize, count as usize)
+            .chart_range_for(self.rust().view.clone(), start as usize, count as usize)
             .and_then(|viewport| {
                 serde_json::to_string(&viewport).map_err(|error| Diagnostic::new("Json", error))
             }) {
@@ -314,7 +338,7 @@ impl bridge::ViewerBackend {
             return;
         };
         let result = capture
-            .fec_time_range(self.rust().view, first, last)
+            .fec_time_range(self.rust().view.clone(), first, last)
             .and_then(|viewport| {
                 serde_json::to_string(&viewport).map_err(|error| Diagnostic::new("Json", error))
             });
@@ -327,6 +351,188 @@ impl bridge::ViewerBackend {
         }
     }
 
+    /// Toggles one source profile while retaining the metric and other traces.
+    /// # Arguments
+    /// * `index` - Zero-based profile position, not its wire ID.
+    /// # Returns
+    /// Validated colored overlays; deselecting the final profile leaves the axes.
+    pub fn toggle_modulation_profile(self: Pin<&mut Self>, index: u32) {
+        if *self.busy() {
+            return;
+        }
+        let Some(capture) = self.rust().capture.clone() else {
+            return;
+        };
+        let metadata = match capture.chart_metadata_for(self.rust().view.clone()) {
+            Ok(metadata) => metadata,
+            Err(error) => {
+                self.fail(error);
+                return;
+            }
+        };
+        let Some(controls) = metadata.modulation_profile else {
+            return;
+        };
+        if index as usize >= controls.profiles.len() {
+            self.fail(Diagnostic::new(
+                "InvalidProfile",
+                "Modulation profile is outside this capture.",
+            ));
+            return;
+        }
+        let mut indices = controls.selected_indices;
+        if let Some(position) = indices
+            .iter()
+            .position(|selected| *selected == index as usize)
+        {
+            indices.remove(position);
+        } else {
+            indices.push(index as usize);
+        }
+        let metric = self.modulation_metric();
+        let carrier_types = self.modulation_carriers();
+        self.change_view(MeasurementView::ModulationProfile {
+            indices: Some(indices),
+            carrier_types,
+            metric,
+        });
+    }
+
+    /// Enables all source profiles while retaining the current modulation metric.
+    /// # Returns
+    /// Validated overlays under the shared carrier/display budgets; failures
+    /// retain the previous chart and are reported through the diagnostic area.
+    pub fn select_all_modulation_profiles(self: Pin<&mut Self>) {
+        if *self.busy() {
+            return;
+        }
+        let Some(capture) = self.rust().capture.clone() else {
+            return;
+        };
+        let controls = match capture.chart_metadata_for(self.rust().view.clone()) {
+            Ok(metadata) => metadata.modulation_profile,
+            Err(error) => {
+                self.fail(error);
+                return;
+            }
+        };
+        let Some(controls) = controls else {
+            return;
+        };
+        let metric = self.modulation_metric();
+        let carrier_types = self.modulation_carriers();
+        self.change_view(MeasurementView::ModulationProfile {
+            indices: Some((0..controls.profiles.len()).collect()),
+            carrier_types,
+            metric,
+        });
+    }
+
+    fn modulation_carriers(&self) -> Option<Vec<viewer::modulation_profile::CarrierType>> {
+        match &self.rust().view {
+            MeasurementView::ModulationProfile { carrier_types, .. } => carrier_types.clone(),
+            _ => None,
+        }
+    }
+
+    /// Toggles one carrier role without changing the profile or metric selection.
+    /// # Arguments
+    /// * `index` - Position in the stable carrier_types metadata list.
+    /// # Returns
+    /// Validated traces/markers or a diagnostic, leaving previous state on error.
+    pub fn toggle_modulation_carrier(self: Pin<&mut Self>, index: u32) {
+        self.change_modulation_carriers(Some(index as usize));
+    }
+
+    /// Enables all carrier roles, preserving the selected profiles and metric.
+    /// # Returns
+    /// Validated data traces and special-carrier lanes.
+    pub fn select_all_modulation_carriers(self: Pin<&mut Self>) {
+        self.change_modulation_carriers(None);
+    }
+
+    fn change_modulation_carriers(self: Pin<&mut Self>, toggle: Option<usize>) {
+        if *self.busy() {
+            return;
+        }
+        let Some(capture) = self.rust().capture.clone() else {
+            return;
+        };
+        let controls = match capture.chart_metadata_for(self.rust().view.clone()) {
+            Ok(metadata) => metadata.modulation_profile,
+            Err(error) => {
+                self.fail(error);
+                return;
+            }
+        };
+        let Some(controls) = controls else {
+            return;
+        };
+        let mut selected = controls.selected_carrier_types;
+        if let Some(index) = toggle {
+            let Some(choice) = controls.carrier_types.get(index) else {
+                self.fail(Diagnostic::new(
+                    "UnsupportedView",
+                    "Unknown carrier classification.",
+                ));
+                return;
+            };
+            if let Some(position) = selected.iter().position(|kind| *kind == choice.kind) {
+                selected.remove(position);
+            } else {
+                selected.push(choice.kind);
+            }
+        } else {
+            selected = controls
+                .carrier_types
+                .iter()
+                .map(|choice| choice.kind)
+                .collect();
+        }
+        let metric = self.modulation_metric();
+        self.change_view(MeasurementView::ModulationProfile {
+            indices: Some(controls.selected_indices),
+            carrier_types: Some(selected),
+            metric,
+        });
+    }
+
+    fn modulation_metric(&self) -> viewer::modulation_profile::ModulationMetric {
+        match &self.rust().view {
+            MeasurementView::ModulationProfile { metric, .. } => *metric,
+            _ => viewer::modulation_profile::ModulationMetric::Shannon,
+        }
+    }
+
+    /// Selects the modulation metric and resets the current profile's zoom.
+    /// # Arguments
+    /// * `index` - Zero for ideal Shannon MER, one for bit loading.
+    /// # Returns
+    /// Updates the chart only after validation; unsupported values retain state.
+    pub fn select_modulation_metric(self: Pin<&mut Self>, index: u32) {
+        let metric = match index {
+            0 => viewer::modulation_profile::ModulationMetric::Shannon,
+            1 => viewer::modulation_profile::ModulationMetric::BitLoading,
+            _ => {
+                self.fail(Diagnostic::new(
+                    "UnsupportedView",
+                    "Unknown modulation metric.",
+                ));
+                return;
+            }
+        };
+        let profiles = match &self.rust().view {
+            MeasurementView::ModulationProfile { indices, .. } => indices.clone(),
+            _ => None,
+        };
+        let carrier_types = self.modulation_carriers();
+        self.change_view(MeasurementView::ModulationProfile {
+            carrier_types,
+            indices: profiles,
+            metric,
+        });
+    }
+
     fn change_view(mut self: Pin<&mut Self>, view: MeasurementView) {
         if *self.busy() {
             return;
@@ -335,8 +541,8 @@ impl bridge::ViewerBackend {
             return;
         };
         let result = (|| {
-            let metadata = capture.chart_metadata_for(view)?;
-            let viewport = capture.chart_range_for(view, 0, metadata.sample_count)?;
+            let metadata = capture.chart_metadata_for(view.clone())?;
+            let viewport = capture.chart_range_for(view.clone(), 0, metadata.sample_count)?;
             let metadata_json =
                 serde_json::to_string(&metadata).map_err(|error| Diagnostic::new("Json", error))?;
             let viewport_json =

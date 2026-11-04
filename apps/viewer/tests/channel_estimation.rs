@@ -27,7 +27,7 @@ fn fixture_views_are_bounded_and_export_preserves_raw_fields() {
     // Independently evaluated from the fixture's first decoded S2.13 pair.
     assert!((first - 1.489266439357412).abs() < 1e-10);
     for view in [MeasurementView::Default, MeasurementView::GroupDelay] {
-        let metadata = capture.chart_metadata_for(view).unwrap();
+        let metadata = capture.chart_metadata_for(view.clone()).unwrap();
         assert!(metadata.minimum.is_finite() && metadata.maximum > metadata.minimum);
         let detail = capture.chart_range_for(view, 7000, 480).unwrap();
         assert_eq!(detail.points.len(), 480);

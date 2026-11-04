@@ -110,6 +110,7 @@ pub(crate) fn metadata(
 ) -> Result<ChartMetadata, Diagnostic> {
     let index = profile_index(capture, view)?;
     Ok(ChartMetadata {
+        modulation_profile: None,
         fec_summary: Some(FecMetadata {
             profiles: capture
                 .fec_summary_data
@@ -165,7 +166,7 @@ pub(crate) fn time_range(
     first: CaptureTime,
     last: CaptureTime,
 ) -> Result<ChartViewport, Diagnostic> {
-    let entries = records(capture, view)?;
+    let entries = records(capture, view.clone())?;
     let lower = first.min(last);
     let upper = first.max(last);
     let start = entries.partition_point(|record| record.timestamp < lower);
@@ -258,6 +259,7 @@ pub(crate) fn viewport(
         })
         .collect();
     Ok(ChartViewport {
+        modulation_profiles: None,
         fec_summary: Some(FecViewport {
             points,
             total_maximum: selected

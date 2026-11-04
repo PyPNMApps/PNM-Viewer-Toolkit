@@ -10,11 +10,35 @@ ColumnLayout {
     id: chart
     required property Theme theme
     property var viewport: ({start: 0, total: 0, points: []})
+    property bool stepPlot: false
     property string unit: "dB"
     property string axisLabel: "RxMER"
     property real minimum: 0
     property real maximum: 64
     property int selectedIndex: 0
+    property string carrierHoverText: ""
+    readonly property var carrierLanes: viewport.modulation_profiles ? (viewport.modulation_profiles.carrier_lanes || []) : []
+    readonly property string verticalTitle: viewport.modulation_profiles ? (unit === "dB" ? "dB" : "Bit loading") : axisLabel + " · " + unit
+    function carrierAt(horizontal, vertical) {
+        const points = viewport.points
+        const overlays = viewport.modulation_profiles
+        if (!overlays || !points.length || horizontal < plot.leftMargin || horizontal > plot.width - plot.rightMargin) { return "" }
+        const first = points[0].frequency_hz
+        const span = points[points.length - 1].frequency_hz - first
+        const plotWidth = plot.width - plot.leftMargin - plot.rightMargin
+        const matches = []
+        for (const marker of (overlays.markers || [])) {
+            if (Math.abs(vertical - plot.laneCenter(marker.carrier_type)) > 6) { continue }
+            const start = span === 0 ? plot.leftMargin + plotWidth / 2 : plot.leftMargin + (marker.first_frequency_hz - first) / span * plotWidth
+            const end = span === 0 ? start : plot.leftMargin + (marker.last_frequency_hz - first) / span * plotWidth
+            if (horizontal < start - 4 || horizontal > end + 4) { continue }
+            const range = (marker.first_frequency_hz / hzPerMhz).toFixed(3)
+                + (marker.last_frequency_hz !== marker.first_frequency_hz ? "–" + (marker.last_frequency_hz / hzPerMhz).toFixed(3) : "") + " MHz"
+            matches.push("Profile " + marker.profile_id + " · " + theme.carrierLabel(marker.carrier_type)
+                + " · " + range + (marker.count > 1 ? " · " + marker.count + " carriers (grouped)" : ""))
+        }
+        return matches.slice(0, 4).join("\n") + (matches.length > 4 ? "\n+" + (matches.length - 4) + " more profiles" : "")
+    }
     readonly property int pointCount: viewport.points.length
     readonly property real hzPerMhz: 1000000
     readonly property var selectedPoint: pointCount > 0 ? viewport.points[Math.min(selectedIndex, pointCount - 1)] : null
@@ -57,12 +81,13 @@ ColumnLayout {
         const last = Math.ceil(upper * (visibleCount - 1))
         rangeRequested(visibleStart + first, Math.max(2, last - first + 1))
     }
-    onViewportChanged: { selection.dragging = false; selectedIndex = 0; plot.requestPaint() }
+    onViewportChanged: { carrierHoverText = ""; selection.dragging = false; selectedIndex = 0; plot.requestPaint() }
     onSelectedIndexChanged: plot.requestPaint()
     onMinimumChanged: plot.requestPaint()
     onMaximumChanged: plot.requestPaint()
     onUnitChanged: plot.requestPaint()
     onAxisLabelChanged: plot.requestPaint()
+    onStepPlotChanged: plot.requestPaint()
     spacing: 10
 
     // Qt Quick Canvas is rendered by Qt; no HTML document or WebView is used.
@@ -79,6 +104,9 @@ ColumnLayout {
         property real rightMargin: 18
         property real topMargin: 22
         property real bottomMargin: 42
+        readonly property real laneHeight: 16
+        readonly property real dataBottom: height - bottomMargin - chart.carrierLanes.length * laneHeight - (chart.carrierLanes.length ? 8 : 0)
+        function laneCenter(kind) { return dataBottom + 8 + (chart.carrierLanes.indexOf(kind) + 0.5) * laneHeight }
         onWidthChanged: requestPaint()
         onHeightChanged: requestPaint()
         Connections {
@@ -90,7 +118,7 @@ ColumnLayout {
             context.reset()
             const points = chart.viewport.points
             const plotWidth = width - leftMargin - rightMargin
-            const plotHeight = height - topMargin - bottomMargin
+            const plotHeight = dataBottom - topMargin
             const firstHz = points.length ? points[0].frequency_hz : 0
             const lastHz = points.length ? points[points.length - 1].frequency_hz : firstHz
             context.font = "11px sans-serif"
@@ -112,43 +140,74 @@ ColumnLayout {
                 context.fillText((frequency / chart.hzPerMhz).toFixed(2), leftMargin + fraction * plotWidth, height - 23)
             }
             context.textAlign = "left"
-            context.fillText(chart.axisLabel + " · " + chart.unit, leftMargin, 12)
+            context.fillText(chart.verticalTitle, leftMargin, 12)
             context.textAlign = "center"
             context.fillText("Frequency · MHz", width / 2, height - 3)
-            context.strokeStyle = chart.theme.accent
-            context.lineWidth = 1.5
-            context.beginPath()
-            let connected = false
-            for (let index = 0; index < points.length; index++) {
-                const point = points[index]
-                if (point.value === null) {
-                    connected = false
-                    continue
-                }
-                const horizontal = lastHz === firstHz ? leftMargin + plotWidth / 2
-                    : leftMargin + (point.frequency_hz - firstHz) / (lastHz - firstHz) * plotWidth
-                const vertical = topMargin + (chart.maximum - point.value) / (chart.maximum - chart.minimum) * plotHeight
-                if (connected) {
-                    context.lineTo(horizontal, vertical)
-                } else {
-                    context.moveTo(horizontal, vertical)
-                }
-                connected = true
-            }
-            context.stroke()
-            context.fillStyle = chart.theme.accent
-            for (let index = 0; index < points.length; index++) {
-                const point = points[index]
-                const isolated = (index === 0 || points[index - 1].value === null)
-                    && (index === points.length - 1 || points[index + 1].value === null)
-                if (point.value !== null && (isolated || index === chart.selectedIndex)) {
+            const overlays = chart.viewport.modulation_profiles
+            const traces = overlays ? overlays.series : [{points: chart.viewport.points}]
+            for (let traceIndex = 0; traceIndex < traces.length; traceIndex++) {
+                const trace = traces[traceIndex]
+                const points = trace.points
+                const color = overlays ? chart.theme.profileColor(trace.profile_id) : chart.theme.accent
+                context.strokeStyle = color
+                context.lineWidth = 1.5
+                context.beginPath()
+                let connected = false
+                let previousVertical = 0
+                for (let index = 0; index < points.length; index++) {
+                    const point = points[index]
+                    if (point.value === null) {
+                        connected = false
+                        continue
+                    }
                     const horizontal = lastHz === firstHz ? leftMargin + plotWidth / 2
                         : leftMargin + (point.frequency_hz - firstHz) / (lastHz - firstHz) * plotWidth
                     const vertical = topMargin + (chart.maximum - point.value) / (chart.maximum - chart.minimum) * plotHeight
-                    context.beginPath()
-                    context.arc(horizontal, vertical, 3, 0, Math.PI * 2)
-                    context.fill()
+                    if (connected) {
+                        if (chart.stepPlot) { context.lineTo(horizontal, previousVertical) }
+                        context.lineTo(horizontal, vertical)
+                    } else {
+                        context.moveTo(horizontal, vertical)
+                    }
+                    previousVertical = vertical
+                    connected = true
                 }
+                context.stroke()
+                context.fillStyle = color
+                for (let index = 0; index < points.length; index++) {
+                    const point = points[index]
+                    const isolated = (index === 0 || points[index - 1].value === null)
+                        && (index === points.length - 1 || points[index + 1].value === null)
+                    if (point.value !== null && (isolated || (!overlays && index === chart.selectedIndex))) {
+                        const horizontal = lastHz === firstHz ? leftMargin + plotWidth / 2
+                            : leftMargin + (point.frequency_hz - firstHz) / (lastHz - firstHz) * plotWidth
+                        const vertical = topMargin + (chart.maximum - point.value) / (chart.maximum - chart.minimum) * plotHeight
+                        context.beginPath()
+                        context.arc(horizontal, vertical, 3, 0, Math.PI * 2)
+                        context.fill()
+                    }
+                }
+            }
+            if (overlays) {
+                for (const kind of chart.carrierLanes) {
+                    const vertical = laneCenter(kind)
+                    context.strokeStyle = chart.theme.line
+                    context.lineWidth = 1
+                    context.beginPath(); context.moveTo(leftMargin, vertical); context.lineTo(width - rightMargin, vertical); context.stroke()
+                    context.fillStyle = chart.theme.muted
+                    context.textAlign = "right"
+                    const labels = {continuous_pilot: "Pilot", plc: "PLC", exclusion: "Excl.", zero_bit_loaded: "Zero", reserved: "Res.", unknown: "Unk."}
+                    context.fillText(labels[kind] || kind, leftMargin - 8, vertical + 3)
+                }
+                for (const marker of (overlays.markers || [])) {
+                    const first = lastHz === firstHz ? leftMargin + plotWidth / 2 : leftMargin + (marker.first_frequency_hz - firstHz) / (lastHz - firstHz) * plotWidth
+                    const last = lastHz === firstHz ? first : leftMargin + (marker.last_frequency_hz - firstHz) / (lastHz - firstHz) * plotWidth
+                    context.strokeStyle = chart.theme.carrierColor(marker.carrier_type)
+                    context.lineWidth = 5
+                    context.globalAlpha = marker.count > 1 ? 0.65 : 1
+                    context.beginPath(); context.moveTo(first - 1, laneCenter(marker.carrier_type)); context.lineTo(last + 1, laneCenter(marker.carrier_type)); context.stroke()
+                }
+                context.globalAlpha = 1
             }
         }
         Rectangle {
@@ -172,6 +231,7 @@ ColumnLayout {
                 return Math.max(0, Math.min(1, (horizontal - plot.leftMargin) / (plot.width - plot.leftMargin - plot.rightMargin)))
             }
             onPressed: mouse => {
+                chart.carrierHoverText = "";
                 if (mouse.x < plot.leftMargin || mouse.x > plot.width - plot.rightMargin
                     || mouse.y < plot.topMargin || mouse.y > plot.height - plot.bottomMargin) {
                     mouse.accepted = false
@@ -190,6 +250,14 @@ ColumnLayout {
             }
             onCanceled: dragging = false
             hoverEnabled: true
+            onExited: chart.carrierHoverText = ""
+            ToolTip {
+                objectName: "carrierTypeTooltip"
+                visible: selection.containsMouse && !selection.dragging && chart.carrierHoverText.length > 0
+                text: chart.carrierHoverText
+                x: Math.max(0, Math.min(selection.width - width - 8, selection.mouseX + 12))
+                y: Math.max(0, selection.mouseY - height - 8)
+            }
             onWheel: wheel => {
                 const fraction = (wheel.x - plot.leftMargin) / (plot.width - plot.leftMargin - plot.rightMargin)
                 chart.zoomAt(fraction, wheel.angleDelta.y > 0)
@@ -197,6 +265,7 @@ ColumnLayout {
             }
             onDoubleClicked: { dragging = false; chart.resetZoom() }
             onPositionChanged: mouse => {
+                chart.carrierHoverText = dragging ? "" : chart.carrierAt(mouse.x, mouse.y)
                 if (dragging) { endFraction = fractionAt(mouse.x) }
                 const fraction = (mouse.x - plot.leftMargin) / (plot.width - plot.leftMargin - plot.rightMargin)
                 const points = chart.viewport.points

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 //! Shared PNM data types and unit definitions.
+pub mod modulation;
 pub mod units;
 
 /// Four-byte PNM file identifier in its encoded byte order.
@@ -40,6 +41,8 @@ pub type CounterValue = u32;
 pub type ProfileId = u8;
 /// Number of profiles encoded in one byte.
 pub type ProfileCount = u8;
+/// Number of data bits carried by one modulation symbol.
+pub type BitsPerSymbol = u8;
 /// Encoded modulation assignment; unknown values remain representable.
 pub type ModulationOrder = u8;
 /// Constellation modulation selection encoded in two bytes.
@@ -71,3 +74,10 @@ pub type LatencyBinEdge = u16;
 pub type LatencyUs = u32;
 /// Latency histogram packet counter encoded in eight bytes.
 pub type PacketCount = u64;
+
+/// Carrier count used by compressed-profile analysis, independent of CPU width.
+pub type CarrierCount = u64;
+/// Total coded data bits carried by one useful OFDM symbol.
+pub type BitCount = u64;
+/// Ideal gross transmission rate in bits per second, before overhead.
+pub type BitRateBps = u64;

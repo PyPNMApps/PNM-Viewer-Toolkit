@@ -11,13 +11,18 @@ use pnm::pnm::{
 use serde::Serialize;
 
 /// Measurement tab; the default is magnitude for channel estimation.
-#[derive(Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Clone, Default, PartialEq, Eq)]
 pub enum MeasurementView {
     #[default]
     Default,
     GroupDelay,
     IqScatter,
     FecProfile(usize),
+    ModulationProfile {
+        indices: Option<Vec<usize>>,
+        carrier_types: Option<Vec<crate::modulation_profile::CarrierType>>,
+        metric: crate::modulation_profile::ModulationMetric,
+    },
 }
 
 /// Display label and formatted value for one metadata pill.
@@ -44,6 +49,8 @@ impl Chip {
 #[derive(Serialize)]
 pub struct ChartMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub modulation_profile: Option<crate::modulation_profile::ModulationMetadata>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub fec_summary: Option<crate::fec_summary::FecMetadata>,
     pub histogram: bool,
     pub views: Vec<&'static str>,
@@ -68,6 +75,8 @@ pub struct ChartPoint {
 /// Selected source range and bounded display points for that range.
 #[derive(Serialize)]
 pub struct ChartViewport {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub modulation_profiles: Option<crate::modulation_profile::ModulationViewport>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fec_summary: Option<crate::fec_summary::FecViewport>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -120,8 +129,11 @@ impl Capture {
     /// Propagates parser/grid errors or an unsupported tab.
     pub fn chart_metadata_for(&self, view: MeasurementView) -> Result<ChartMetadata, Diagnostic> {
         let decoded = self.decoded()?;
-        validate_view(&decoded, view)?;
+        validate_view(&decoded, &view)?;
         match decoded {
+            DecodedPnm::ModulationProfile(capture) => {
+                crate::modulation_profile::metadata(&capture, view)
+            }
             DecodedPnm::FecSummary(capture) => crate::fec_summary::metadata(&capture, view),
             DecodedPnm::Histogram(capture) => Ok(crate::histogram::metadata(&capture)),
             DecodedPnm::ChannelEstimate(capture) => {
@@ -130,6 +142,7 @@ impl Capture {
             DecodedPnm::RxMer(_) => {
                 let metadata = self.metadata()?;
                 Ok(ChartMetadata {
+                    modulation_profile: None,
                     fec_summary: None,
                     histogram: false,
                     views: vec![],
@@ -167,6 +180,7 @@ impl Capture {
                     .collect::<Vec<_>>()
                     .join(":");
                 Ok(ChartMetadata {
+                    modulation_profile: None,
                     fec_summary: None,
                     histogram: false,
                     views: vec![],
@@ -198,7 +212,7 @@ impl Capture {
     }
     fn chart_points(&self, view: MeasurementView) -> Result<Vec<ChartPoint>, Diagnostic> {
         let decoded = self.decoded()?;
-        validate_view(&decoded, view)?;
+        validate_view(&decoded, &view)?;
         match decoded {
             DecodedPnm::ChannelEstimate(capture) => {
                 let analysis =
@@ -310,6 +324,9 @@ impl Capture {
         start: usize,
         count: usize,
     ) -> Result<ChartViewport, Diagnostic> {
+        if let DecodedPnm::ModulationProfile(capture) = self.decoded()? {
+            return crate::modulation_profile::viewport(&capture, view, start, count);
+        }
         if let DecodedPnm::FecSummary(capture) = self.decoded()? {
             return crate::fec_summary::viewport(&capture, view, start, count);
         }
@@ -324,7 +341,7 @@ impl Capture {
         }
         if view == MeasurementView::IqScatter {
             let decoded = self.decoded()?;
-            validate_view(&decoded, view)?;
+            validate_view(&decoded, &view)?;
             if let DecodedPnm::ChannelEstimate(capture) = decoded {
                 let samples: Vec<_> = capture.iq().collect();
                 if start != 0 || count != samples.len() {
@@ -334,6 +351,7 @@ impl Capture {
                     ));
                 }
                 return Ok(ChartViewport {
+                    modulation_profiles: None,
                     fec_summary: None,
                     histogram: None,
                     start,
@@ -354,6 +372,7 @@ impl Capture {
             })?;
         let points = overview(&samples[start..end]);
         Ok(ChartViewport {
+            modulation_profiles: None,
             fec_summary: None,
             histogram: None,
             iq_density: None,
@@ -365,12 +384,24 @@ impl Capture {
     }
 }
 fn overview(samples: &[ChartPoint]) -> Vec<ChartPoint> {
-    if samples.len() <= MAX_VIEW_SAMPLES {
+    overview_with_limit(samples, MAX_VIEW_SAMPLES)
+}
+
+/// Bounds display points while retaining endpoints, extrema and missing buckets.
+/// # Arguments
+/// * `samples` - Ordered source points in one selected range.
+/// * `limit` - Display budget, at least four for endpoints and bucket extrema.
+/// # Returns
+/// At most limit points in source order; empty input remains empty.
+/// # Panics
+/// May panic if limit is below four and the input requires decimation.
+pub(crate) fn overview_with_limit(samples: &[ChartPoint], limit: usize) -> Vec<ChartPoint> {
+    if samples.len() <= limit {
         return samples.to_vec();
     }
-    let bucket_count = (MAX_VIEW_SAMPLES - 2) / 2;
+    let bucket_count = (limit - 2) / 2;
     let bucket_size = samples.len().div_ceil(bucket_count);
-    let mut points = Vec::with_capacity(MAX_VIEW_SAMPLES);
+    let mut points = Vec::with_capacity(limit);
     points.push(samples[0].clone());
     for bucket in samples.chunks(bucket_size) {
         if let Some(missing) = bucket.iter().find(|point| point.value.is_none()) {
@@ -394,14 +425,21 @@ fn overview(samples: &[ChartPoint]) -> Vec<ChartPoint> {
     points
 }
 
-fn validate_view(decoded: &DecodedPnm<'_>, view: MeasurementView) -> Result<(), Diagnostic> {
+fn validate_view(decoded: &DecodedPnm<'_>, view: &MeasurementView) -> Result<(), Diagnostic> {
     let supported = match decoded {
         DecodedPnm::FecSummary(_) => matches!(
             view,
             MeasurementView::Default | MeasurementView::FecProfile(_)
         ),
-        DecodedPnm::ChannelEstimate(_) => !matches!(view, MeasurementView::FecProfile(_)),
-        _ => view == MeasurementView::Default,
+        DecodedPnm::ChannelEstimate(_) => matches!(
+            view,
+            MeasurementView::Default | MeasurementView::GroupDelay | MeasurementView::IqScatter
+        ),
+        DecodedPnm::ModulationProfile(_) => matches!(
+            view,
+            MeasurementView::Default | MeasurementView::ModulationProfile { .. }
+        ),
+        _ => *view == MeasurementView::Default,
     };
     if !supported {
         return Err(Diagnostic::new(

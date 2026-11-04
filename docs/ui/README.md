@@ -59,6 +59,13 @@ keeps the current capture. Unsupported measurements can still be decoded with
 - FEC Summary has a profile selector and Total/Corrected/Uncorrectable CW toggles.
   Its left axis shows total codewords and its right axis shows error codewords.
   Drag selects UTC time; window sums and the last interval update with the range.
+- Modulation Profile has colored profile toggles and an **All** button for
+  any combination of traces. Switch between ideal Shannon
+  minimum MER and bit loading. These are derived from encoded assignments;
+  the dB view is theoretical, not measured MER. Carrier-type buttons control
+  data traces and labeled special-carrier lanes; hover markers for type details.
+  Frequency zoom works as usual. The **Profile BW** chip opens a bandwidth
+  grid. JSON includes per-profile `bandwidth_bps` and ideal capacity.
 - The I/Q density view always shows the full capture and does not use range zoom.
 - For channel estimation, choose **Magnitude**, **Group delay**, or **I/Q scatter**.
   Switching tabs resets the range.

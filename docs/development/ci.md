@@ -62,7 +62,7 @@ CI workflow on that exact tagged commit, then builds packages on native runners.
 The Ubuntu 22.04-built DEBs are downloaded unchanged and installed/tested on
 **22.04, 24.04 and 26.04**. Windows and each macOS architecture test their own
 native installers/images. Every test checks package hashes, GUI open/render/JSON
-export for all five current measurements, CLI operation, manual installation and
+export for all six current measurements, CLI operation, manual installation and
 removal. Linux also verifies that removing the viewer preserves the CLI package.
 
 Only after every lifecycle job succeeds does one job assemble the complete

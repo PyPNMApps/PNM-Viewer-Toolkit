@@ -327,3 +327,19 @@ The development-only package at `tests/fixtures/` owns the fixture directory
 and each filename in one place, anchored with `CARGO_MANIFEST_DIR`. It is a
 `dev-dependency` of `pnm`, so production library builds do not pull in captures.
 The existing binary files and their provenance remain unchanged.
+
+## Shannon capacity helper
+
+`pnm::common::signal_processing::shannon::minimum_snr_db(bits_per_symbol)` returns
+an ideal dB SNR bound for positive bit counts and `None` for zero. It does not
+interpret wire assignment codes or apply DOCSIS margins. Modulation presentation
+maps valid QAM assignments to `BitsPerSymbol` before calling the helper. Known
+values and the full u8 domain have independent numeric tests.
+
+
+Modulation capacity analysis lives in
+`crates/core/src/pnm/analysis/modulation_profile.rs`; reusable useful-symbol
+rate and bandwidth arithmetic lives in `common/signal_processing/ofdm.rs`.
+Exports include per-profile `analysis` through the core capture serializer, so
+`pnm-decode INPUT --stdout` and desktop JSON agree without UI post-processing.
+See [the capacity contract](../reference/formats.md#per-profile-ideal-capacity-analysis).
