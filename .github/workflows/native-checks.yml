@@ -130,17 +130,17 @@ jobs:
           "$binary" tests/fixtures/pypnm/tests/files/rxmer.bin --output "$RUNNER_TEMP/rxmer.json"
           test -s "$RUNNER_TEMP/rxmer.json"
       - name: Cache pinned native Qt SDK
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: local/qt
           key: qt-sdk-${{ matrix.os }}-${{ runner.arch }}-${{ hashFiles('scripts/qt-sdk.py') }}
       - name: Prepare pinned native Qt SDK
-        run: python scripts/qt-sdk.py setup
+        run: python scripts/qt-sdk.py setup --download-attempts 3
       - name: Check Qt adapter and presentation
         run: python scripts/qt-sdk.py check
       - name: Retain QML test reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: qml-tests-${{ matrix.os }}
           path: local/qt-test-results/

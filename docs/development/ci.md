@@ -131,6 +131,24 @@ hash. Setup still checks the SDK version and presentation-test executable on
 cache hits; a hit never skips the build or tests. The Python installer virtual
 environment is not cached.
 
+Both native and manual troubleshooting workflows invoke Qt setup with
+`--download-attempts 3`. Only recognized transient archive network failures are
+retried, after 10 and then 20 seconds. Each retry repeats the complete pinned
+archive request even after partial extraction. Installer diagnostics remain in
+the job log; exhausting retries preserves failure. Invalid SDKs, checksum or
+configuration errors, tests, builds and installer lifecycle checks are not
+retried. Local setup defaults to one attempt. This cannot guarantee recovery
+from a persistently unavailable Qt mirror.
+
+Cache and artifact actions use Node 24 releases (`actions/cache@v5` and
+`actions/upload-artifact@v6`), following
+[GitHub's Node 20 migration guidance](https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/).
+
+Installed GUI smoke subprocesses set `QT_FORCE_STDERR_LOGGING=1`, so Windows
+GUI-subsystem applications send Qt diagnostics and the required render marker
+to the captured stderr pipe. This is test-only; normal desktop launches keep
+their usual logging. A zero exit status without `UI_SMOKE_OK` still fails.
+
 [Swatinem/rust-cache](https://github.com/Swatinem/rust-cache) caches Cargo downloads
 and compiled dependencies for both workspaces. The additional key isolates
 runner image labels and Qt setup revisions; the action also keys by Rust host,

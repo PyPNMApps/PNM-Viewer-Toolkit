@@ -19,11 +19,34 @@ sys.path.insert(0, str(ROOT / 'scripts/release'))
 import common
 import collect
 import native
+import smoke
 import verify
 
 
 class PackageContractTests(unittest.TestCase):
     """Reject corrupt artifacts and unsafe execution without native installers."""
+
+    def test_smoke_captures_gui_diagnostics_without_sdk_paths(self):
+        """Route Qt GUI messages to stderr without altering the caller's session."""
+        original = {'PATH': os.pathsep.join(('/tools', '/checkout/local/qt/bin')),
+                    'QT_SDK_DIR': '/checkout/local/qt', 'QT_PLUGIN_PATH': '/sdk/plugins',
+                    'QMAKE': '/sdk/qmake', 'QT_FORCE_STDERR_LOGGING': '0',
+                    'DISPLAY': ':42'}
+        with patch.dict(os.environ, original, clear=True):
+            environment = smoke.clean_environment()
+            self.assertEqual(dict(os.environ), original)
+        self.assertEqual(environment['QT_FORCE_STDERR_LOGGING'], '1')
+        self.assertEqual(environment['DISPLAY'], ':42')
+        self.assertEqual(environment['PATH'], '/tools')
+        for name in ('QT_SDK_DIR', 'QT_PLUGIN_PATH', 'QMAKE'):
+            self.assertNotIn(name, environment)
+
+    def test_smoke_rejects_missing_render_marker(self):
+        """An exit-zero GUI still fails without positive rendering evidence."""
+        with patch.object(smoke.subprocess, 'run', return_value=subprocess.CompletedProcess(
+                [], 0, stdout='', stderr='')):
+            with self.assertRaisesRegex(RuntimeError, 'Installed GUI smoke failed: rxmer.bin'):
+                smoke.smoke(Path('viewer'), Path('decoder'))
 
     def test_windows_zip_preserves_legacy_notices(self):
         """Clamp old ZIP dates while preserving bytes, paths and source metadata."""

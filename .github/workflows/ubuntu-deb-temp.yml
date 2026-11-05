@@ -62,7 +62,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ccache build-essential cmake python3-venv shellcheck patchelf xvfb xauth libgl1-mesa-dev libegl1 libopengl0 libdbus-1-3 libfontconfig1 libfreetype6 libx11-xcb1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-randr0 libxcb-xfixes0 libxcb-sync1 libxcb-render0 libsm6 libice6 libgtk-3-0 libb2-1
       - name: Cache C and C++ compilation
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: local/ccache
           key: cpp-ubuntu-22.04-${{ runner.arch }}-${{ hashFiles('scripts/qt-sdk.py') }}-${{ github.sha }}
@@ -101,12 +101,12 @@ jobs:
       - name: Initialize compiler cache statistics
         run: ccache --zero-stats
       - name: Cache pinned native Qt SDK
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: local/qt
           key: qt-sdk-ubuntu-22.04-${{ runner.arch }}-${{ hashFiles('scripts/qt-sdk.py') }}
       - name: Prepare pinned native Qt SDK
-        run: python scripts/qt-sdk.py setup
+        run: python scripts/qt-sdk.py setup --download-attempts 3
       - name: Run workspace, CLI, tooling and native Qt checks
         run: |
           set -o pipefail

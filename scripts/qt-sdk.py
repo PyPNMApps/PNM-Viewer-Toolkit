@@ -11,11 +11,19 @@ import platform
 import subprocess
 import sys
 import tempfile
+import time
 import venv
 
 ROOT = Path(__file__).resolve().parents[1]
 QT_VERSION = '6.8.3'
 AQT_VERSION = '3.3.0'
+MAX_DOWNLOAD_ATTEMPTS = 3
+TRANSIENT_DOWNLOAD_ERRORS = (
+    'read timed out', 'connection timeout', 'connection reset',
+    'temporary failure in name resolution', 'getaddrinfo failed',
+    'failed to establish a new connection', 'remote end closed connection',
+    '502 server error', '503 server error', '504 server error',
+)
 
 
 def sdk_layout():
@@ -114,12 +122,44 @@ def run(command, environment=None):
                    env=environment, check=True)
 
 
-def setup():
+def _download_qt(command, attempts):
+    """Retry only recognized transient aqt download failures, preserving status.
+
+    Run the same pinned archive installation each time, including after partial
+    extraction; never mistake qmake from an interrupted install for completion.
+    Print captured installer diagnostics on every attempt. Wait 10 then 20
+    seconds between attempts; final failures and non-network errors propagate.
+    """
+    for attempt in range(1, attempts + 1):
+        try:
+            result = subprocess.run([str(argument) for argument in command], cwd=ROOT,
+                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                    text=True, errors='replace', check=True)
+        except subprocess.CalledProcessError as error:
+            diagnostic = error.stdout or ''
+            print(diagnostic, flush=True)
+            if attempt == attempts or not any(
+                    message in diagnostic.casefold() for message in TRANSIENT_DOWNLOAD_ERRORS):
+                raise
+            delay_seconds = 10 * attempt
+            print(f'Qt download attempt {attempt}/{attempts} failed; '
+                  f'retrying in {delay_seconds}s.', flush=True)
+            time.sleep(delay_seconds)
+        else:
+            print(result.stdout, flush=True)
+            return
+
+
+def setup(download_attempts=1):
     """Install aqt and the native Qt SDK locally, or validate an existing SDK.
 
     Reject unsupported hosts first. Downloads require network; no system package
-    installation or global environment mutation occurs. Subprocess errors propagate.
+    installation or global environment mutation occurs. download_attempts is 1–3
+    and retries only transient archive download failures, not validation or tests.
+    Subprocess errors propagate after the last attempt.
     """
+    if not 1 <= download_attempts <= MAX_DOWNLOAD_ATTEMPTS:
+        raise ValueError('Download attempts must be between 1 and 3')
     host, architecture, _ = sdk_layout()
     sdk = sdk_path()
     suffix = '.exe' if os.name == 'nt' else ''
@@ -134,8 +174,9 @@ def setup():
         archives = ['qtbase', 'qtdeclarative', 'qtshadertools', 'qtsvg', 'qttools']
         if host == 'linux':
             archives.append('icu')
-        run([python, '-m', 'aqt', 'install-qt', host, 'desktop', QT_VERSION,
-             architecture, '-O', ROOT / 'local/qt', '--archives', *archives])
+        _download_qt([python, '-m', 'aqt', 'install-qt', host, 'desktop', QT_VERSION,
+                      architecture, '-O', ROOT / 'local/qt', '--archives', *archives],
+                     download_attempts)
     run([qmake, '-query', 'QT_VERSION'], qt_environment())
     if not (sdk / 'bin' / ('qmltestrunner' + suffix)).is_file():
         raise ValueError('Qt SDK lacks qmltestrunner; move the incomplete local SDK aside')
@@ -202,10 +243,14 @@ def main():
     """Dispatch SDK checks or CI linker export and report failures clearly."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=('setup', 'check', 'qml-test', 'export-msvc-linker'))
+    parser.add_argument('--download-attempts', type=int, choices=range(1, 4), default=1,
+                        help='Qt archive download attempts for setup (default: 1)')
     args = parser.parse_args()
+    if args.action != 'setup' and args.download_attempts != 1:
+        parser.error('--download-attempts applies only to setup')
     try:
         if args.action == 'setup':
-            setup()
+            setup(args.download_attempts)
         elif args.action == 'check':
             check()
         elif args.action == 'qml-test':

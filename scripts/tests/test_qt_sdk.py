@@ -152,6 +152,79 @@ class QtEnvironmentTests(unittest.TestCase):
             self.assertEqual(environment['LD_LIBRARY_PATH'].split(os.pathsep)[0], str(self.sdk / 'lib'))
 
 
+class QtDownloadTests(unittest.TestCase):
+    """Keep download retries bounded and independent of test/build failures."""
+
+    def test_timeout_retries_full_install_after_partial_extraction(self):
+        """Retry aqt despite an already extracted qmake, then retain its output."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            qmake = root / 'local/qt/bin/qmake'
+            command = ['python', '-m', 'aqt', 'install-qt', 'mac']
+            calls = []
+
+            def download(arguments, **options):
+                calls.append(arguments)
+                if len(calls) == 1:
+                    qmake.parent.mkdir(parents=True)
+                    qmake.touch()
+                    raise subprocess.CalledProcessError(
+                        1, arguments, output='ArchiveDownloadError: Read timed out.')
+                self.assertTrue(qmake.exists())
+                return subprocess.CompletedProcess(arguments, 0, stdout='Installed all archives')
+
+            output = io.StringIO()
+            with patch.object(QT, 'ROOT', root), \
+                    patch.object(QT.subprocess, 'run', side_effect=download), \
+                    patch.object(QT.time, 'sleep') as pause, redirect_stdout(output):
+                QT._download_qt(command, 3)
+            self.assertEqual(calls, [command, command])
+            pause.assert_called_once_with(10)
+            self.assertIn('Read timed out', output.getvalue())
+            self.assertIn('Installed all archives', output.getvalue())
+
+    def test_repeated_timeout_preserves_final_failure(self):
+        """Stop after exactly three downloads with the final original status."""
+        failure = subprocess.CalledProcessError(7, ['aqt'], output='Read timed out.')
+        with patch.object(QT.subprocess, 'run', side_effect=failure) as download, \
+                patch.object(QT.time, 'sleep') as pause, redirect_stdout(io.StringIO()):
+            with self.assertRaises(subprocess.CalledProcessError) as caught:
+                QT._download_qt(['aqt'], 3)
+        self.assertIs(caught.exception, failure)
+        self.assertEqual(download.call_count, 3)
+        self.assertEqual([call.args[0] for call in pause.call_args_list], [10, 20])
+
+    def test_non_network_failures_are_not_retried(self):
+        """Bad archives, invalid arguments and unknown errors fail immediately."""
+        for diagnostic in ('ArchiveChecksumError', 'Unknown architecture', 'Disk full', ''):
+            with self.subTest(diagnostic=diagnostic), \
+                    patch.object(QT.subprocess, 'run', side_effect=subprocess.CalledProcessError(
+                        1, ['aqt'], output=diagnostic)) as download, \
+                    patch.object(QT.time, 'sleep') as pause, redirect_stdout(io.StringIO()):
+                with self.assertRaises(subprocess.CalledProcessError):
+                    QT._download_qt(['aqt'], 3)
+                self.assertEqual(download.call_count, 1)
+                pause.assert_not_called()
+
+    def test_single_attempt_does_not_retry_timeout(self):
+        """Keep ordinary local setup at one download attempt by default."""
+        with patch.object(QT.subprocess, 'run', side_effect=subprocess.CalledProcessError(
+                1, ['aqt'], output='Read timed out.')) as download, \
+                patch.object(QT.time, 'sleep') as pause, redirect_stdout(io.StringIO()):
+            with self.assertRaises(subprocess.CalledProcessError):
+                QT._download_qt(['aqt'], 1)
+        self.assertEqual(download.call_count, 1)
+        pause.assert_not_called()
+
+    def test_invalid_attempt_count_fails_before_setup(self):
+        """Reject unbounded attempts before tool selection or filesystem writes."""
+        for attempts in (0, 4):
+            with self.subTest(attempts=attempts), patch.object(QT, 'sdk_layout') as layout:
+                with self.assertRaises(ValueError):
+                    QT.setup(attempts)
+                layout.assert_not_called()
+
+
 class QmlReportTests(unittest.TestCase):
     """Keep otherwise invisible Windows test failures observable and fatal."""
 

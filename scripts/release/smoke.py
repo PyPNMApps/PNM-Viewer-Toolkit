@@ -29,7 +29,10 @@ def clean_environment():
     environment['PATH'] = os.pathsep.join(
         entry for entry in environment['PATH'].split(os.pathsep)
         if 'local/qt' not in entry.replace('\\', '/').lower())
-    environment.update(QT_QUICK_BACKEND='software', QT_QUICK_CONTROLS_STYLE='Fusion')
+    # GUI-subsystem Windows applications otherwise send Qt messages to the
+    # debugger instead of the subprocess stderr pipe used for smoke evidence.
+    environment.update(QT_QUICK_BACKEND='software', QT_QUICK_CONTROLS_STYLE='Fusion',
+                       QT_FORCE_STDERR_LOGGING='1')
     return environment
 
 
@@ -58,7 +61,8 @@ def smoke(gui, cli):
                 raise
             print(result.stdout, result.stderr, flush=True)
             if result.returncode != 0 or 'UI_SMOKE_OK' not in result.stdout + result.stderr:
-                raise RuntimeError(f'Installed GUI smoke failed: {filename}')
+                raise RuntimeError(f'Installed GUI smoke failed: {filename}; '
+                                   f'exit={result.returncode}; export_exists={decoded.is_file()}')
             expected = json.loads(raw.read_text(encoding='utf-8'))
             actual = json.loads(decoded.read_text(encoding='utf-8'))
             for field, value in expected.items():
