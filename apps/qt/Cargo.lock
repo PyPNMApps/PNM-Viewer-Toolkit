@@ -622,7 +622,7 @@ checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 
 [[package]]
 name = "pnm"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "delaunator",
  "serde",
@@ -632,11 +632,11 @@ dependencies = [
 
 [[package]]
 name = "pnm-fixtures"
-version = "0.2.2"
+version = "0.2.3"
 
 [[package]]
 name = "pnm-viewer-qt"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "cxx",
  "cxx-gen",
@@ -1091,7 +1091,7 @@ dependencies = [
 
 [[package]]
 name = "viewer"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "pnm",
  "serde",
