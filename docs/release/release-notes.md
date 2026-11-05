@@ -130,7 +130,8 @@ matrix, package integrity/size checks and installed-package lifecycle tests pass
 for this tag. Lifecycle tests cover install, open/render/export and removal on
 all three Ubuntu versions, Windows x64, macOS arm64 and macOS x64. See
 [this tag's workflow runs]({{RUNS_URL}}) for results. These development builds
-are not a release-readiness claim. Public publication remains a manual review.
+are not a release-readiness claim. Publication is automatic only after uploaded
+asset metadata and downloaded bytes are verified.
 
 [Packaging, licenses and prerequisites]({{SOURCE_URL}}/docs/release/packaging.md) ·
 [JSON field contracts]({{SOURCE_URL}}/docs/reference/formats.md)

@@ -57,6 +57,10 @@ GITHUB_ACTIONS locally to bypass their guard. Report local relocated-binary smok
 checks separately from native install/remove checks. Ubuntu installs the same
 22.04-built DEBs on all three versions, and removing the UI must preserve the CLI.
 
-Only a complete validated artifact set produces a draft release. The workflow
-refuses to mutate a public release and does not publish, externally sign or
-notarize. A workflow file or local build is not proof of hosted platform success.
+User authorization on 2026-11-04 supersedes the earlier draft-only rule.
+Only a complete validated artifact set may be uploaded to a temporary draft.
+Verify uploaded sizes, GitHub DEB SHA-256 digests and re-downloaded bytes before
+automatically publishing and marking latest. Never mutate a public release.
+Preserve the temporary Ubuntu-only CI exception in AGENTS.md; a green result
+there is not multi-OS validation. External signing/notarization remain separate.
+A workflow file or local build is not proof of hosted platform success.

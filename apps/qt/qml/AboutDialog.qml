@@ -17,6 +17,7 @@ Dialog {
     title: "About PNM Viewer Toolkit"
     width: 500
     modal: true
+    readonly property bool installBusy: updates.install_state === "downloading" || updates.install_state === "installing"
     standardButtons: Dialog.Close
     contentItem: ColumnLayout {
         spacing: 12
@@ -58,7 +59,7 @@ Dialog {
             Button {
                 objectName: "checkUpdatesButton"
                 text: dialog.updates.update_state === "checking" ? "Checking…" : "Check for updates"
-                enabled: dialog.updates.update_state !== "checking"
+                enabled: dialog.updates.update_state !== "checking" && !dialog.installBusy && dialog.updates.install_state !== "installed"
                 onClicked: dialog.updates.check_updates()
             }
             Button {
@@ -67,8 +68,51 @@ Dialog {
                 onClicked: dialog.openReleaseRequested(dialog.updates.release_url)
             }
         }
+        RowLayout {
+            Button {
+                objectName: "installUpdateButton"
+                text: "Download and install update"
+                visible: dialog.updates.install_available
+                enabled: !dialog.installBusy
+                onClicked: dialog.updates.install_update()
+            }
+            Button {
+                objectName: "cancelUpdateButton"
+                text: "Cancel download"
+                visible: dialog.updates.install_state === "downloading"
+                onClicked: dialog.updates.cancel_install()
+            }
+            Button {
+                objectName: "restartUpdateButton"
+                text: "Restart viewer"
+                visible: dialog.updates.install_state === "installed"
+                onClicked: {
+                    if (dialog.updates.restart_updated()) Qt.quit()
+                }
+            }
+        }
+        ProgressBar {
+            objectName: "installProgress"
+            Layout.fillWidth: true
+            visible: dialog.installBusy
+            from: 0
+            to: 100
+            value: dialog.updates.install_progress
+            indeterminate: dialog.updates.install_state === "installing"
+        }
         Label {
-            text: "Updates are installed manually from the release downloads."
+            objectName: "installStatusLabel"
+            text: dialog.updates.install_status
+            visible: text.length > 0
+            textFormat: Text.PlainText
+            wrapMode: Text.WordWrap
+            Layout.fillWidth: true
+            color: dialog.theme.text
+        }
+        Label {
+            text: dialog.updates.install_available || dialog.installBusy
+                ? "Both packages are verified before installation. Administrator approval is required."
+                : "In-app installation requires an installed Ubuntu x64 build and matching release packages. Other builds use release downloads."
             color: dialog.theme.muted
             wrapMode: Text.WordWrap
             Layout.fillWidth: true

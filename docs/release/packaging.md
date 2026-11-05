@@ -4,10 +4,10 @@
 
 The project remains **under development**. Tag automation builds development
 packages. Temporarily, tag pushes create Ubuntu 22.04-only workflow artifacts
-and an Ubuntu-only draft release after package/lifecycle verification;
+and an automatically published Ubuntu-only release after package/lifecycle and uploaded-byte verification;
 see [DEB testing](ubuntu-deb-testing.md). The preserved full multi-OS workflow is
-manual-only and creates a draft release only after its full native checks pass. Public
-publication, external signing and Apple notarization are separate actions.
+manual-only and publishes only after its full native checks pass and uploaded
+bytes match. External signing and Apple notarization are separate actions.
 
 ## Preserved native outputs
 
@@ -113,7 +113,8 @@ attached alongside the installers.
 
 The workflow supplies this generated page when creating a draft and refreshes
 its text when retrying an existing draft. Existing public releases remain
-protected by the draft check. Release publication stays manual. Tests for the
+protected by the draft check. Publication happens automatically only after
+uploaded metadata and re-downloaded bytes match the verified local assets. Tests for the
 renderer run in the standard release-tool suite and local pre-push gate.
 
 To preview using a complete, verified collected asset directory:

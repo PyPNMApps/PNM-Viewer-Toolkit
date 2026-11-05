@@ -11,8 +11,9 @@ CodeQL/static checks, runs the complete local gate on Ubuntu 22.04, builds both
 viewer/CLI DEBs with existing size/checksum gates, and tests installed packages
 on a disposable Ubuntu 22.04 host. Successful packages are retained as workflow
 artifacts for 30 days. A final job re-verifies the packages and attaches them to
-an explicitly Ubuntu-only **draft** release; it refuses to change public releases
-and never publishes automatically. Diagnostics last 14 days.
+an explicitly Ubuntu-only release. It verifies uploaded sizes, GitHub DEB
+digests and downloaded bytes before automatically publishing. It refuses to
+change an already public release. Diagnostics last 14 days.
 See [artifact installation and upgrade testing](../release/ubuntu-deb-testing.md).
 
 Master/PR CI still runs CodeQL and static checks automatically. The full native
@@ -25,7 +26,7 @@ succeed. A green automatic CI badge therefore does **not** certify all OSes.
 The original full package workflow is preserved with a manual trigger only.
 Run it against an existing matching tag to explicitly request full validation;
 it passes `run_native_checks: true` and retains every original packaging/lifecycle
-and draft-release gate. The temporary workflow never invokes it.
+and publication gate. The temporary workflow never invokes it.
 
 The [investigated run](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/41934494719)
 passed all three Ubuntu native jobs. Windows failed the pre-EQ label-width QML
@@ -168,9 +169,10 @@ removal. Linux also verifies that removing the viewer preserves the CLI package.
 
 Only after every lifecycle job succeeds does one job assemble the complete
 artifact set and attach it to a **draft** GitHub release. It refuses to modify an
-already public release. There is no automatic public publication, external
-signing or notarization. Failed packages, missing targets and packages above
-50,000,000 bytes block the draft. See [packaging](../release/packaging.md).
+already public release. After verifying uploaded metadata and re-downloaded
+bytes, it publishes automatically. External signing and notarization are
+separate. Failed packages, missing targets and packages above
+50,000,000 bytes block publication. See [packaging](../release/packaging.md).
 
 ## Evidence and badges
 
@@ -185,3 +187,25 @@ still require validation in a new hosted run.
 The local pre-push gate checks versions, tooling, Rust and Linux Qt without
 installing dependencies. Native package installation is restricted to disposable
 GitHub runners. Local package builds do not install or publish anything.
+
+## Tag build timing investigation
+
+The v0.1.7 Ubuntu run 41949867202 took 19m 34s after starting (queue time is
+separate): CodeQL about 5m, the full local gate 8m 23s, packaging 4m 26s,
+and installed lifecycle checks 24s. Its Rust restore explicitly reported
+`No cache found`; Qt SDK restoration succeeded. Qt test compilation took 3m 24s,
+Qt Clippy 3m 01s, GUI build 46s and the release GUI build 3m 47s.
+
+Package workflows now use the same `native` Rust cache namespace as native
+checks so compatible default-branch caches are candidates. Preserve runner,
+Qt/toolchain/lockfile cache invalidation and all checks. GitHub caches created
+under one tag are not available to a different tag; without a compatible master
+cache a cold build is expected. No measured speedup is claimed until the next
+hosted run. The user-paused native matrix is not re-enabled to warm caches.
+
+Ubuntu lifecycle CI additionally exercises the real elevated Rust installer
+using synthetic older control versions for both DEBs, verifies the resulting
+versions and refuses same-version reinstallation. This is not historical-binary
+upgrade evidence or automated proof of the interactive Polkit prompt.
+
+Cache scope reference: [GitHub cache access restrictions](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache).

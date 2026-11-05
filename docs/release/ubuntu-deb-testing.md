@@ -22,9 +22,9 @@ Extract it into a fresh directory, keeping one version per directory. It include
 The job enforces version/master ancestry, CodeQL/static checks, Rust and Qt/QML
 checks, package sizes/checksums and installed viewing/export/removal checks on
 Ubuntu 22.04. Failed builds retain diagnostics rather than a successful package
-artifact. A final job creates or refreshes an Ubuntu-only draft release with
-verified package downloads and installation notes. It refuses to change an
-already public release and never publishes automatically.
+artifact. A final job stages an Ubuntu-only draft, verifies uploaded metadata
+and downloads the uploaded bytes, then automatically publishes with installation
+notes. It refuses to change an already public release.
 
 ## Install or manually upgrade
 
@@ -48,14 +48,15 @@ baseline package. Record the actual installed versions and results separately.
 
 The app's update check reads published stable GitHub releases. Actions artifacts
 are not releases, and drafts are ignored, so a successful tag alone will not
-activate the green Update chip. After reviewing the draft, manually publish it
-as a stable release if it should be offered to users. Downloads/installations
-remain manual in the app.
+activate the green Update chip. Automatic publication happens only after all
+workflow gates and remote asset checks pass. Installed Ubuntu x64 builds with
+the installer feature can install both matching packages after OS authentication.
+Older builds need a manual upgrade once to gain that feature.
 
 ### Test from the installed 0.1.6 baseline
 
-1. Keep 0.1.6 installed while the next patch tag builds and its draft is reviewed.
-2. Publish the newer stable release, then use **About → Check for updates** in
+1. Keep 0.1.6 installed while the next patch tag builds and publishes automatically.
+2. After publication, use **About → Check for updates** in
    0.1.6. Confirm the newer version and green Update button appear.
 3. Open **Release notes and downloads**, download the matching CLI and viewer
    DEBs plus checksums, verify them, and install both DEBs together as above.
@@ -63,7 +64,11 @@ remain manual in the app.
    Export use the OS file chooser, About shows the new version, and the update
    check reports the installed version is current. Open a fixture and export JSON.
 
-This is a manual update test; the application does not install its own updates.
+This baseline test is manual because 0.1.6 predates the in-app installer. For the
+next release after the installer is installed, use **Download and install update**
+in About. Test download cancellation, canceled administrator approval and
+successful paired installation. After success, export any unsaved work and use
+**Restart viewer**. Verify both versions and viewing/export after restart.
 
 ## Existing successful tags
 

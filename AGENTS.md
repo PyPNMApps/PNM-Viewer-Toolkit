@@ -135,6 +135,7 @@ User instruction on 2026-11-04 pauses automatic multi-OS execution. Preserve
 full matrices and package/lifecycle/draft gates for explicit manual runs, while
 master/PR runs keep CodeQL/static checks and v* tags use ubuntu-deb-temp.yml.
 That workflow validates and builds/tests Ubuntu 22.04 development artifacts only,
-then creates a clearly scoped Ubuntu-only draft release. Public publication
-remains manual; never modify an already public release. A temporary green CI result is not full OS validation.
+then automatically publishes a clearly scoped Ubuntu-only release after
+verifying uploaded assets. User authorization on 2026-11-04 supersedes the
+earlier draft-only rule. Never modify an already public release. A temporary green CI result is not full OS validation.
 See docs/release/ubuntu-deb-testing.md before restoring automatic scheduling.

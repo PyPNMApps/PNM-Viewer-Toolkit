@@ -52,8 +52,9 @@ The current viewer supports:
 Choose System, Dark or Light appearance. Drag across a graph to zoom and
 double-click to reset; the I/Q density view shows the full capture.
 
-Tag builds prepare [native packages](docs/release/packaging.md) for a draft release
-after all required checks pass. Public downloads are not available yet. Local
+Tag builds automatically publish [native packages](docs/release/packaging.md)
+after all required checks and uploaded-byte verification pass. Automatic tag
+delivery currently covers Ubuntu 22.04 x64 only. Local
 builds have been exercised on Ubuntu 22.04 x86_64; hosted results for the full
 platform matrix remain pending.
 

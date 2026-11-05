@@ -8,8 +8,9 @@
 Tag push commands are unchanged. They currently trigger only the
 [Ubuntu 22.04 development workflow](../../.github/workflows/ubuntu-deb-temp.yml)
 and produce downloadable Actions artifacts after Ubuntu checks/lifecycle tests.
-After verification, a final job creates an Ubuntu-only draft release with
-install/upgrade notes and assets. Public publication remains manual. See
+After verification, a final job uploads assets to a temporary draft, verifies
+remote metadata and downloaded bytes, then automatically publishes the Ubuntu-only
+release with install/upgrade notes. See
 [DEB installation and upgrade testing](../release/ubuntu-deb-testing.md).
 The preserved full package workflow is manual-only against a selected tag;
 its complete multi-OS gates remain mandatory if explicitly run.
@@ -131,11 +132,11 @@ use the already-prepared-version procedure instead.
 
 The [tag workflow](ci.md#tags) validates version/master ancestry, repeats all
 required OS checks, builds native packages and tests installed behavior. Only a
-complete passing artifact set produces a **draft** release. Review artifacts and
-checksums before separate public publication; the project remains in development.
+complete passing artifact set is uploaded to a temporary draft, checked remotely
+and automatically published; the project remains in development.
 
 
-## Review the draft page
+## Release page and automatic publication
 
 Maintain [the installation-focused release template](../release/release-notes.md)
 with package/runtime changes. It supplies package selection, per-OS install,
@@ -143,7 +144,8 @@ update/removal steps, CLI-only options, first use and checksum instructions.
 
 The final workflow job renders version-specific download links from the verified
 collected release index, with source-guide links pinned to the tag. Review the
-rendered draft text and attached assets together before manually publishing.
+rendered page and attached assets in the workflow. The final job verifies remote
+asset metadata and downloads the uploaded bytes before publishing automatically.
 See [release-page generation](../release/packaging.md#release-page) for a local
 preview command. Retrying a draft refreshes its instructions; the workflow
 refuses to edit a public release.

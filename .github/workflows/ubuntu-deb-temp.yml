@@ -54,7 +54,9 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: native-package
+          # Reuse compatible native-check caches from master; tag-only caches
+          # cannot be restored by later tags.
+          shared-key: native
           key: ubuntu-22.04-qt-${{ hashFiles('scripts/qt-sdk.py') }}
           workspaces: |
             . -> target
@@ -106,11 +108,11 @@ jobs:
             echo '### Ubuntu 22.04 development packages'
             echo "Tag: $RELEASE_TAG"
             echo 'Download the ubuntu-22.04-deb artifact for the paired viewer and CLI DEBs, checksums and build metadata.'
-            echo 'Only Ubuntu 22.04 was built and tested. A separate job creates an Ubuntu-only draft; public publication remains manual.'
+            echo 'Only Ubuntu 22.04 was built and tested. A separate job verifies uploaded assets and automatically publishes the Ubuntu-only release.'
             echo 'Installed smoke tests cover installation, viewing/export and removal. Upgrade from an older package remains a separate test.'
           } >> "$GITHUB_STEP_SUMMARY"
-  draft:
-    name: Create Ubuntu-only draft release
+  publish:
+    name: Publish verified Ubuntu-only release
     needs: deb
     runs-on: ubuntu-22.04
     permissions:
@@ -130,19 +132,12 @@ jobs:
         run: |
           python3 scripts/release/notes.py --ubuntu-only --assets release-assets \
             --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY" --output release-page.md
-      - name: Attach tested packages to a draft only
+      - name: Verify uploaded bytes and publish automatically
         env:
           GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          set -euo pipefail
-          if gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft' > draft-state; then
-            test "$(cat draft-state)" = true || { echo 'Refusing to modify a public release'; exit 1; }
-            gh release edit "$RELEASE_TAG" --notes-file release-page.md
-          else
-            gh release create "$RELEASE_TAG" --verify-tag --draft \
-              --title "PNM Viewer Toolkit $RELEASE_TAG — Ubuntu 22.04 development" \
-              --notes-file release-page.md
-          fi
-          gh release upload "$RELEASE_TAG" release-assets/* --clobber
+          python3 scripts/release/publish.py --assets release-assets --notes release-page.md \
+            --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY" \
+            --title "PNM Viewer Toolkit $RELEASE_TAG — Ubuntu 22.04 development"

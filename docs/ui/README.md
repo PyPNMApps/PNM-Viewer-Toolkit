@@ -102,8 +102,16 @@ latest version and open **Release notes and downloads**. Draft releases and tags
 without a published release are not updates. Until a release is published,
 **No published release is available yet** is a normal result.
 
-Installation is manual in this version: the application does not download or
-run installers. **View releases** remains available when checks fail. The check
+Installed Ubuntu x64 builds offer **Download and install update** when the
+release has matching viewer/CLI DEBs with SHA-256 digests. Downloading and
+verification run in Rust with progress and **Cancel download**. The OS asks for
+administrator approval before both packages are installed together. Canceling
+before installation leaves the installed version unchanged. After success,
+export any unsaved work and choose **Restart viewer**; restart is never automatic.
+A failed apt operation can leave a partially updated package state; check both
+package versions before retrying. Other OSes and source builds use release downloads.
+Older 0.1.6/0.1.7 builds require one manual upgrade to gain this installer.
+**View releases** remains available when checks fail. The check
 sends only a release lookup to this project's GitHub API, not capture contents
 or device metadata. Native automated smoke tests skip the startup request.
 

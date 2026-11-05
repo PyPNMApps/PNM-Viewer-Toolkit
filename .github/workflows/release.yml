@@ -73,7 +73,9 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: native-package
+          # Reuse compatible native-check caches from master; tag-only caches
+          # cannot be restored by later tags.
+          shared-key: native
           key: ${{ matrix.os }}-qt-${{ hashFiles('scripts/qt-sdk.py') }}
           workspaces: |
             . -> target
@@ -172,8 +174,8 @@ jobs:
           name: lifecycle-${{ matrix.os }}
           path: lifecycle.log
           if-no-files-found: warn
-  draft:
-    name: Assemble verified draft release
+  publish:
+    name: Publish verified native release
     needs: [ubuntu-install, native-install]
     runs-on: ubuntu-24.04
     permissions:
@@ -195,19 +197,12 @@ jobs:
         run: |
           python3 scripts/release/notes.py --assets release-assets \
             --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY" --output release-page.md
-      - name: Attach verified assets to a draft only
+      - name: Verify uploaded bytes and publish automatically
         env:
           GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          set -euo pipefail
-          if gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft' > draft-state; then
-            test "$(cat draft-state)" = true || { echo 'Refusing to modify a public release'; exit 1; }
-            gh release edit "$RELEASE_TAG" --notes-file release-page.md
-          else
-            gh release create "$RELEASE_TAG" --verify-tag --draft \
-              --title "PNM Viewer Toolkit $RELEASE_TAG — Development build" \
-              --notes-file release-page.md
-          fi
-          gh release upload "$RELEASE_TAG" release-assets/* --clobber
+          python3 scripts/release/publish.py --assets release-assets --notes release-page.md \
+            --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY" \
+            --title "PNM Viewer Toolkit $RELEASE_TAG — Development build"

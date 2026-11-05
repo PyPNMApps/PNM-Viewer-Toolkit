@@ -21,6 +21,15 @@ TestCase {
         property string update_status: "Updates have not been checked."
         property string latest_version: ""
         property string release_url: "https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases"
+        property bool install_available: false
+        property string install_state: "idle"
+        property string install_status: ""
+        property int install_progress: 0
+        property int installs: 0
+        property int cancels: 0
+        function install_update() { installs++; install_state = "downloading" }
+        function cancel_install() { cancels++ }
+        function restart_updated() { return false }
         property int requests: 0
         function check_updates() { requests++; update_state = "checking"; update_status = "Checking for updates…" }
     }
@@ -44,6 +53,11 @@ TestCase {
         service.update_status = "Updates have not been checked."
         service.latest_version = ""
         service.requests = 0
+        service.install_available = false
+        service.install_state = "idle"
+        service.install_status = ""
+        service.installs = 0
+        service.cancels = 0
         appearance.preference = 1
         releaseOpened.clear()
     }
@@ -94,5 +108,29 @@ TestCase {
             about.close()
             tryCompare(about, "opened", false)
         }
+    }
+    function test_installer_progress_cancel_failure_and_restart_controls() {
+        about.open()
+        tryCompare(about, "opened", true)
+        const install = findChild(about, "installUpdateButton")
+        verify(!install.visible)
+        service.install_available = true
+        verify(install.visible)
+        mouseClick(install)
+        compare(service.installs, 1)
+        verify(!install.enabled)
+        verify(!findChild(about, "checkUpdatesButton").enabled)
+        mouseClick(findChild(about, "cancelUpdateButton"))
+        compare(service.cancels, 1)
+        service.install_state = "installing"
+        verify(!findChild(about, "cancelUpdateButton").visible)
+        service.install_state = "error"
+        service.install_status = "Administrator approval canceled."
+        verify(install.enabled)
+        compare(findChild(about, "installStatusLabel").text, service.install_status)
+        service.install_state = "installed"
+        service.install_available = false
+        verify(findChild(about, "restartUpdateButton").visible)
+        verify(!findChild(about, "checkUpdatesButton").enabled)
     }
 }

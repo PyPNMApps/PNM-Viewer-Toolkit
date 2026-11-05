@@ -220,9 +220,16 @@ Core parsers and pnm-decode have no update networking dependency.
 
 Tests use local HTTP fixtures and mocked QML update state. They do not require
 a successful tag, published release, credentials or a live GitHub connection.
-This delivery opens release notes/downloads only. Installer downloads, progress,
-verification, process handoff and restart remain future work; no MSI/MSP helper
-is copied from OSCAR-UI into this NSIS-based Windows package.
+Ubuntu x64 installation lives in `apps/viewer/src/updates/ubuntu/`. Rust validates
+both release assets, downloads with TLS/redirect/size/time/hash limits and
+cancellation, and requests Polkit authentication only after verification.
+The fixed installed executable handles `--install-update` before constructing Qt:
+it copies to root-private staging, rechecks hashes and DEB identity/version/arch,
+requires both candidates to be newer, and runs apt on the pair. It performs no
+network I/O as root. The controller reports progress/failure and exposes an
+explicit restart after success. No Python runtime or shell command strings are
+used. Source builds, Windows and macOS keep release-download links; no Windows
+installer automation is claimed. Interactive Polkit/restart requires VM testing.
 
 ## Viewer source organization
 

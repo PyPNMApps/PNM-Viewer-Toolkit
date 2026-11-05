@@ -5,6 +5,8 @@
 #
 """Test native package installation, rendered JSON export, and removal in CI."""
 import argparse
+import hashlib
+import json
 import os
 from pathlib import Path
 import shutil
@@ -39,6 +41,7 @@ def linux(packages):
         if not Path('/usr/share/applications/pnm-viewer-toolkit.desktop').is_file():
             raise ValueError('Desktop integration missing')
         smoke(installed_gui, Path('/usr/bin/pnm-decode'))
+        linux_upgrade(cli, gui, installed_gui)
     finally:
         run(['sudo', 'apt-get', 'remove', '-y', 'pnm-viewer-toolkit'])
         if installed_gui.exists() or Path('/usr/bin/pnm-viewer').exists():
@@ -48,6 +51,59 @@ def linux(packages):
         run(['sudo', 'apt-get', 'remove', '-y', 'pnm-decode'])
         if Path('/usr/bin/pnm-decode').exists():
             raise ValueError('CLI removal left installed executable')
+
+
+def linux_upgrade(cli, gui, installed_gui):
+    """Exercise the real root installer from a synthetic older control version.
+
+    Runs only inside the existing disposable-host lifecycle gate. The baseline
+    uses this build's payload with an older DEB control version, not a claimed
+    real historical binary. Test both-package upgrade and same-version refusal.
+    No desktop password prompt is automated; VM Polkit testing is separate.
+    """
+    version = json.loads((cli.parent / 'release-manifest.json').read_text())['version']
+    with tempfile.TemporaryDirectory(prefix='pnm-upgrade-fixture-') as workspace:
+        root = Path(workspace)
+        older = []
+        for package in (cli, gui):
+            stage = root / package.stem
+            run(['dpkg-deb', '-R', package, stage])
+            control = stage / 'DEBIAN/control'
+            control.write_text(control.read_text().replace(version, version + '~upgrade-test'))
+            output = root / package.name
+            run(['dpkg-deb', '--root-owner-group', '-Znone', '--build', stage, output])
+            older.append(output)
+        run(['sudo', 'apt-get', 'install', '-y', '--allow-downgrades', *older])
+        with tempfile.TemporaryDirectory(prefix='pnm-viewer-update-') as directory:
+            downloads = Path(directory)
+            plan = {'version': version, 'packages': []}
+            for package in (cli, gui):
+                shutil.copy2(package, downloads / package.name)
+                plan['packages'].append({
+                    'name': package.name, 'size': package.stat().st_size,
+                    'sha256': hashlib.sha256(package.read_bytes()).hexdigest(),
+                    'url': f'https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases/download/v{version}/{package.name}'})
+            (downloads / 'plan.json').write_text(json.dumps(plan))
+            command = ['sudo', 'env', f'PKEXEC_UID={os.getuid()}', installed_gui,
+                       '--install-update', downloads]
+            # Reject tampered bytes through the real privileged entry point.
+            first = downloads / cli.name
+            original = first.read_bytes()
+            first.write_bytes(original[:-1] + bytes([original[-1] ^ 1]))
+            rejected = subprocess.run([str(item) for item in command], capture_output=True, text=True)
+            if rejected.returncode == 0 or 'SHA-256 verification failed' not in rejected.stderr:
+                raise ValueError('Updater did not reject a corrupted package by hash')
+            first.write_bytes(original)
+            run(command)
+            for package in ('pnm-decode', 'pnm-viewer-toolkit'):
+                installed = run(['dpkg-query', '-W', '-f=${Version}', package],
+                                capture_output=True, text=True).stdout
+                if installed != version:
+                    raise ValueError('Paired upgrade did not install the expected version')
+            rejected = subprocess.run([str(item) for item in command], capture_output=True, text=True)
+            if rejected.returncode == 0 or 'newer than both installed packages' not in rejected.stderr:
+                raise ValueError('Updater did not reject a same-version installation')
+            smoke(installed_gui, Path('/usr/bin/pnm-decode'))
 
 
 def windows(packages):

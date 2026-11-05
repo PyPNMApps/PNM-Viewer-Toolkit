@@ -24,6 +24,8 @@ pub struct ReleaseCheck {
     pub latest_version: Option<String>,
     /// Project-owned release page or fixed releases index.
     pub release_url: String,
+    /// Verified metadata for the paired Ubuntu packages, when offered.
+    pub ubuntu: Option<super::ubuntu::InstallPlan>,
 }
 
 #[derive(Deserialize)]
@@ -31,12 +33,14 @@ struct ReleaseMetadata {
     tag_name: String,
     draft: bool,
     prerelease: bool,
+    #[serde(default)]
+    assets: Vec<super::ubuntu::ReleaseAsset>,
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
-struct ReleaseVersion([u64; 3]);
+pub(super) struct ReleaseVersion([u64; 3]);
 impl ReleaseVersion {
-    fn parse(text: &str) -> Result<Self, String> {
+    pub(super) fn parse(text: &str) -> Result<Self, String> {
         if text.len() > MAX_VERSION_BYTES {
             return Err("Release version is too long.".into());
         }
@@ -99,6 +103,7 @@ fn fetch_release(
                 status: "No published release is available yet.".into(),
                 latest_version: None,
                 release_url: RELEASES_URL.into(),
+                ubuntu: None,
             });
         }
         Err(ureq::Error::Status(code, _)) => {
@@ -156,7 +161,9 @@ fn parse_release(installed_version: &str, bytes: &[u8]) -> Result<ReleaseCheck, 
             "This build is newer than the latest published release.".into(),
         ),
     };
+    let ubuntu = super::ubuntu::InstallPlan::from_assets(&latest_version, &release.assets).ok();
     Ok(ReleaseCheck {
+        ubuntu,
         state,
         status,
         latest_version: Some(latest_version),

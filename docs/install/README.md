@@ -4,7 +4,7 @@ PNM Viewer Toolkit is **under development**. Open the
 [GitHub Releases page](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases)
 and choose a published release with installer assets. Each release page has
 version-specific downloads, installation/removal commands and checksums.
-Tag CI prepares drafts for review; drafts are not public downloads. If no
+Tag CI publishes automatically after testing and uploaded-byte verification. If no
 published installer is available, use the [source build](source.md) for the CLI
 or the [Qt development setup](../development/qt.md) for the desktop.
 

@@ -2,8 +2,8 @@
 
 This temporary release contains **Ubuntu 22.04 x64 packages only**. The project
 is under development. Other platforms are not validated by this workflow; their
-full workflows are preserved for manual execution. The workflow creates a draft;
-manual publication makes its downloads public and enables release discovery.
+full workflows are preserved for manual execution. The workflow uploads to a temporary draft, verifies the uploaded metadata and
+downloaded bytes, then automatically publishes the release for update discovery.
 
 ## Downloads
 
@@ -44,5 +44,7 @@ claim validation on Ubuntu 24.04/26.04, Windows or macOS.
 - [Build and test runs]({{RUNS_URL}})
 
 The application's Update chip checks published stable releases. Drafts are not
-announced, and installer download/execution is currently manual. Reusable core
+announced. Installed Ubuntu x64 builds with the installer feature download and
+verify both DEBs, request OS administrator approval, and offer an explicit restart.
+Older builds such as 0.1.6/0.1.7 need one manual upgrade to gain this feature. Reusable core
 libraries are Apache-2.0; the desktop application is GPL-3.0-only.

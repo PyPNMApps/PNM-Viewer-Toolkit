@@ -2,7 +2,7 @@
 
 The Qt viewer, CLI and Rust parsers are available from source. The project is
 under development. Tags temporarily build Ubuntu 22.04-only Actions artifacts
-and a verified Ubuntu-only draft release;
+and an automatically published, verified Ubuntu-only release;
 see [DEB testing](release/ubuntu-deb-testing.md). The full native release workflow
 is manual-only. See the
 [Releases page](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases) for published downloads.

@@ -18,7 +18,7 @@ SYSTEM_DEPENDENCIES = (
     'libxcb-image0, libxcb-keysyms1, libxcb-render-util0, libxcb-shape0, '
     'libxcb-randr0, libxcb-xfixes0, libxcb-sync1, libxcb-render0, libxcb-shm0, '
     'libsm6, libice6, libglib2.0-0 | libglib2.0-0t64, '
-    'libgtk-3-0 | libgtk-3-0t64, libzstd1, zlib1g, libpcre2-16-0, libb2-1'
+    'pkexec, libgtk-3-0 | libgtk-3-0t64, libzstd1, zlib1g, libpcre2-16-0, libb2-1'
 )
 
 

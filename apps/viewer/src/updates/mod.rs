@@ -4,3 +4,4 @@
  */
 //! Application maintenance independent of capture processing.
 pub mod release;
+pub mod ubuntu;

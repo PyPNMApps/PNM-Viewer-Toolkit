@@ -124,7 +124,7 @@ class ReleasePageTests(unittest.TestCase):
         page = self.render(template=template, manifests=self.index[:1], ubuntu_only=True)
         self.assertIn('Ubuntu 22.04 x64 only', page)
         self.assertIn(f'pnm-decode_{self.version}_amd64.deb', page)
-        self.assertIn('manual publication', ' '.join(page.split()))
+        self.assertIn('automatically publishes', ' '.join(page.split()))
         with self.assertRaisesRegex(ValueError, 'Incomplete'):
             self.render(manifests=self.index[:1])
         with self.assertRaisesRegex(ValueError, 'unexpected'):

@@ -54,7 +54,7 @@ version or a failed upload, use `--tag vMAJOR.MINOR.PATCH` with its matching
 existing tag at HEAD. See [release preparation](../development/releasing.md)
 for first-tag instructions, no-op behavior and recovery without a second bump.
 Never overwrite tags. Temporary tag delivery runs Ubuntu 22.04 checks and uploads test-package
-artifacts and creates an Ubuntu-only draft release. Publication remains manual.
+artifacts and automatically publishes an Ubuntu-only release after remote-byte verification.
 The full multi-OS workflow is
 manual-only; see [DEB testing](ubuntu-deb-testing.md).
 
