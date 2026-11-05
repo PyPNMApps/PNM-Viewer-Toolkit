@@ -6,7 +6,7 @@
     "minor_version": 0,
     "capture_time": null
   },
-  "mac_address": "01:02:03:04:05:06",
+  "mac_address": "aa:bb:cc:dd:ee:ff",
   "num_latency_objects": 1,
   "latency_data": [
     {

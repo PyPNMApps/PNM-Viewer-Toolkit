@@ -644,7 +644,7 @@ mod tests {
             Capture::from_bytes(pnm_fixtures::RXMER.to_vec(), "rxmer.bin".into()).unwrap();
         let metadata = serde_json::to_value(capture.metadata().unwrap()).unwrap();
         assert_eq!(metadata["channel_id"], 34);
-        assert_eq!(metadata["mac_address"], "a1:b2:c3:d4:e5:f6");
+        assert_eq!(metadata["mac_address"], "aa:bb:cc:dd:ee:ff");
         assert_eq!(metadata["sample_count"], 7480);
         assert_eq!(capture.viewport(0).unwrap().points.len(), 1024);
     }

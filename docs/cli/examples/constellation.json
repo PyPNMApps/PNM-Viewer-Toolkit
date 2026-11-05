@@ -7,7 +7,7 @@
     "capture_time": 1478354
   },
   "channel_id": 34,
-  "mac_address": "a1:b2:c3:d4:e5:f6",
+  "mac_address": "aa:bb:cc:dd:ee:ff",
   "subcarrier_zero_frequency": 631100000,
   "actual_modulation_order": 7,
   "num_sample_symbols": 8192,

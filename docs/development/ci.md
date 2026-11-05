@@ -209,3 +209,15 @@ versions and refuses same-version reinstallation. This is not historical-binary
 upgrade evidence or automated proof of the interactive Polkit prompt.
 
 Cache scope reference: [GitHub cache access restrictions](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache).
+
+### Follow-up on v0.1.8
+
+Run 41955696360 job 127011859530 still spent 7m52s in the full gate before
+packaging. Sharing the Rust cache namespace alone did not remove the repeated
+Qt native compilation cost. The temporary Ubuntu job now wraps C/C++ compilers
+with ccache, retaining content/flag/compiler validation and all existing tests.
+It caches within the job and restores compatible snapshots when GitHub scope
+permits. A final statistics step reports hits/misses even after test failure.
+No relaxed ccache correctness settings or disabled tests are used. The running
+tag uses its original workflow; this change applies to a subsequent tag.
+Measure the next run before claiming a speedup.

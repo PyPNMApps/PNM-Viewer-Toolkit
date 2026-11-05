@@ -85,6 +85,7 @@ if ! git -C "${PROJECT_DIR}" rev-parse --is-inside-work-tree >/dev/null 2>&1; th
 fi
 
 reject_nested_skill_checkouts
+python3 "${PROJECT_DIR}/tools/security/pnm-mac-updater.py"
 git -C "${PROJECT_DIR}" add --all
 
 if git -C "${PROJECT_DIR}" ls-files --stage -- \

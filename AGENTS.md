@@ -139,3 +139,13 @@ then automatically publishes a clearly scoped Ubuntu-only release after
 verifying uploaded assets. User authorization on 2026-11-04 supersedes the
 earlier draft-only rule. Never modify an already public release. A temporary green CI result is not full OS validation.
 See docs/release/ubuntu-deb-testing.md before restoring automatic scheduling.
+
+## Fixture MAC hygiene
+
+Imported fixture CM and CMTS MAC fields use aabb.ccdd.eeff, serialized as
+aa:bb:cc:dd:ee:ff, as explicitly selected by the user. Run the read-only
+`python3 tools/security/pnm-mac-updater.py` check before staging. Use its explicit
+--write mode for fixture identity changes, preserve original/current provenance
+hashes, and regenerate JSON examples and affected screenshots. See
+`tools/security/README.md`. Do not rewrite arbitrary binary/text files or alter
+upstream PyPNM. This policy concerns development fixtures, not user captures.

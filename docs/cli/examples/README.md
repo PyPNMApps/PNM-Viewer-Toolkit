@@ -5,9 +5,9 @@ and profile. Arrays have not been shortened or rounded for documentation.
 Together the JSON files occupy a few MB. The
 [CLI user guide](../usage.md#json-examples-by-file-type) lists all supported types.
 
-## Preserved capture sources
+## MAC-sanitized capture sources
 
-Inputs come from [the preserved PyPNM fixtures](../../../tests/fixtures/pypnm/README.md).
+Inputs come from [the MAC-sanitized PyPNM fixtures](../../../tests/fixtures/pypnm/README.md).
 Their [provenance](../../../tests/fixtures/pypnm/provenance.json),
 [license](../../../tests/fixtures/pypnm/LICENSE) and
 [notice](../../../tests/fixtures/pypnm/NOTICE) apply to the source material.
@@ -66,3 +66,6 @@ Use an existing `local/` directory; all paths above are relative to the checkout
 root. The JSON examples come from the same serializer used by normal CLI and
 desktop exports. Modulation capacity is an ideal gross useful-symbol estimate
 with explicit overhead exclusions; see [the contract](../../reference/formats.md#per-profile-ideal-capacity-analysis).
+
+All example MAC fields, including the synthetic latency example, use
+`aa:bb:cc:dd:ee:ff` (`aabb.ccdd.eeff`). Measurement values are unchanged.

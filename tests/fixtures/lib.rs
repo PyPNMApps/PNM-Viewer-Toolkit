@@ -2,7 +2,7 @@
  * Copyright 2026 PNM Viewer contributors
  * SPDX-License-Identifier: Apache-2.0
  */
-//! Preserved PyPNM captures for tests and runnable examples only.
+//! MAC-sanitized PyPNM captures for tests and runnable examples only.
 //! Binary inputs retain their upstream license and provenance in pypnm/.
 #![forbid(unsafe_code)]
 
@@ -18,29 +18,29 @@ macro_rules! capture {
     };
 }
 
-/// Preserved `rxmer.bin` capture; see pypnm/provenance.json.
+/// MAC-sanitized `rxmer.bin` capture; see pypnm/provenance.json.
 pub const RXMER: &[u8] = capture!("rxmer.bin");
 
-/// Preserved `fec_summary.bin` capture; see pypnm/provenance.json.
+/// MAC-sanitized `fec_summary.bin` capture; see pypnm/provenance.json.
 pub const FEC_SUMMARY: &[u8] = capture!("fec_summary.bin");
 
-/// Preserved `channel_estimation.bin` capture; see pypnm/provenance.json.
+/// MAC-sanitized `channel_estimation.bin` capture; see pypnm/provenance.json.
 pub const CHANNEL_ESTIMATE: &[u8] = capture!("channel_estimation.bin");
 
-/// Preserved `const_display.bin` capture; see pypnm/provenance.json.
+/// MAC-sanitized `const_display.bin` capture; see pypnm/provenance.json.
 pub const CONSTELLATION: &[u8] = capture!("const_display.bin");
 
-/// Preserved `histogram.bin` capture; see pypnm/provenance.json.
+/// MAC-sanitized `histogram.bin` capture; see pypnm/provenance.json.
 pub const HISTOGRAM: &[u8] = capture!("histogram.bin");
 
-/// Preserved `us_pre_equalizer_coef.bin` capture; see pypnm/provenance.json.
+/// MAC-sanitized `us_pre_equalizer_coef.bin` capture; see pypnm/provenance.json.
 pub const UPSTREAM_PRE_EQ: &[u8] = capture!("us_pre_equalizer_coef.bin");
 
-/// Preserved `us_pre_equalizer_coef_last.bin` capture; see pypnm/provenance.json.
+/// MAC-sanitized `us_pre_equalizer_coef_last.bin` capture; see pypnm/provenance.json.
 pub const UPSTREAM_PRE_EQ_LAST: &[u8] = capture!("us_pre_equalizer_coef_last.bin");
 
-/// Preserved `spectrum_analyzer.bin` capture; see pypnm/provenance.json.
+/// MAC-sanitized `spectrum_analyzer.bin` capture; see pypnm/provenance.json.
 pub const SPECTRUM: &[u8] = capture!("spectrum_analyzer.bin");
 
-/// Preserved `modulation_profile.bin` capture; see pypnm/provenance.json.
+/// MAC-sanitized `modulation_profile.bin` capture; see pypnm/provenance.json.
 pub const MODULATION_PROFILE: &[u8] = capture!("modulation_profile.bin");

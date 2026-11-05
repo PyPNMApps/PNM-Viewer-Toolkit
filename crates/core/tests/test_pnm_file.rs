@@ -199,7 +199,7 @@ fn json_matches_output_contract_and_enforces_limits() {
     assert_eq!(serde_json::to_value(&capture).unwrap(), model);
     assert_eq!(model.as_object().unwrap().len(), 9);
     assert_eq!(model["values"], serde_json::json!([0.0, 23.75, 63.5, null]));
-    assert_eq!(model["mac_address"], "a1:b2:c3:d4:e5:f6");
+    assert_eq!(model["mac_address"], "aa:bb:cc:dd:ee:ff");
     assert_eq!(model["subcarrier_spacing"], 25000);
     assert_eq!(model["data_length"], 4);
     assert_eq!(model["value_units"], "dB");

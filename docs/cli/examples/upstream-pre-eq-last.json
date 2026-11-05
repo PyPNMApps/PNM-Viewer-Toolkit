@@ -7,8 +7,8 @@
     "capture_time": 1764785273
   },
   "channel_id": 41,
-  "mac_address": "a1:b2:c3:d4:e5:f6",
-  "cmts_mac_address": "00:90:f0:05:00:00",
+  "mac_address": "aa:bb:cc:dd:ee:ff",
+  "cmts_mac_address": "aa:bb:cc:dd:ee:ff",
   "subcarrier_zero_frequency": 36200000,
   "first_active_subcarrier_index": 148,
   "subcarrier_spacing": 25000,

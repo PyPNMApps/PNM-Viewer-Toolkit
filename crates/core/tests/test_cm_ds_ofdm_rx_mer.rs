@@ -23,7 +23,7 @@ fn golden_fixture() {
     );
     assert_eq!(header_access.capture_time(), Some(1380970));
     assert_eq!(rxmer.channel_id, 34);
-    assert_eq!(rxmer.mac_address, [0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6]);
+    assert_eq!(rxmer.mac_address, [0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff]);
     assert_eq!(rxmer.subcarrier_zero_frequency_hz, 631100000);
     assert_eq!(rxmer.first_active_subcarrier_index, 356);
     assert_eq!(rxmer.subcarrier_spacing_khz, 25);
