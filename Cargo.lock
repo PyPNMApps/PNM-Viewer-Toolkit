@@ -338,7 +338,7 @@ checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 
 [[package]]
 name = "logging"
-version = "0.1.12"
+version = "0.1.13"
 dependencies = [
  "tracing-subscriber",
 ]
@@ -378,7 +378,7 @@ checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 
 [[package]]
 name = "pnm"
-version = "0.1.12"
+version = "0.1.13"
 dependencies = [
  "delaunator",
  "logging",
@@ -390,7 +390,7 @@ dependencies = [
 
 [[package]]
 name = "pnm-decode"
-version = "0.1.12"
+version = "0.1.13"
 dependencies = [
  "pnm",
  "pnm-fixtures",
@@ -399,7 +399,7 @@ dependencies = [
 
 [[package]]
 name = "pnm-fixtures"
-version = "0.1.12"
+version = "0.1.13"
 
 [[package]]
 name = "proc-macro2"
@@ -802,7 +802,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "viewer"
-version = "0.1.12"
+version = "0.1.13"
 dependencies = [
  "pnm",
  "pnm-fixtures",
