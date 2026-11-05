@@ -32,7 +32,13 @@ ApplicationWindow {
     Theme { id: appTheme }
     ViewerBackend { id: backend }
     UpdateBackend { id: updateBackend }
-    SmokeTest { viewerBackend: backend; applicationWindow: window; surface: captureSurface }
+    SmokeTest {
+        viewerBackend: backend
+        applicationWindow: window
+        surface: captureSurface
+        openCaptureDialog: openDialog
+        exportCaptureDialog: saveDialog
+    }
     Component.onCompleted: {
         backend.set_dark_icon(appTheme.dark)
         // Packaged smoke checks stay offline; normal launch checks once, asynchronously.
@@ -137,6 +143,8 @@ ApplicationWindow {
         theme: appTheme
         updates: updateBackend
         appVersion: backend.app_version
+        captureBusy: backend.busy
+        onRestartRequested: Qt.quit()
         onOpenReleaseRequested: address => Qt.openUrlExternally(address)
     }
     RowLayout {

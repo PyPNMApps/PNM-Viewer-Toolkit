@@ -233,8 +233,11 @@ creator, including ownership and cleanup; the installed lifecycle test uses a
 Python-created private fixture directory and does not exercise live downloads.
 It requires both candidates to be newer, and runs apt on the pair. It performs no
 network I/O as root. The controller reports progress/failure and exposes an
-explicit restart after success. No Python runtime or shell command strings are
-used. Source builds, Windows and macOS keep release-download links; no Windows
+automatic restart after success. About queues the restart on installed state,
+including when hidden, and defers it while the capture backend is busy. Rust
+marks the successful spawn as restarting before QML requests application quit;
+a launch failure keeps installed state and the old window with a retry button.
+No Python runtime or shell command strings are used. Source builds, Windows and macOS keep release-download links; no Windows
 installer automation is claimed. Interactive Polkit/restart requires VM testing.
 
 ## Viewer source organization

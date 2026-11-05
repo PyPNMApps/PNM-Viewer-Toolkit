@@ -17,9 +17,10 @@ CLI archives install no desktop UI.
 
 ## Ubuntu 22.04 / 24.04 / 26.04 — x64
 
-Download both same-version DEBs from the Ubuntu row. In the download directory:
+Download both same-version DEBs and `SHA256SUMS` from this release. In the download directory:
 
 ```bash
+sha256sum --ignore-missing --check SHA256SUMS &&
 sudo apt install ./pnm-decode_{{VERSION}}_amd64.deb ./pnm-viewer-toolkit_{{VERSION}}_amd64.deb
 ```
 
@@ -45,28 +46,29 @@ This leaves the separately owned CLI installed. To remove it too, run
 
 ## Windows — x64
 
-1. Download and run the **Windows x64 EXE installer** from the table.
+1. Download and run the **Windows x64 MSI installer** from the table.
 2. Select an installation folder and launch **PNM Viewer Toolkit** from Start.
 
-The default per-user location is `%LOCALAPPDATA%\Programs\PNM Viewer Toolkit`.
+The default per-machine location is `%ProgramFiles%\PNM Viewer Toolkit`.
 Qt and Microsoft runtime DLLs are app-local. The bundled CLI is in that folder;
 the installer does not add it to PATH. From PowerShell at the default location:
 
 ```powershell
-& "$env:LOCALAPPDATA\Programs\PNM Viewer Toolkit\pnm-decode.exe" --help
+& "$env:ProgramFiles\PNM Viewer Toolkit\pnm-decode.exe" --help
 ```
 
 **CLI only:** extract the Windows CLI ZIP and run `pnm-decode.exe` from its
 versioned folder. Add that folder to your user PATH only if desired.
 
-The installer is unsigned. If Windows displays a reputation or publisher prompt,
-verify the project download and checksum before approving it; do not disable
-Windows protections globally.
+The MSI is unsigned. Verify the project release and SHA-256 before approving
+Windows security/UAC prompts. If double-click does not start installation, use the
+[PowerShell installer/logging instructions]({{SOURCE_URL}}/docs/install/windows.md#windows-11-security-prompts-or-an-msi-that-does-not-open).
+These steps do not disable SmartScreen, Defender, or company policy.
 
-**Update:** quit the viewer and run the new EXE using the same installation folder.
+**Update:** quit the viewer and install the new MSI (older MSIs upgrade; downgrades are refused).
 
 **Uninstall:** Settings → Apps → Installed apps → PNM Viewer Toolkit → Uninstall,
-or run `uninstall.exe` in its installation directory. A separately extracted CLI
+managed by Windows Installer. A separately extracted CLI
 is independent of the desktop installation.
 
 [Windows installation and uninstall guide]({{SOURCE_URL}}/docs/install/windows.md)
@@ -126,7 +128,7 @@ shasum -a 256 PNM-Viewer-Toolkit-{{VERSION}}-macos-arm64.dmg
 ```
 
 ```powershell
-Get-FileHash .\PNM-Viewer-Toolkit-{{VERSION}}-windows-x64.exe -Algorithm SHA256
+Get-FileHash .\PNM-Viewer-Toolkit-{{VERSION}}-windows-x64.msi -Algorithm SHA256
 ```
 
 These packages are assembled only after CodeQL, code checks, the complete native

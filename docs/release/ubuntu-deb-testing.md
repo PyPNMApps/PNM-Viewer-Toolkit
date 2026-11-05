@@ -1,16 +1,18 @@
-# Temporary Ubuntu 22.04 DEB testing
+# Ubuntu package validation and troubleshooting
 
-[CI scope](../development/ci.md#temporary-ubuntu-only-delivery) ·
+[CI scope](../development/ci.md#automatic-multi-os-releases) ·
 [Packaging](packaging.md) · [Version/tag commands](../development/releasing.md)
 
-The project is in development. This temporary workflow runs only when a `v*`
-tag is pushed and builds/tests **Ubuntu 22.04 x64** packages. It preserves the
-full multi-OS workflows for explicit manual runs; it does not make their current
-Windows/macOS failures pass or certify Ubuntu 24.04/26.04 packages.
+The project is in development. Automatic tags now use the full native release
+workflow, including the same 22.04-built DEBs on Ubuntu 22.04, 24.04 and 26.04.
+All native/platform and integrity gates must pass before publication. The former
+Ubuntu-only workflow remains available for explicit manual troubleshooting.
+The instructions below describing its artifact are historical/manual scope;
+normal users should use the [Ubuntu installation guide](../install/ubuntu.md).
 
 ## Get the packages
 
-After pushing a normal version-matched tag, open **Actions → Ubuntu 22.04 DEB
+For an explicitly requested troubleshooting run, open **Actions → Ubuntu 22.04 DEB
 (temporary)** and select its successful run. Download the
 `ubuntu-22.04-deb-vMAJOR.MINOR.PATCH` artifact, available for 30 days.
 Extract it into a fresh directory, keeping one version per directory. It includes:
@@ -79,10 +81,14 @@ newer release. Wayland/accessibility warnings are separate from this rejection.
    check reports the installed version is current. Open a fixture and export JSON.
 
 This baseline test is manual because 0.1.6 predates the in-app installer. For the
-next release after the installer is installed, use **Download and install update**
+next release after the installer is installed, use **Install update and restart**
 in About. Test download cancellation, canceled administrator approval and
-successful paired installation. After success, export any unsaved work and use
-**Restart viewer**. Verify both versions and viewing/export after restart.
+successful paired installation. Export work before starting. Verify successful
+installation automatically launches the updated viewer and closes the old window.
+Check that active capture/export work delays restart, a launch failure keeps the
+old window with a **Restart viewer** retry, and installation errors never restart.
+Verify both versions and viewing/export after restart. Older installed versions
+with the manual flow require one click on **Restart viewer** for that upgrade.
 
 ## Existing successful tags
 
@@ -96,15 +102,9 @@ Prepared v0.1.6 assets/notes in this checkout are under ignored
 Creating a draft and publishing it remain distinct actions. Do not overwrite
 an already public release to apply the workflow correction.
 
-## Restore full delivery
+## Full delivery
 
-1. Resolve and validate the Windows/macOS QML failures.
-2. Restore the `push: tags: ['v*']` trigger in release.yml.
-3. Restore automatic full-native CI scheduling and strict all-platform aggregation.
-4. Remove ubuntu-deb-temp.yml so one tag does not trigger two delivery paths.
-5. Update the README badge and temporary notices in documentation/AGENTS.md.
-
-Until then, a green automatic **Required checks** status covers CodeQL/static
-checks only; the temporary tag job separately requires the Ubuntu 22.04 gate and
-package lifecycle. Full CI and full packages remain available through manual
-workflow runs, with the native matrix enabled and a matching tag for packaging.
+Automatic full delivery is configured in release.yml. The former Ubuntu-only
+workflow has no tag trigger, and must not be used to replace a public release.
+See [CI ordering](../development/ci.md) for the required native matrix and
+remaining hosted/interactive verification scope.

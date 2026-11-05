@@ -145,14 +145,17 @@ def qml_check(environment=None):
     """Run the complete QML suite with persistent, console-independent reports.
 
     environment optionally supplies an already validated Qt subprocess environment;
-    otherwise validate the SDK here. Copy it before selecting offscreen/software
-    rendering. Write fresh text, JUnit XML and process logs in a unique directory
+    otherwise validate the SDK here. Copy it before selecting Cocoa/offscreen
+    event delivery and software rendering. Write fresh text, JUnit XML and process logs in a unique directory
     under local/qt-test-results, then print available diagnostics even on failure.
     Return the report directory. SDK, filesystem and subprocess errors propagate;
     a nonzero test exit always fails the check, never triggers a passing retry.
     """
     environment = dict(qt_environment() if environment is None else environment)
-    environment.update(QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software')
+    # Cocoa runners have a logged-in WindowServer. Its native event delivery
+    # avoids offscreen-plugin mouse/Canvas failures observed on both Mac CPUs.
+    environment.update(QT_QPA_PLATFORM='cocoa' if platform.system() == 'Darwin' else 'offscreen',
+                       QT_QUICK_BACKEND='software')
     reports = ROOT / 'local/qt-test-results'
     reports.mkdir(parents=True, exist_ok=True)
     destination = Path(tempfile.mkdtemp(prefix='run-', dir=reports))

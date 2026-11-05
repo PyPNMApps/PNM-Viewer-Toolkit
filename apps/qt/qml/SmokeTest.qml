@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 import QtQuick
+import QtQuick.Dialogs
 
 // Explicit CI-only command: --smoke-test INPUT_FILE_URL NEW_OUTPUT_FILE_URL.
 // Exercise the real asynchronous backend and one rendered frame, then exit.
@@ -10,6 +11,8 @@ Timer {
     required property var viewerBackend
     required property var applicationWindow
     required property Item surface
+    required property var openCaptureDialog
+    required property var exportCaptureDialog
     readonly property int argumentIndex: Qt.application.arguments.indexOf("--smoke-test")
     property int stage: 0
     property int ticks: 0
@@ -25,6 +28,14 @@ Timer {
             return
         }
         if (stage === 0) {
+            if (Qt.platform.os === "windows" &&
+                ((openCaptureDialog.options & FileDialog.DontUseNativeDialog) !== 0 ||
+                 (exportCaptureDialog.options & FileDialog.DontUseNativeDialog) !== 0)) {
+                console.error("UI_SMOKE_FAILED: Windows native file dialogs disabled")
+                stop()
+                Qt.exit(1)
+                return
+            }
             if (Qt.platform.os === "linux" && Qt.application.name !== "pnm-viewer-toolkit") {
                 console.error("UI_SMOKE_FAILED: desktop application identity mismatch")
                 stop()

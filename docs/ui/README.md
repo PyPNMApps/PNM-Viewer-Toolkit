@@ -102,12 +102,15 @@ latest version and open **Release notes and downloads**. Draft releases and tags
 without a published release are not updates. Until a release is published,
 **No published release is available yet** is a normal result.
 
-Installed Ubuntu x64 builds offer **Download and install update** when the
+Installed Ubuntu x64 builds offer **Install update and restart** when the
 release has matching viewer/CLI DEBs with SHA-256 digests. Downloading and
 verification run in Rust with progress and **Cancel download**. The OS asks for
 administrator approval before both packages are installed together. Canceling
-before installation leaves the installed version unchanged. After success,
-export any unsaved work and choose **Restart viewer**; restart is never automatic.
+before installation leaves the installed version unchanged. Export work before
+starting: after successful installation, the viewer automatically launches the
+updated executable and closes the old window. An active capture/export operation
+finishes first. If launching fails, the old window stays open and **Restart viewer**
+allows a retry. Older versions that wait for this button still need that one click.
 A failed apt operation can leave a partially updated package state; check both
 package versions before retrying. Other OSes and source builds use release downloads.
 Older 0.1.6/0.1.7 builds require one manual upgrade to gain this installer.

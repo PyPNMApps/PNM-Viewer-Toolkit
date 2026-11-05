@@ -199,8 +199,10 @@ def restore(directory):
 
 def select_run(repository, output):
     """Select only successful exact-workflow push artifacts from ancestor commits."""
-    endpoint = f'repos/{repository}/actions/workflows/ubuntu-deb-temp.yml/runs?event=push&status=success&per_page=30'
-    runs = json.loads(run('gh', 'api', endpoint))['workflow_runs']
+    runs = []
+    for workflow in ('release.yml', 'ubuntu-deb-temp.yml'):
+        endpoint = f'repos/{repository}/actions/workflows/{workflow}/runs?event=push&status=success&per_page=30'
+        runs.extend(json.loads(run('gh', 'api', endpoint))['workflow_runs'])
     artifact_name = ARTIFACT_NAME + '-' + identity()[:20]
     selected = None
     for candidate in runs:

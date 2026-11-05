@@ -2,6 +2,7 @@
  * Copyright 2026 PNM Viewer contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
+#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 mod backend;
 mod update;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};

@@ -2,44 +2,45 @@
 
 [Documentation index](../README.md) · [Native packaging](../release/packaging.md)
 
-## Temporary Ubuntu-only delivery
+## Automatic multi-OS releases
 
-By user request, automatic multi-OS runs are paused while Ubuntu DEBs are tested.
-[Ubuntu 22.04 DEB (temporary)](../../.github/workflows/ubuntu-deb-temp.yml) runs
-only on pushed `v*` tags. It validates VERSION and master ancestry, requires
-CodeQL/static checks, runs the complete local gate on Ubuntu 22.04, builds both
-viewer/CLI DEBs with existing size/checksum gates, and tests installed packages
-on a disposable Ubuntu 22.04 host. Successful packages are retained as workflow
-artifacts for 30 days. A final job re-verifies the packages and attaches them to
-an explicitly Ubuntu-only release. It verifies uploaded sizes, GitHub DEB
-digests and downloaded bytes before automatically publishing. It refuses to
-change an already public release. Diagnostics last 14 days.
-See [artifact installation and upgrade testing](../release/ubuntu-deb-testing.md).
+A `v*` tag starts [Native releases](../../.github/workflows/release.yml):
 
-Master/PR CI still runs CodeQL and static checks automatically. The full native
-matrix requires `run_native_checks: true`: this is the default for manual CI,
-but false for reusable calls and absent on ordinary pushes/PRs. Required checks
-explicitly expect the native job to be skipped in this temporary automatic mode;
-failed/canceled code checks still fail. In full mode, every native result must
-succeed. A green automatic CI badge therefore does **not** certify all OSes.
+1. Validate VERSION and master ancestry, then require CodeQL and code checks.
+2. Run the six-platform native matrix. Build packages on Ubuntu 22.04, Windows
+   x64, macOS arm64 and macOS Intel **in the same jobs after their tests**. This
+   reuses dependency outputs instead of starting a second cold packaging matrix.
+3. Exercise Windows MSI baseline/major-upgrade/downgrade/uninstall and both Mac
+   DMG copied-app lifecycles on those native hosts.
+4. Install the identical Ubuntu 22.04-built DEBs on 22.04, 24.04 and 26.04.
+5. Verify the complete asset set, hashes and 50 MB budgets, then upload to a draft,
+   verify remote metadata and downloaded bytes, and publish automatically.
 
-The original full package workflow is preserved with a manual trigger only.
-Run it against an existing matching tag to explicitly request full validation;
-it passes `run_native_checks: true` and retains every original packaging/lifecycle
-and publication gate. The temporary workflow never invokes it.
+Every stage is required; failures/cancellations/skips block publication. Windows
+Server 2022 is the x64 test host, not proof of Windows 11 security-dialog behavior.
+Mac builds use native Cocoa QML event delivery; Linux/Windows QML tests use
+software/offscreen rendering. No failing interaction or pixel assertion is skipped.
+Earlier Windows axis-width and Mac offscreen interaction failures prompted dynamic
+font-based axis margins, test synchronization and the Cocoa selection; native
+hosted success remains to be established for this revised configuration.
 
-The [investigated run](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/41934494719)
-passed all three Ubuntu native jobs. Windows failed the pre-EQ label-width QML
-test; both macOS targets failed chart interaction/rendering tests. Those failures
-remain unresolved and are not relabeled as passing. Restore normal scheduling
-only after the platform issues are addressed: restore the full release tag
-trigger, re-enable automatic native CI, and remove the temporary workflow.
+Master/PR CI remains lean CodeQL/static checking. Manual CI can request the full
+native test matrix without packages; tags always require it with packages.
+[The former Ubuntu-only workflow](../../.github/workflows/ubuntu-deb-temp.yml)
+is now manual troubleshooting only; it has no tag trigger, avoiding duplicate
+release builds. Never run it against an already published tag to change assets.
 
-## Preserved full CI mode
+Ubuntu dependency artifacts may come from successful ancestor runs of either
+release workflow with matching compiler/image/Qt identity. Qt test setup changes
+correctly change the current fingerprint, so the first revised release may be
+cold; subsequent matching tags can reuse its cache. Other platforms use their
+native Cargo/Qt caches. No test results or public packages are reused.
+
+## Full CI mode
 
 [CI](../../.github/workflows/ci.yml) runs on pushes to `master`/`main`, pull
-requests, manual dispatch, and reusable calls. Automatic runs currently use
-the reduced scope above; the diagram below describes explicit full mode.
+requests, manual dispatch, and reusable calls. Master/PR runs use the lean scope above; tags and explicit manual full mode use
+the native matrix below.
 
 ```text
 CodeQL + code checks
@@ -81,7 +82,7 @@ Its six jobs start only after CodeQL and code checks pass. Tests, release CLI
 build/smoke and desktop checks share one runner per platform. This replaces the
 three separate six-platform matrices, reducing hosted runner allocations from
 18 to six while retaining every check on every platform. In full mode, a failed,
-canceled or skipped stage makes **Required checks** fail. The temporary automatic
+canceled or skipped stage makes **Required checks** fail. Lean master/PR
 mode accepts only the deliberately skipped native job; CodeQL/quality must pass.
 
 In GitHub repository settings, protect `master` with the **Required checks**
@@ -143,7 +144,7 @@ still run for the current commit.
 Cold runs and cache evictions still require full downloads/builds. CodeQL remains
 before the matrix. No fixed runtime is promised: GitHub runner queue time and
 macOS availability are outside this repository's control. Full-mode Required checks continue to reject native failures, skips and
-cancellations; temporary automatic mode follows the explicit scope above.
+cancellations; lean branch mode follows the explicit scope above.
 
 The [v0.1.1 run](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/41914986990)
 failed because its macOS ARM desktop job never acquired a hosted runner. GitHub
@@ -156,8 +157,8 @@ an existing release tag to apply these optimizations.
 
 ## Tags
 
-[Native packages](../../.github/workflows/release.yml) is currently manual-only
-and requires a selected `v*` tag. Its preserved full delivery flow follows. It first requires exact `vMAJOR.MINOR.PATCH` agreement with VERSION and every
+[Native releases](../../.github/workflows/release.yml) runs on `v*` pushes and
+can be manually dispatched against a selected tag. It requires exact `vMAJOR.MINOR.PATCH` agreement with VERSION and every
 manifest/lockfile, plus tag-commit ancestry in `origin/master`. It calls the same
 CI workflow on that exact tagged commit, then builds packages on native runners.
 
@@ -176,7 +177,7 @@ separate. Failed packages, missing targets and packages above
 
 ## Evidence and badges
 
-README CI and temporary-DEB badges show their actual workflow state. Platform badges describe
+README CI and native-release badges show their actual workflow state. Platform badges describe
 the required matrix, not passing results. A configured runner is not evidence of
 a successful hosted run; inspect the first run after pushing these changes.
 The linked run completed native build/test checks on all three Ubuntu versions,
@@ -214,7 +215,7 @@ Cache scope reference: [GitHub cache access restrictions](https://docs.github.co
 
 Run 41955696360 job 127011859530 still spent 7m52s in the full gate before
 packaging. Sharing the Rust cache namespace alone did not remove the repeated
-Qt native compilation cost. The temporary Ubuntu job now wraps C/C++ compilers
+Qt native compilation cost. The earlier temporary Ubuntu job wrapped C/C++ compilers
 with ccache, retaining content/flag/compiler validation and all existing tests.
 It caches within the job and restores compatible snapshots when GitHub scope
 permits. A final statistics step reports hits/misses even after test failure.
@@ -230,7 +231,7 @@ the successful v0.1.8 tag's outputs into v0.1.9. Merely changing keys does not
 remove that ref isolation. We preserve tag-only execution and the existing
 CodeQL/test/package/lifecycle/publication gates.
 
-The temporary Ubuntu job now also retains a separate 14-day **native build cache
+The earlier temporary Ubuntu job also retained a separate 14-day **native build cache
 artifact**, not a public release asset. It selects only successful push runs of
 the exact Ubuntu workflow whose stable tag commit is an ancestor of the current
 validated commit. Artifact names include a fingerprint of runner image/ABI,

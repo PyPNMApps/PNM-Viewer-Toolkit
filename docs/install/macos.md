@@ -2,9 +2,10 @@
 
 [Installation overview](README.md) · [Ubuntu](ubuntu.md) · [Windows](windows.md)
 
-**Under development.** macOS packaging is configured but automatic releases
-currently contain Ubuntu packages only. Use these instructions when a release
-includes the matching DMG; do not interpret them as successful macOS validation.
+**Under development.** Choose a release containing the matching Apple Silicon
+or Intel DMG. The release is published only after both native architecture jobs
+pass; older Ubuntu-only releases have no macOS installer. Signing is ad-hoc,
+not Apple notarization or a verified Developer ID.
 
 ## Install and launch
 

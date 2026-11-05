@@ -54,13 +54,6 @@ class PackageContractTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Unsafe'):
                 verify.verify(output)
 
-    def test_nsis_literal_validation(self):
-        """Reject command delimiters in generated installer source."""
-        self.assertEqual(native.nsis_escape('C:/fixture/$value'), 'C:/fixture/$$value')
-        for value in ('"unsafe"', 'line\nbreak', 'line\rbreak'):
-            with self.assertRaises(ValueError):
-                native.nsis_escape(value)
-
     def test_install_requires_disposable_runner(self):
         """Local invocation cannot install packages without the explicit CI guard."""
         result = subprocess.run([sys.executable, str(ROOT / 'scripts/release/test-installed.py'),

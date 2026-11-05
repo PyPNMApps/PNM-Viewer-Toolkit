@@ -1,8 +1,9 @@
 # Copyright 2026 PNM Viewer contributors
 # SPDX-License-Identifier: Apache-2.0
-name: Native packages (manual full matrix)
+name: Native releases
 on:
-  # Temporary: tag pushes use ubuntu-deb-temp.yml instead.
+  push:
+    tags: ['v*']
   workflow_dispatch:
 permissions:
   contents: read
@@ -29,86 +30,15 @@ jobs:
     needs: tag
     permissions:
       contents: read
+      actions: read
       security-events: write
     uses: ./.github/workflows/ci.yml
     with:
       run_native_checks: true
-  package:
-    name: Package / ${{ matrix.os }}
-    needs: validate
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-22.04, windows-2022, macos-15, macos-15-intel]
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - name: Enable MSVC compiler and app-local runtime
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
-      - name: Pin Cargo to the MSVC linker
-        if: runner.os == 'Windows'
-        run: python scripts/qt-sdk.py export-msvc-linker
-      - name: Install Linux packaging prerequisites
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake python3-venv patchelf libgl1-mesa-dev libegl1 libopengl0 libdbus-1-3 libfontconfig1 libfreetype6 libx11-xcb1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-randr0 libxcb-xfixes0 libxcb-sync1 libxcb-render0 libsm6 libice6 libgtk-3-0 libb2-1
-      - name: Install NSIS
-        if: runner.os == 'Windows'
-        run: choco install nsis --version=3.11 --yes --no-progress
-      - name: Load pinned Rust toolchain
-        run: rustup show
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          # Reuse compatible native-check caches from master; tag-only caches
-          # cannot be restored by later tags.
-          shared-key: native
-          key: ${{ matrix.os }}-qt-${{ hashFiles('scripts/qt-sdk.py') }}
-          workspaces: |
-            . -> target
-            apps/qt -> target
-          cache-bin: false
-      - name: Cache pinned native Qt SDK
-        uses: actions/cache@v4
-        with:
-          path: local/qt
-          key: qt-sdk-${{ matrix.os }}-${{ runner.arch }}-${{ hashFiles('scripts/qt-sdk.py') }}
-      - name: Prepare pinned native Qt SDK
-        run: python scripts/qt-sdk.py setup
-      - name: Build native packages and enforce size budget
-        run: python scripts/release/build.py --output dist/release
-      - name: Verify package bytes
-        run: python scripts/release/verify.py --packages dist/release
-      - uses: actions/upload-artifact@v6
-        with:
-          name: native-${{ matrix.os }}
-          path: dist/release/*
-          if-no-files-found: error
-      - name: Retain partial build diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v6
-        with:
-          name: package-diagnostics-${{ matrix.os }}
-          path: |
-            dist/release/*.json
-            dist/release-stage/installer.nsi
-          if-no-files-found: ignore
+      package_release: true
   ubuntu-install:
     name: DEB lifecycle / ${{ matrix.os }}
-    needs: package
+    needs: validate
     strategy:
       fail-fast: false
       matrix:
@@ -139,44 +69,9 @@ jobs:
           name: lifecycle-${{ matrix.os }}
           path: lifecycle.log
           if-no-files-found: warn
-  native-install:
-    name: Native lifecycle / ${{ matrix.os }}
-    needs: package
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-2022, macos-15, macos-15-intel]
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - uses: actions/download-artifact@v7
-        with:
-          name: native-${{ matrix.os }}
-          path: release
-      - name: Verify package bytes
-        run: python scripts/release/verify.py --packages release
-      - name: Install, open, render, export and remove packages
-        run: |
-          set -o pipefail
-          python scripts/release/test-installed.py --packages release --ci-disposable-host 2>&1 | tee lifecycle.log
-      - uses: actions/upload-artifact@v6
-        if: always()
-        with:
-          name: lifecycle-${{ matrix.os }}
-          path: lifecycle.log
-          if-no-files-found: warn
   publish:
     name: Publish verified native release
-    needs: [ubuntu-install, native-install]
+    needs: [validate, ubuntu-install]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

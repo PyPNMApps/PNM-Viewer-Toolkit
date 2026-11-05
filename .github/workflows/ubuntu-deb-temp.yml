@@ -3,8 +3,8 @@
 # Temporary Ubuntu-only development artifacts; never a full release gate.
 name: Ubuntu 22.04 DEB (temporary)
 on:
-  push:
-    tags: ['v*']
+  # Historical troubleshooting path; automatic tags use release.yml.
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
@@ -29,6 +29,7 @@ jobs:
     needs: tag
     permissions:
       contents: read
+      actions: read
       security-events: write
     uses: ./.github/workflows/ci.yml
     with:

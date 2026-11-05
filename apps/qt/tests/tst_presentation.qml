@@ -202,6 +202,8 @@ TestCase {
             appearance.preference = preference
             wait(50)
             const plot = findChild(chart, "measurementPlot")
+            plot.requestPaint()
+            verify(waitForRendering(plot))
             const image = grabImage(plot)
             const horizontal = Math.round((plot.width + plot.leftMargin - plot.rightMargin) / 2)
             for (const trace of series) {
@@ -243,6 +245,7 @@ TestCase {
         compare(pilot.height, all.height)
         compare(pilot.width, all.width)
         verify(!findChild(modulationControls, "modulationCarrierToggle2").enabled)
+        verify(waitForPolish(modulationControls))
         mouseClick(pilot)
         tryCompare(modulationControls, "carrierRequest", 1)
         verify(!pilot.checked && data.checked)
@@ -381,6 +384,9 @@ TestCase {
         chart.visible = true
         histogramChart.visible = false
         scatter.visible = false
+        fecChart.visible = false
+        modulationControls.visible = false
+        bandwidthChip.visible = false
         chart.unit = "dB"
         chart.axisLabel = "RxMER"
         chart.minimum = 0
@@ -434,6 +440,7 @@ TestCase {
             sourcePoints.push({frequency_hz: 640000000 + index * 25000, value: 43})
         }
         chart.viewport = {start: 0, count: 100, total: 100, points: sourcePoints}
+        verify(waitForRendering(chart))
         const plot = findChild(chart, "measurementPlot")
         const plotWidth = plot.width - plot.leftMargin - plot.rightMargin
         const left = plot.leftMargin + plotWidth * 0.25

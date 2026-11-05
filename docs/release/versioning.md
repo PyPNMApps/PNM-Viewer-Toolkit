@@ -53,10 +53,10 @@ Do not manually bump before a combined bump mode. For an already prepared
 version or a failed upload, use `--tag vMAJOR.MINOR.PATCH` with its matching
 existing tag at HEAD. See [release preparation](../development/releasing.md)
 for first-tag instructions, no-op behavior and recovery without a second bump.
-Never overwrite tags. Temporary tag delivery runs Ubuntu 22.04 checks and uploads test-package
-artifacts and automatically publishes an Ubuntu-only release after remote-byte verification.
-The full multi-OS workflow is
-manual-only; see [DEB testing](ubuntu-deb-testing.md).
+Never overwrite tags. Tag delivery requires the complete native matrix and
+MSI/DMG/DEB lifecycle checks before verified automatic publication. The former
+Ubuntu-only workflow is available for manual troubleshooting only; see
+[CI ordering](../development/ci.md).
 
 Run `python3 tools/release/versions.py` to detect version drift; do not edit
 individual application versions independently.

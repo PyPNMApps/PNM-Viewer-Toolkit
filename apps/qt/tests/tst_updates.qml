@@ -29,7 +29,15 @@ TestCase {
         property int cancels: 0
         function install_update() { installs++; install_state = "downloading" }
         function cancel_install() { cancels++ }
-        function restart_updated() { return false }
+        property bool restartSucceeds: false
+        property int restarts: 0
+        function restart_updated() {
+            restarts++
+            if (restartSucceeds) {
+                install_state = "restarting"
+            }
+            return restartSucceeds
+        }
         property int requests: 0
         function check_updates() { requests++; update_state = "checking"; update_status = "Checking for updates…" }
     }
@@ -46,6 +54,7 @@ TestCase {
         appVersion: "0.1.5"
         iconSource: ""
     }
+    SignalSpy { id: restartRequested; target: about; signalName: "restartRequested" }
     SignalSpy { id: releaseOpened; target: about; signalName: "openReleaseRequested" }
     function init() {
         about.close()
@@ -58,6 +67,10 @@ TestCase {
         service.install_status = ""
         service.installs = 0
         service.cancels = 0
+        service.restarts = 0
+        service.restartSucceeds = false
+        about.captureBusy = false
+        restartRequested.clear()
         appearance.preference = 1
         releaseOpened.clear()
     }
@@ -108,6 +121,41 @@ TestCase {
             about.close()
             tryCompare(about, "opened", false)
         }
+    }
+    function test_install_success_automatically_requests_restart_once() {
+        service.restartSucceeds = true
+        service.install_state = "installing"
+        service.install_state = "installed"
+        tryCompare(restartRequested, "count", 1)
+        compare(service.restarts, 1)
+        compare(service.install_state, "restarting")
+        wait(100)
+        compare(service.restarts, 1)
+    }
+    function test_restart_failure_keeps_old_window_and_allows_retry() {
+        about.open()
+        tryCompare(about, "opened", true)
+        service.install_state = "installed"
+        tryCompare(service, "restarts", 1)
+        compare(restartRequested.count, 0)
+        verify(about.opened)
+        service.restartSucceeds = true
+        mouseClick(findChild(about, "restartUpdateButton"))
+        tryCompare(restartRequested, "count", 1)
+        compare(service.restarts, 2)
+    }
+    function test_restart_waits_for_capture_work_and_ignores_install_errors() {
+        about.captureBusy = true
+        service.restartSucceeds = true
+        service.install_state = "installed"
+        wait(100)
+        compare(service.restarts, 0)
+        about.captureBusy = false
+        tryCompare(restartRequested, "count", 1)
+        compare(service.restarts, 1)
+        service.install_state = "error"
+        wait(100)
+        compare(service.restarts, 1)
     }
     function test_installer_progress_cancel_failure_and_restart_controls() {
         about.open()

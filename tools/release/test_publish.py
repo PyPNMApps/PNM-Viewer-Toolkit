@@ -19,12 +19,12 @@ SPEC.loader.exec_module(MODULE)
 class PublishTests(unittest.TestCase):
     """Use an entirely synthetic GitHub service; no network/publication occurs."""
 
-    def exercise(self, mode):
+    def exercise(self, mode, filename="test.deb"):
         """Execute the real coordinator with success, API failure or corrupt assets."""
         with tempfile.TemporaryDirectory() as directory:
             assets = Path(directory) / 'assets'
             assets.mkdir()
-            (assets / 'test.deb').write_bytes(b'package')
+            (assets / filename).write_bytes(b'package')
             calls = []
             def github(*arguments):
                 calls.append(arguments)
@@ -35,12 +35,12 @@ class PublishTests(unittest.TestCase):
                         return json.dumps([[]] if mode == 'new' else [[{'tag_name': 'v0.2.0', 'draft': mode != 'public'}]])
                     digest = 'sha256:' + hashlib.sha256(b'package').hexdigest()
                     return json.dumps([[{'tag_name': 'v0.2.0', 'draft': True, 'assets': [{
-                        'name': 'test.deb', 'state': 'uploaded',
+                        'name': filename, 'state': 'uploaded',
                         'size': 8 if mode == 'size' else 7,
                         'digest': None if mode == 'digest' else digest}]}]])
                 if arguments[:2] == ('release', 'download'):
                     destination = Path(arguments[arguments.index('--dir') + 1])
-                    (destination / 'test.deb').write_bytes(b'corrupt' if mode == 'bytes' else b'package')
+                    (destination / filename).write_bytes(b'corrupt' if mode == 'bytes' else b'package')
                 return ''
             with patch.object(MODULE, 'github', side_effect=github):
                 if mode in ('ok', 'new'):
@@ -58,6 +58,13 @@ class PublishTests(unittest.TestCase):
         """Publish last after successful remote metadata and download verification."""
         self.exercise('ok')
         self.exercise('new')
+
+    def test_msi_and_dmg_digests_are_verified_before_publication(self):
+        """Both new platform installer types require matching GitHub SHA-256."""
+        for filename in ('test.msi', 'test.dmg'):
+            with self.subTest(filename=filename):
+                self.exercise('ok', filename)
+                self.exercise('digest', filename)
 
     def test_blocks_public_api_failure_corrupt_or_missing_assets(self):
         """Every failure stops before publication; public assets remain untouched."""

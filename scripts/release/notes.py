@@ -49,6 +49,12 @@ def render(template, manifests, version, tag, repository, ubuntu_only=False):
     if ubuntu_only:
         platforms = {('Linux', 'x64'): 'Ubuntu 22.04 x64 only'}
         expected_targets = set(platforms)
+    required_packages = {
+        ('Linux', 'x64'): {f'pnm-viewer-toolkit_{version}_amd64.deb', f'pnm-decode_{version}_amd64.deb'},
+        ('Windows', 'x64'): {f'PNM-Viewer-Toolkit-{version}-windows-x64.msi', f'pnm-decode-{version}-windows-x64.zip'},
+        ('Darwin', 'arm64'): {f'PNM-Viewer-Toolkit-{version}-macos-arm64.dmg', f'pnm-decode-{version}-darwin-arm64.tar.gz'},
+        ('Darwin', 'x64'): {f'PNM-Viewer-Toolkit-{version}-macos-x64.dmg', f'pnm-decode-{version}-darwin-x64.tar.gz'},
+    }
     base = 'https://github.com/' + repository
     download = base + '/releases/download/' + tag + '/'
     targets = {}
@@ -83,6 +89,9 @@ def render(template, manifests, version, tag, repository, ubuntu_only=False):
             raise ValueError('Ubuntu draft requires matching viewer and CLI DEBs')
         if len(viewer) != 1 or not cli:
             raise ValueError('Each target needs one viewer installer and CLI packages')
+        target_names = {artifact['name'] for artifact in manifest['artifacts']}
+        if not required_packages[target].issubset(target_names):
+            raise ValueError('Target installer or CLI package missing; require MSI/DMG/DEB for the correct architecture')
         targets[target] = ' | '.join((platforms[target], '<br>'.join(viewer), '<br>'.join(cli)))
     if set(targets) != expected_targets:
         raise ValueError('Incomplete release platform set')

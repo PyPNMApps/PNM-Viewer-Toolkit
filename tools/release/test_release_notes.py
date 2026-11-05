@@ -29,7 +29,7 @@ def manifests(version):
     names = {
         ('Linux', 'x64'): [f'pnm-viewer-toolkit_{version}_amd64.deb',
                            f'pnm-decode_{version}_amd64.deb', f'pnm-decode-{version}-linux-x64.tar.gz'],
-        ('Windows', 'x64'): [f'PNM-Viewer-Toolkit-{version}-windows-x64.exe',
+        ('Windows', 'x64'): [f'PNM-Viewer-Toolkit-{version}-windows-x64.msi',
                              f'pnm-decode-{version}-windows-x64.zip'],
         ('Darwin', 'arm64'): [f'PNM-Viewer-Toolkit-{version}-macos-arm64.dmg',
                               f'pnm-decode-{version}-darwin-arm64.tar.gz'],
@@ -76,6 +76,14 @@ class ReleasePageTests(unittest.TestCase):
         self.assertIn('Under development', page)
         self.assertNotIn('{{', page)
         self.assertNotIn('](../', page)
+
+    def test_windows_requires_msi_and_mac_requires_matching_architecture(self):
+        """Do not publish legacy EXEs or mislabeled DMGs behind new OS instructions."""
+        for index, suffix in ((1, 'windows-x64.exe'), (2, 'macos-x64.dmg')):
+            changed = copy.deepcopy(self.index)
+            changed[index]['artifacts'][0]['name'] = f'PNM-Viewer-Toolkit-{self.version}-{suffix}'
+            with self.assertRaisesRegex(ValueError, 'Target installer|duplicate'):
+                self.render(manifests=changed)
 
     def test_mismatched_tag_or_mixed_version_is_rejected(self):
         """Prevent a release page from pointing at another version's assets."""

@@ -2,41 +2,72 @@
 
 [Installation overview](README.md) · [Ubuntu](ubuntu.md) · [macOS](macos.md)
 
-**Under development.** Windows x64 packaging is configured but automatic releases
-currently contain Ubuntu packages only. These instructions apply when a release
-actually includes a Windows installer; they are not proof of Windows validation.
+**Under development.** Use the **Windows x64 MSI** from a published release with
+Windows assets. Windows 11 x64 is the desktop target; hosted lifecycle tests run
+on Windows Server 2022, which does not prove interactive Windows 11 approval UI.
 
 ## Install and launch
 
-1. Open [GitHub Releases](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases)
-   and download `PNM-Viewer-Toolkit-<version>-windows-x64.exe` and `SHA256SUMS`.
-2. In PowerShell, run `Get-FileHash .\<installer-filename> -Algorithm SHA256`.
-   Compare the result with the matching entry in `SHA256SUMS`.
-3. Run the EXE installer and launch PNM Viewer Toolkit from Start.
+1. Open [GitHub Releases](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases).
+   Download `PNM-Viewer-Toolkit-<version>-windows-x64.msi` and `SHA256SUMS`.
+2. Run `Get-FileHash .\<msi-filename> -Algorithm SHA256` in PowerShell and compare
+   the matching checksum entry. Use the project release assets, not source ZIPs.
+3. Double-click the MSI and follow Windows Installer's prompts, including UAC.
+4. Launch **PNM Viewer Toolkit** from Start as your normal user.
 
-The default per-user folder is `%LOCALAPPDATA%\Programs\PNM Viewer Toolkit`.
-Qt, runtime DLLs, and the CLI are app-local; no Rust or Qt SDK is needed.
-The installer is unsigned. Verify the download before approving OS prompts;
-do not disable Windows protections. GitHub source archives are not installers.
+The default installation directory is `C:\Program Files\PNM Viewer Toolkit`.
+Qt, the MSVC runtime DLLs, CLI, manual and notices are bundled app-local.
+The application does not require an administrator account to run or modify PATH.
+
+## Windows 11 security prompts or an MSI that does not open
+
+These development MSIs are unsigned. A matching SHA-256 checks downloaded bytes;
+it does not provide a verified Authenticode publisher. Confirm the project and
+release before approving OS prompts. If double-click does nothing, try
+right-click → Install, or start Windows Installer with logging from PowerShell:
+
+```powershell
+$msi = Get-ChildItem "$env:USERPROFILE\Downloads\PNM-Viewer-Toolkit-*-windows-x64.msi" |
+    Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if (!$msi) { throw 'Download the Windows x64 MSI first.' }
+$log = "$env:TEMP\pnm-viewer-install.log"
+Write-Host "Installing: $($msi.FullName)"
+$result = Start-Process "$env:SystemRoot\System32\msiexec.exe" -ArgumentList "/i `"$($msi.FullName)`" /norestart /L*V `"$log`"" -Wait -PassThru
+Write-Host "Installer exit code: $($result.ExitCode); log: $log"
+```
+
+Selection is by download modification time; check the printed filename and its
+checksum. Exit code 0 means success; 3010 means success with an OS reboot needed.
+The command keeps Windows security checks enabled and does not reboot the PC.
+If SmartScreen, Smart App Control, Defender, or company policy blocks installation,
+use the applicable OS approval process or contact your administrator. Do not
+disable protections, change execution policy, or blanket-unblock downloads.
+Read logs around `Return value 3` on failure; remove personal information before
+sharing them. See [Microsoft's installer options](https://learn.microsoft.com/en-us/windows/win32/msi/standard-installer-command-line-options).
+
+The viewer's Open and Export actions use native Windows Open/Save dialogs.
+The package includes `qwindows.dll`; smoke tests reject forcing QML fallback.
+Interactive Explorer/dialog and security-prompt behavior still needs Windows 11 testing.
+
+## Update
+
+Quit the viewer and install the new MSI. Its major-upgrade rules replace an older
+MSI from this product family and refuse downgrades. Windows in-app installation
+and MSP patches are deferred; About links to release downloads. A legacy EXE/NSIS
+installation must be uninstalled through Installed apps before the first MSI.
 
 ## CLI only
 
-Extract the release's Windows CLI ZIP. Run `pnm-decode.exe --help` from its
-versioned folder. The desktop installer includes a CLI too:
+Extract the Windows CLI ZIP and run `pnm-decode.exe --help` from its versioned
+folder. Or use the copy bundled with the viewer:
 
 ```powershell
-& "$env:LOCALAPPDATA\Programs\PNM Viewer Toolkit\pnm-decode.exe" --help
+& "$env:ProgramFiles\PNM Viewer Toolkit\pnm-decode.exe" --help
 ```
 
-The installer does not modify PATH. Add an independently extracted CLI folder
-to your user PATH only if desired.
+## Uninstall
 
-## Update and uninstall
-
-Quit the viewer and run the new EXE using the same installation directory.
-Windows updates use manual downloads; Ubuntu's in-app installer does not apply.
-
-To remove it, use Settings → Apps → Installed apps → PNM Viewer Toolkit →
-Uninstall, or run `uninstall.exe` in its installation folder. A separately
-extracted CLI is independent; delete its extracted folder to remove it.
-Keep captures outside installation directories.
+Settings → Apps → Installed apps → PNM Viewer Toolkit → Uninstall.
+Windows Installer owns removal; no separate `uninstall.exe` is installed.
+A separately extracted CLI is independent. Keep captures outside installation
+folders; removing the viewer does not remove captures in your own folders.

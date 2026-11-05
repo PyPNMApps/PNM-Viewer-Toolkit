@@ -2,19 +2,19 @@
 
 [CI and release ordering](../development/ci.md) · [Versioning](versioning.md)
 
-The project remains **under development**. Tag automation builds development
-packages. Temporarily, tag pushes create Ubuntu 22.04-only workflow artifacts
-and an automatically published Ubuntu-only release after package/lifecycle and uploaded-byte verification;
-see [DEB testing](ubuntu-deb-testing.md). The preserved full multi-OS workflow is
-manual-only and publishes only after its full native checks pass and uploaded
-bytes match. External signing and Apple notarization are separate actions.
+The project remains **under development**. Tag releases require native tests,
+installer lifecycle checks and complete-set integrity/size validation before
+verified automatic publication. The same Ubuntu baseline is tested on three
+versions; Windows x64 produces an MSI and both Mac architectures produce DMGs.
+This describes configured gates; use the tagged workflow's results as evidence.
+External signing and Apple notarization remain separate actions.
 
-## Preserved native outputs
+## Native outputs
 
 | Native builder | Viewer | Standalone CLI |
 | --- | --- | --- |
 | Ubuntu 22.04 x64 | `pnm-viewer-toolkit_VERSION_amd64.deb` plus CLI DEB dependency | DEB and `.tar.gz` |
-| Windows x64 | `PNM-Viewer-Toolkit-VERSION-windows-x64.exe` (NSIS) | `.zip` |
+| Windows x64 | `PNM-Viewer-Toolkit-VERSION-windows-x64.msi` | `.zip` |
 | macOS Apple Silicon | `PNM-Viewer-Toolkit-VERSION-macos-arm64.dmg` | `.tar.gz` |
 | macOS Intel | `PNM-Viewer-Toolkit-VERSION-macos-x64.dmg` | `.tar.gz` |
 
@@ -28,8 +28,8 @@ icon, and `pnm-viewer` launcher. Its separate `pnm-decode` dependency owns
 The same Ubuntu 22.04 artifacts must pass installed tests on 22.04, 24.04 and
 26.04; never rebuild a different DEB to make a newer OS check pass.
 
-Windows installs per user under Local AppData with a Start Menu shortcut and
-uninstaller. Qt and MSVC runtime DLLs are app-local. The bundled CLI/manual belong
+Windows installs per machine under Program Files with a Start Menu shortcut and
+standard Windows Installer registration/repair/uninstall. Qt and MSVC runtime DLLs are app-local. The bundled CLI/manual belong
 to that private application directory; independently installed CLI files and
 PATH entries are untouched. Windows packages are unsigned development builds.
 
@@ -44,7 +44,8 @@ explicit user approval. The deployment baseline is macOS 13 or newer.
 
 Install the pinned Rust toolchain and Qt SDK first; use
 `python3 scripts/qt-sdk.py setup` on Unix or `python scripts/qt-sdk.py setup` on
-Windows. Windows builds need an x64 MSVC developer shell and NSIS 3.11; macOS
+Windows. Windows builds need an x64 MSVC developer shell and pinned WiX 3.14.1
+(`WIX_BIN` points to the candle.exe/light.exe directory); macOS
 needs Xcode command-line tools. Ubuntu packaging needs `dpkg-deb`, `patchelf`
 and the runtime libraries listed in `scripts/release/linux.py`.
 
@@ -99,9 +100,9 @@ No configured matrix should be described as a passing platform before that run.
 ## Release page
 
 [The release-page template](release-notes.md) follows OSCAR-UI's installation-first
-layout, adapted to this project's actual NSIS/DEB/DMG and CLI packages. Keep its
+layout, adapted to this project's actual MSI/DEB/DMG and CLI packages. Keep its
 platform instructions consistent with `linux.py` and `native.py`; do not copy
-OSCAR-UI's MSI, Java runtime, engine or update-system claims.
+OSCAR-UI's Java runtime, engine or MSP update-system claims.
 
 After `collect.py` verifies all platform assets, `scripts/release/notes.py` renders
 an installation page from `release-index.json` and root VERSION. It requires a
@@ -126,3 +127,18 @@ python3 scripts/release/notes.py --assets release-assets --tag "v$(cat VERSION)"
 Output must be absent; the renderer never replaces an existing page or contacts
 GitHub. The template contains `{{VERSION}}`, `{{TAG}}`, `{{SOURCE_URL}}`,
 `{{RUNS_URL}}` and `{{ASSET_TABLE}}` tokens, resolved by that command.
+
+## Windows MSI contracts
+
+`scripts/release/windows_msi.py` authors stable per-path components and a stable
+product-family UpgradeCode. Each MSI has a fresh ProductCode, three-point version
+bounded by 255.255.65535, an embedded cabinet, advertised Start menu shortcut and
+transactional major upgrade after InstallInitialize. WiX installer validation is
+enabled; no custom executable actions, PATH edits or security overrides are used.
+The WiX 3.14.1 build pin follows OSCAR-UI's tested authoring toolchain; it produces
+an MSI only, not a Burn bootstrapper or MSP. Native CI authors a synthetic 0.0.0
+installer from current payload bytes, upgrades to the candidate, rejects downgrade,
+verifies one registration and removes it. This checks MSI transitions, not historic
+binary compatibility. The viewer runs as the normal user; only installation needs
+administrator approval. Windows 11 SmartScreen/UAC and native Open/Save behavior
+remain interactive target-device checks. See [Windows installation](../install/windows.md).

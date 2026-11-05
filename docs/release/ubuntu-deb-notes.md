@@ -16,8 +16,11 @@ the packages. Verify downloaded package hashes before installation.
 
 [Ubuntu installation and uninstall guide]({{SOURCE_URL}}/docs/install/ubuntu.md)
 
-From a terminal, download this release's matching packages and checksums, verify
-them, and install both. Quit any running viewer first:
+Download both same-version DEBs and `SHA256SUMS` from the table above. Quit the
+viewer and use the APT commands below from your Downloads folder.
+
+<details>
+<summary>Optional: download and install this release from a terminal</summary>
 
 ```bash
 (
@@ -37,12 +40,14 @@ them, and install both. Quit any running viewer first:
 ```
 
 Launch `pnm-viewer` from a graphical desktop terminal or the application menu.
+</details>
+
 The download command uses `curl`; downloaded packages remain under the generated
 `/tmp/pnm-viewer-install.*` directory. To install files already downloaded using
 your browser, open a terminal in their directory and run:
 
 ```bash
-sha256sum --ignore-missing --check SHA256SUMS
+sha256sum --ignore-missing --check SHA256SUMS &&
 sudo apt install ./pnm-decode_{{VERSION}}_amd64.deb ./pnm-viewer-toolkit_{{VERSION}}_amd64.deb
 pnm-decode --version
 pnm-viewer
@@ -85,6 +90,8 @@ claim validation on Ubuntu 24.04/26.04, Windows or macOS.
 
 The application's Update chip checks published stable releases. Drafts are not
 announced. Installed Ubuntu x64 builds with the installer feature download and
-verify both DEBs, request OS administrator approval, and offer an explicit restart.
+verify both DEBs, request OS administrator approval, then restart automatically
+after installation and any active capture/export work finish. Export work before
+starting. Older installed versions may still require clicking Restart viewer.
 Older builds such as 0.1.6/0.1.7 need one manual upgrade to gain this feature. Reusable core
 libraries are Apache-2.0; the desktop application is GPL-3.0-only.

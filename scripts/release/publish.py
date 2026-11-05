@@ -68,7 +68,7 @@ def publish(assets, notes, tag, repository, title):
     } != expected:
         raise ValueError('Uploaded release asset set does not match verified artifacts')
     for asset in remote:
-        if asset['name'].endswith('.deb'):
+        if asset['name'].endswith(('.deb', '.msi', '.dmg')):
             digest = 'sha256:' + hashlib.sha256((assets / asset['name']).read_bytes()).hexdigest()
             if asset.get('digest') != digest:
                 raise ValueError('GitHub package digest does not match verified bytes')

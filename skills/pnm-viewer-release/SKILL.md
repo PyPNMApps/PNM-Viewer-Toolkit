@@ -64,6 +64,9 @@ User authorization on 2026-11-04 supersedes the earlier draft-only rule.
 Only a complete validated artifact set may be uploaded to a temporary draft.
 Verify uploaded sizes, GitHub DEB SHA-256 digests and re-downloaded bytes before
 automatically publishing and marking latest. Never mutate a public release.
-Preserve the temporary Ubuntu-only CI exception in AGENTS.md; a green result
-there is not multi-OS validation. External signing/notarization remain separate.
+The user restored automatic full tag delivery on 2026-11-04; the old Ubuntu-only
+workflow is manual troubleshooting only. Require MSI/DMG and all Ubuntu lifecycle
+gates; do not treat legacy Ubuntu-only success as multi-OS validation. Windows
+and macOS in-app installers/MSP patches are deferred; manual installer releases
+come first. External signing/notarization remain separate.
 A workflow file or local build is not proof of hosted platform success.

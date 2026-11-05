@@ -11,19 +11,19 @@ or the [Qt development setup](../development/qt.md) for the desktop.
 ## Installation and uninstall by OS
 
 - [Ubuntu: terminal download, install, update and uninstall](ubuntu.md)
-- [Windows: EXE installation, update and uninstall](windows.md)
+- [Windows: MSI installation, update and uninstall](windows.md)
 - [macOS: DMG installation, update and uninstall](macos.md)
 
-Automatic releases currently target **Ubuntu 22.04 x64 only**. Windows, macOS
-and the broader Ubuntu matrix remain manual and are not validated by that run.
-The table below describes configured package formats, not current asset availability.
+Tag releases target the complete matrix below and publish only after every
+native test and package lifecycle gate passes. Check each release's actual assets;
+earlier releases contain Ubuntu 22.04 packages only.
 
 ## Choose a component
 
 | Platform | Desktop viewer | CLI only |
 | --- | --- | --- |
 | Ubuntu 22.04 / 24.04 / 26.04 x64 | Viewer DEB plus same-version CLI DEB; install both with APT | CLI DEB or Linux `.tar.gz` |
-| Windows x64 | Per-user EXE installer with private Qt, Microsoft runtime DLLs and bundled CLI | ZIP containing `pnm-decode.exe` |
+| Windows x64 | Per-machine MSI installer with private Qt, Microsoft runtime DLLs and bundled CLI | ZIP containing `pnm-decode.exe` |
 | macOS Apple Silicon | arm64 DMG; drag the app into Applications | Darwin arm64 `.tar.gz` |
 | macOS Intel | x64 DMG; drag the app into Applications | Darwin x64 `.tar.gz` |
 
@@ -33,7 +33,7 @@ run packaged binaries. Ubuntu uses declared system display libraries; APT may
 need network access. Source builds have separate development prerequisites.
 GitHub's automatically generated **Source code** archives are not installers.
 
-Windows installers are unsigned and do not modify PATH. macOS applications use
+Windows MSIs are unsigned and do not modify PATH. macOS applications use
 ad-hoc signing and are not notarized; their deployment target is macOS 13 or
 newer, while CI runs on macOS 15. Use the release page's download/checksum and
 OS approval instructions. Keep captures outside installation directories.
@@ -41,12 +41,12 @@ OS approval instructions. Keep captures outside installation directories.
 ## Update and remove
 
 Quit the viewer before updating. On Ubuntu, install both new-version DEBs using
-APT. On Windows, run the new EXE with the same installation directory. On macOS,
+APT. On Windows, install the new MSI. On macOS,
 replace the application using the matching architecture's new DMG.
 
 Remove the Ubuntu viewer with `sudo apt remove pnm-viewer-toolkit`; the separate
 CLI remains installed until you remove `pnm-decode`. On Windows, uninstall through
-Installed apps or the installation directory's `uninstall.exe`. On macOS, move
+Installed apps (Windows Installer manages removal). On macOS, move
 the application to Trash. Independently extracted CLI archives are separate from
 the Windows/macOS desktop installations and can be removed independently.
 

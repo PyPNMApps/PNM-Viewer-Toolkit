@@ -213,6 +213,18 @@ class QmlReportTests(unittest.TestCase):
                 QT.check()
             native.assert_not_called()
 
+    def test_mac_uses_native_cocoa_for_interaction_tests(self):
+        """Use WindowServer event delivery without skipping any QML test input."""
+        def succeed(command, **options):
+            self.assertEqual(options['env']['QT_QPA_PLATFORM'], 'cocoa')
+            self.assertEqual(options['env']['QT_QUICK_BACKEND'], 'software')
+            self.assertIn(str(QT.ROOT / 'apps/qt/tests'), command)
+            destination = Path(command[command.index('-o') + 1].rsplit(',', 1)[0])
+            destination.write_text('PASS fixture\n', encoding='utf-8')
+        with patch.object(QT.platform, 'system', return_value='Darwin'), \
+                patch.object(QT.subprocess, 'run', side_effect=succeed), redirect_stdout(self.output):
+            QT.qml_check(self.environment)
+
     def test_repeated_runs_have_separate_reports(self):
         """A later startup failure cannot reuse an earlier passing result file."""
         def succeed(command, **options):

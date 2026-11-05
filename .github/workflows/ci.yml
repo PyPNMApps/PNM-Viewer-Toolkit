@@ -13,11 +13,16 @@ on:
         default: true
   workflow_call:
     inputs:
+      package_release:
+        description: Package and lifecycle-test native installers in the test jobs
+        type: boolean
+        default: false
       run_native_checks:
         description: Run the full native platform matrix
         type: boolean
         default: false
 permissions:
+  actions: read
   contents: read
   security-events: write
 concurrency:
@@ -65,10 +70,12 @@ jobs:
           for script in scripts/*.sh tools/git/*.sh tools/bump-version.sh; do bash -n "$script"; done
           shellcheck install.sh scripts/*.sh tools/git/*.sh tools/bump-version.sh
   native:
-    # Temporary Ubuntu-only delivery: full matrix is explicit/manual.
+    # Tags request the full native matrix; branch/PR checks remain lean.
     if: inputs.run_native_checks == true
     needs: [codeql, quality]
     uses: ./.github/workflows/native-checks.yml
+    with:
+      package_release: ${{ inputs.package_release == true }}
   required:
     name: Required checks
     if: always()

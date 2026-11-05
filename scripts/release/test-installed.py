@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import json
 import os
+import uuid
 from pathlib import Path
 import shutil
 import subprocess
@@ -112,38 +113,76 @@ def linux_upgrade(cli, gui, installed_gui):
             smoke(installed_gui, Path('/usr/bin/pnm-decode'))
 
 
-def windows(packages):
-    """Silently install NSIS to a fresh temp prefix, smoke-test and uninstall.
+def windows(packages, payload):
+    """Exercise MSI install/major-upgrade/downgrade refusal/removal on disposable CI.
 
-    Never touch a user's installed viewer. This script requires the disposable
-    CI guard and refuses a preexisting product registration.
+    payload is the freshly packaged image used to author a synthetic 0.0.0
+    baseline with the current binaries. This verifies installer transitions,
+    not a historical application's behavior or interactive Windows 11 prompts.
     """
     import winreg
-    key = r'Software\Microsoft\Windows\CurrentVersion\Uninstall\PNMViewerToolkit'
-    try:
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key):
-            raise ValueError('Existing viewer registration; refusing lifecycle test')
-    except FileNotFoundError:
-        pass
-    installer = one(packages, '*-windows-x64.exe')
-    with tempfile.TemporaryDirectory(prefix='pnm-install-') as directory:
-        prefix = Path(directory) / 'viewer'
+    from windows_msi import build
+    registry_path = r'Software\Microsoft\Windows\CurrentVersion\Uninstall'
+
+    def registrations():
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, registry_path, 0,
+                            winreg.KEY_READ | winreg.KEY_WOW64_64KEY) as registry:
+            found = []
+            for index in range(winreg.QueryInfoKey(registry)[0]):
+                name = winreg.EnumKey(registry, index)
+                with winreg.OpenKey(registry, name) as product:
+                    try:
+                        title = winreg.QueryValueEx(product, 'DisplayName')[0]
+                    except FileNotFoundError:
+                        continue
+                    if title == 'PNM Viewer Toolkit':
+                        uuid.UUID(name.strip('{}'))
+                        found.append((name, winreg.QueryValueEx(product, 'DisplayVersion')[0]))
+            return found
+
+    def execute(arguments, logfile, success=True):
+        result = subprocess.run(['msiexec.exe', *map(str, arguments), '/qn', '/norestart',
+                                 '/L*V', str(logfile)], cwd=packages, capture_output=True,
+                                text=True, timeout=180)
+        accepted = result.returncode in (0, 3010)
+        if not success:
+            accepted = result.returncode == 1603
+        if not accepted:
+            if logfile.is_file():
+                print(logfile.read_text(encoding='utf-16', errors='replace'), flush=True)
+            raise ValueError(f'Windows Installer exit {result.returncode}; log: {logfile}')
+
+    if registrations():
+        raise ValueError('Existing viewer MSI registration; refusing lifecycle test')
+    if payload is None or not payload.is_dir():
+        raise ValueError('Windows lifecycle requires the fresh packaging payload')
+    installer = one(packages, '*-windows-x64.msi')
+    version = json.loads((packages / 'release-manifest.json').read_text())['version']
+    logs = Path(__file__).resolve().parents[2] / 'local/windows-installer-logs'
+    logs.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='pnm-msi-') as directory:
+        work = Path(directory)
+        prefix = work / 'viewer'
+        baseline = work / 'baseline.msi'
+        build(payload, work, baseline, '0.0.0')
         try:
-            run([installer, '/S', f'/D={prefix}'], timeout=120)
+            execute(['/i', baseline, f'INSTALLFOLDER={prefix}'], logs / 'baseline.log')
+            if len(registrations()) != 1 or registrations()[0][1] != '0.0.0':
+                raise ValueError('MSI baseline registration missing')
+            execute(['/i', installer, f'INSTALLFOLDER={prefix}'], logs / 'upgrade.log')
+            if len(registrations()) != 1 or registrations()[0][1] != version:
+                raise ValueError('MSI major upgrade did not replace baseline registration')
             smoke(prefix / 'pnm-viewer.exe', prefix / 'pnm-decode.exe')
             if not (prefix / 'share/pnm-decode.1').is_file():
                 raise ValueError('Bundled CLI manual missing')
+            execute(['/i', baseline, f'INSTALLFOLDER={prefix}'], logs / 'downgrade.log', success=False)
+            if len(registrations()) != 1 or registrations()[0][1] != version:
+                raise ValueError('Rejected downgrade changed installed version')
         finally:
-            uninstaller = prefix / 'uninstall.exe'
-            if uninstaller.exists():
-                run([uninstaller, '/S', f'_?={prefix}'], timeout=120)
-            if (prefix / 'pnm-viewer.exe').exists() or (prefix / 'pnm-decode.exe').exists():
-                raise ValueError('Uninstall left application executables')
-        try:
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key):
-                raise ValueError('Uninstall left product registration')
-        except FileNotFoundError:
-            pass
+            for product_code, _version in registrations():
+                execute(['/x', product_code], logs / 'uninstall.log')
+        if registrations() or (prefix / 'pnm-viewer.exe').exists() or (prefix / 'pnm-decode.exe').exists():
+            raise ValueError('MSI uninstall left application files or registration')
 
 
 def macos(packages, architecture):
@@ -230,6 +269,7 @@ def main():
     """Require a disposable GitHub runner before system-changing package tests."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--packages', required=True, type=Path)
+    parser.add_argument('--windows-payload', type=Path, help='Fresh image for synthetic MSI upgrade tests')
     parser.add_argument('--ci-disposable-host', action='store_true')
     args = parser.parse_args()
     if not args.ci_disposable_host or os.environ.get('GITHUB_ACTIONS') != 'true':
@@ -239,7 +279,7 @@ def main():
     if system == 'Linux':
         linux(args.packages)
     elif system == 'Windows':
-        windows(args.packages)
+        windows(args.packages.resolve(), args.windows_payload.resolve() if args.windows_payload else None)
     else:
         macos(args.packages, architecture)
 

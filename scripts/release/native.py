@@ -12,25 +12,13 @@ import shutil
 from common import ROOT, binary_path, inventory, notices, qt, run
 
 
-def nsis_escape(value):
-    """Quote generated NSIS string content, rejecting command delimiters.
-
-    Input is a trusted local path or release version; reject quotes/newlines
-    rather than allowing generated source injection. Escape literal dollar signs.
-    """
-    text = str(value)
-    if any(character in text for character in ('"', '\n', '\r')):
-        raise ValueError('Unsupported quote/newline in NSIS path')
-    return text.replace('$', '$$')
-
-
 def windows(stage, output, version):
-    """Deploy a private Qt runtime and build a per-user NSIS installer.
+    """Deploy app-local Qt/MSVC and build a native per-machine Windows MSI.
 
-    Bundle app-local MSVC runtime DLLs, CLI and manual. Do not mutate PATH or
-    claim ownership of any independently installed CLI. Missing deploy/compiler
-    tools fail before installer creation. Native installation is a separate test.
+    Bundle the CLI/manual without changing PATH. Windows Installer owns upgrade,
+    repair and uninstall; no elevated application/custom action is installed.
     """
+    from windows_msi import build
     payload = stage / 'windows-payload'
     payload.mkdir()
     gui = payload / 'pnm-viewer.exe'
@@ -39,6 +27,8 @@ def windows(stage, output, version):
     notices(payload / 'share')
     run([qt.sdk_path() / 'bin/windeployqt.exe', '--release', '--no-translations',
          '--no-compiler-runtime', '--qmldir', ROOT / 'apps/qt/qml', gui], env=qt.qt_environment())
+    if not (payload / 'platforms/qwindows.dll').is_file():
+        raise ValueError('Windows native platform/dialog plugin missing')
     redist = os.environ.get('VCToolsRedistDir')
     if not redist:
         raise ValueError('VCToolsRedistDir missing; initialize the MSVC environment')
@@ -48,48 +38,7 @@ def windows(stage, output, version):
     for dll in candidates[-1].glob('*.dll'):
         shutil.copy2(dll, payload / dll.name)
     inventory(payload, output / 'windows-installed-files.json')
-    artifact = output / f'PNM-Viewer-Toolkit-{version}-windows-x64.exe'
-    install_files = []
-    delete_files = []
-    for path in sorted(payload.rglob('*')):
-        if path.is_file():
-            relative = path.relative_to(payload)
-            parent = str(relative.parent).replace('/', '\\')
-            install_files.extend([f'SetOutPath "$INSTDIR\\{nsis_escape(parent)}"',
-                                  f'File "{nsis_escape(path)}"'])
-            delete_files.append(f'Delete "$INSTDIR\\{nsis_escape(str(relative).replace(chr(47), chr(92)))}"')
-    directories = sorted((path.relative_to(payload) for path in payload.rglob('*') if path.is_dir()),
-                         key=lambda path: len(path.parts), reverse=True)
-    delete_files += [f'RMDir "$INSTDIR\\{nsis_escape(str(path).replace(chr(47), chr(92)))}"' for path in directories]
-    script = stage / 'installer.nsi'
-    script.write_text(f'''Unicode true
-Name "PNM Viewer Toolkit"
-OutFile "{nsis_escape(artifact)}"
-InstallDir "$LOCALAPPDATA\\Programs\\PNM Viewer Toolkit"
-RequestExecutionLevel user
-SetCompressor /SOLID lzma
-Page directory
-Page instfiles
-UninstPage uninstConfirm
-UninstPage instfiles
-Section
-{chr(10).join(install_files)}
-WriteUninstaller "$INSTDIR\\uninstall.exe"
-CreateShortcut "$SMPROGRAMS\\PNM Viewer Toolkit.lnk" "$INSTDIR\\pnm-viewer.exe"
-WriteRegStr HKCU "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\PNMViewerToolkit" "DisplayName" "PNM Viewer Toolkit"
-WriteRegStr HKCU "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\PNMViewerToolkit" "DisplayVersion" "{version}"
-WriteRegStr HKCU "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\PNMViewerToolkit" "UninstallString" '"$INSTDIR\\uninstall.exe"'
-SectionEnd
-Section "Uninstall"
-{chr(10).join(delete_files)}
-Delete "$SMPROGRAMS\\PNM Viewer Toolkit.lnk"
-DeleteRegKey HKCU "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\PNMViewerToolkit"
-Delete "$INSTDIR\\uninstall.exe"
-RMDir "$INSTDIR"
-SectionEnd
-''', encoding='utf-8')
-    compiler = shutil.which('makensis') or r'C:\Program Files (x86)\NSIS\makensis.exe'
-    run([compiler, '/V3', script])
+    build(payload, stage, output / f'PNM-Viewer-Toolkit-{version}-windows-x64.msi', version)
 
 
 def macos(stage, output, version, architecture):

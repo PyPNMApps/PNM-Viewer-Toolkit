@@ -2,19 +2,37 @@
 
 [Installation overview](README.md) · [Windows](windows.md) · [macOS](macos.md)
 
-PNM Viewer Toolkit is **under development**. The current temporary release
-workflow builds and tests **Ubuntu 22.04 x64 only**. Ubuntu 24.04/26.04 packaging
-and lifecycle checks are preserved for manual runs; this release does not claim
-those platforms passed. Download packages from
-[GitHub Releases](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases).
+PNM Viewer Toolkit is **under development**. Release validation targets Ubuntu
+22.04, 24.04 and 26.04 on x64, using the same DEBs built on 22.04. Check the
+release's assets and workflow results; older releases may cover only 22.04.
 
-## Download and install the latest release
+## Download and install
 
-Quit the viewer first. This block downloads both same-version DEBs and their
-checksums, verifies the downloads, and installs or upgrades them through APT.
-It uses `curl` and `python3` for release lookup; neither Python nor Rust is needed
-to run the packaged application. If these download tools are missing, install
-with `sudo apt install curl python3`, or download the assets using your browser.
+1. Open [GitHub Releases](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases).
+2. Download both same-version `pnm-decode_<version>_amd64.deb` and
+   `pnm-viewer-toolkit_<version>_amd64.deb`, plus `SHA256SUMS`, into Downloads.
+3. Quit the viewer. Open a terminal in that download folder, verify the checksums,
+   then install the two DEBs using their actual filenames:
+
+```bash
+# Replace VERSION with the version you downloaded; keep both packages identical.
+sha256sum --ignore-missing --check SHA256SUMS &&
+sudo apt install ./pnm-decode_VERSION_amd64.deb ./pnm-viewer-toolkit_VERSION_amd64.deb &&
+pnm-decode --version
+```
+
+Launch **PNM Viewer Toolkit** from the application menu, or run `pnm-viewer`
+from a graphical desktop terminal as your normal user. No repository checkout,
+Rust, Python, or separate Qt SDK is needed to run packaged binaries. APT may
+download system libraries. An `_apt` sandbox permission notice by itself is
+nonfatal; confirm both packages installed successfully.
+
+<details>
+<summary>Optional: download and install the latest release entirely from a terminal</summary>
+
+This method needs `curl` and `python3` for release lookup. It downloads into a
+fresh APT-readable temporary directory, verifies hashes, then installs both DEBs.
+Installation starts only after every download and checksum check succeeds.
 
 ```bash
 (
@@ -36,20 +54,11 @@ with `sudo apt install curl python3`, or download the assets using your browser.
 )
 ```
 
-Downloads remain in the printed temporary directory. The directory is readable
-by APT's `_apt` user; no home-directory permissions are changed. Installation
-needs administrator approval, and APT may download required system libraries.
-No repository checkout or separate Qt SDK is needed. If a newer release lacks
-the Ubuntu package pair, the download stops before installation.
+The printed directory contains the downloads. If the latest release lacks the
+Ubuntu package pair, the command stops before installation. It changes no
+home-directory permissions.
 
-Launch from the application menu, or from a terminal in the graphical desktop:
-
-```bash
-pnm-viewer
-```
-
-Do not run the viewer with sudo. A terminal without DISPLAY or a working display
-connection cannot launch the desktop; see [Qt troubleshooting](../development/qt.md).
+</details>
 
 ## CLI only
 
@@ -59,10 +68,13 @@ Run `pnm-decode --help` or `man pnm-decode`. The viewer package is not required.
 
 ## Update
 
-No uninstall is needed: quit the viewer and repeat the install block. Installed
+No uninstall is needed: quit the viewer and install both new-version DEBs using the same steps. Installed
 Ubuntu builds with the updater can also use About → Check for updates, then
-Download and install update. Approve the OS authentication dialog and restart
-after success. Versions 0.1.8/0.1.9 need one manual upgrade to fix their download
+Install update and restart. Export work before starting and approve the OS
+authentication dialog. After success, the viewer restarts automatically once any
+active capture/export work finishes. If launching fails, the existing window
+remains open with a Restart viewer retry button. Older builds with the manual
+restart flow require that button after installation. Versions 0.1.8/0.1.9 need one manual upgrade to fix their download
 directory permissions before testing future in-app updates.
 
 ## Uninstall

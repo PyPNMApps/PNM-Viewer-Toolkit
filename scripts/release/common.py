@@ -95,7 +95,7 @@ def verify_artifacts(output):
     50,000,000-byte cap; metadata does not exempt oversized packages.
     """
     artifacts = sorted(path for path in output.iterdir()
-                       if path.suffix in ('.deb', '.exe', '.dmg', '.zip', '.gz'))
+                       if path.suffix in ('.deb', '.msi', '.dmg', '.zip', '.gz'))
     if not artifacts:
         raise ValueError('No native package artifacts produced')
     checksums = []

@@ -132,16 +132,22 @@ local builds do not authorize system installation or publication.
 Qt setup and validation: docs/development/qt.md. Run scripts/qt-desktop.sh check
 for Qt changes and capture-layer changes.
 
-## Temporary Ubuntu-only CI mode
+## Multi-OS release delivery
 
-User instruction on 2026-11-04 pauses automatic multi-OS execution. Preserve
-full matrices and package/lifecycle/draft gates for explicit manual runs, while
-master/PR runs keep CodeQL/static checks and v* tags use ubuntu-deb-temp.yml.
-That workflow validates and builds/tests Ubuntu 22.04 development artifacts only,
-then automatically publishes a clearly scoped Ubuntu-only release after
-verifying uploaded assets. User authorization on 2026-11-04 supersedes the
-earlier draft-only rule. Never modify an already public release. A temporary green CI result is not full OS validation.
-See docs/release/ubuntu-deb-testing.md before restoring automatic scheduling.
+User instruction on 2026-11-04 restores automatic multi-OS tag releases, superseding
+the earlier Ubuntu-only pause. release.yml requires CodeQL/static checks, all six
+native test jobs, MSI/DMG packaging and installed lifecycle checks, baseline DEBs
+on Ubuntu 22.04/24.04/26.04, complete assets, budgets and verified publication.
+Tests and packaging share native hosts to avoid a second cold compilation matrix.
+The old Ubuntu-only workflow is manual troubleshooting only; never trigger both
+for an automatic tag. Master/PR remains lean CodeQL/static, with native checks
+available manually. No failing native tests may be skipped to publish.
+Windows x64 uses MSI; macOS arm64/x64 use DMGs. Windows/macOS in-app install and
+restart are deferred by explicit user choice; Ubuntu keeps automatic restart.
+Follow OSCAR-UI's Windows security guidance without disabling OS protections,
+execution-policy bypasses, blanket unblock or elevated application launches.
+Native hosted results and Windows 11/macOS interactive approvals require evidence.
+Never modify an already public release. Signing/notarization remain separate.
 
 ## Fixture MAC hygiene
 

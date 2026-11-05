@@ -90,6 +90,12 @@ ColumnLayout {
     onStepPlotChanged: plot.requestPaint()
     spacing: 10
 
+    TextMetrics {
+        id: axisLabelMetrics
+        font.family: "sans-serif"
+        font.pixelSize: 11
+        text: "-000.000"
+    }
     // Qt Quick Canvas is rendered by Qt; no HTML document or WebView is used.
     Canvas {
         id: plot
@@ -101,7 +107,8 @@ ColumnLayout {
         Accessible.role: Accessible.Graphic
         Accessible.name: chart.axisLabel + " in " + chart.unit + " versus frequency in MHz; drag to zoom, double-click to reset"
         // Leave room for negative dB labels with three decimal places.
-        property real leftMargin: 64
+        property real leftMargin: Math.max(64, Math.ceil(axisLabelMetrics.width) + 16)
+        onLeftMarginChanged: requestPaint()
         property real rightMargin: 18
         property real topMargin: 22
         property real bottomMargin: 42

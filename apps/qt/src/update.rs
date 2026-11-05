@@ -94,7 +94,7 @@ impl bridge::UpdateBackend {
         if self.update_state().to_string() == "checking"
             || matches!(
                 self.install_state().to_string().as_str(),
-                "downloading" | "installing" | "installed"
+                "downloading" | "installing" | "installed" | "restarting"
             )
         {
             return;
@@ -154,7 +154,7 @@ impl bridge::UpdateBackend {
         if !*self.install_available()
             || matches!(
                 self.install_state().to_string().as_str(),
-                "downloading" | "installing" | "installed"
+                "downloading" | "installing" | "installed" | "restarting"
             )
         {
             return;
@@ -186,9 +186,11 @@ impl bridge::UpdateBackend {
             let _queued = qt_thread.queue(move |mut controller| {
                 match result {
                     Ok(()) => {
-                        controller.as_mut().set_install_state(QString::from("installed"));
-                        controller.as_mut().set_install_status(QString::from("Update installed. Export any unsaved work, then restart the viewer."));
                         controller.as_mut().set_install_available(false);
+                        controller.as_mut().set_update_state(QString::from("installed"));
+                        controller.as_mut().set_update_status(QString::from("Update installed. Restarting the viewer…"));
+                        controller.as_mut().set_install_status(QString::from("Update installed. Restarting the viewer…"));
+                        controller.as_mut().set_install_state(QString::from("installed"));
                     }
                     Err(message) => {
                         controller.as_mut().set_install_state(QString::from("error"));
@@ -219,9 +221,14 @@ impl bridge::UpdateBackend {
             return false;
         }
         match ubuntu::restart() {
-            Ok(_) => true,
+            Ok(_) => {
+                self.as_mut().set_install_state(QString::from("restarting"));
+                true
+            }
             Err(message) => {
-                self.as_mut().set_install_status(QString::from(message));
+                self.as_mut().set_install_status(QString::from(format!(
+                    "Update installed, but the viewer could not restart: {message}. Try Restart viewer again."
+                )));
                 false
             }
         }

@@ -3,8 +3,14 @@
 name: Native checks
 on:
   workflow_call:
+    inputs:
+      package_release:
+        description: Build installer assets and exercise native installation
+        type: boolean
+        default: false
 permissions:
   contents: read
+  actions: read
 jobs:
   native:
     name: Native / ${{ matrix.os }}
@@ -38,7 +44,38 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake python3-venv libgl1-mesa-dev libegl1 libopengl0 libdbus-1-3 libfontconfig1 libfreetype6 libx11-xcb1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-randr0 libxcb-xfixes0 libxcb-sync1 libxcb-render0 libsm6 libice6 libgtk-3-0 libb2-1
+          sudo apt-get install -y build-essential cmake python3-venv libgl1-mesa-dev libegl1 libopengl0 libdbus-1-3 libfontconfig1 libfreetype6 libx11-xcb1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-randr0 libxcb-xfixes0 libxcb-sync1 libxcb-render0 libsm6 libice6 libgtk-3-0 libb2-1 ccache patchelf shellcheck
+      - name: Configure Linux compiler cache
+        if: runner.os == 'Linux'
+        run: |
+          {
+            echo 'CC=ccache cc'
+            echo 'CXX=ccache c++'
+            echo "CCACHE_DIR=$GITHUB_WORKSPACE/local/ccache"
+            echo "CCACHE_BASEDIR=$GITHUB_WORKSPACE"
+            echo 'CCACHE_COMPILERCHECK=content'
+            echo 'CCACHE_MAXSIZE=512M'
+          } >> "$GITHUB_ENV"
+      - name: Install pinned Windows MSI build tools
+        if: inputs.package_release && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $wixBin = "${env:ProgramFiles(x86)}\WiX Toolset v3.14\bin"
+          $pinned = (Test-Path "$wixBin\candle.exe") -and (Test-Path "$wixBin\light.exe")
+          if ($pinned) {
+            $pinned = (Get-Item "$wixBin\candle.exe").VersionInfo.FileVersion -like '3.14.1*'
+          }
+          if (!$pinned) {
+            choco upgrade wixtoolset --version=3.14.1 --allow-downgrade --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'WiX installation failed' }
+          }
+          foreach ($tool in @('candle.exe', 'light.exe')) {
+            if (!(Test-Path "$wixBin\$tool") -or (Get-Item "$wixBin\$tool").VersionInfo.FileVersion -notlike '3.14.1*') {
+              throw "Pinned WiX 3.14.1 tool missing: $tool"
+            }
+          }
+          "WIX_BIN=$wixBin" >> $env:GITHUB_ENV
       - name: Load pinned Rust toolchain
         run: rustup show
       - name: Cache Rust dependencies
@@ -50,6 +87,27 @@ jobs:
             . -> target
             apps/qt -> target
           cache-bin: false
+      - name: Find reusable Ubuntu outputs from an ancestor release
+        if: inputs.package_release && matrix.os == 'ubuntu-22.04'
+        id: native-cache-source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/ci/native_cache.py select
+      - name: Download prior Ubuntu dependency outputs
+        if: steps.native-cache-source.outputs.run_id != ''
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ steps.native-cache-source.outputs.artifact_name }}
+          path: local/previous-native-cache
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.native-cache-source.outputs.run_id }}
+      - name: Restore validated Ubuntu dependency outputs
+        if: steps.native-cache-source.outputs.run_id != ''
+        run: python3 scripts/ci/native_cache.py restore --directory local/previous-native-cache
+      - name: Initialize compiler cache statistics
+        if: runner.os == 'Linux'
+        run: ccache --zero-stats
       - name: Test workspace and CLI
         run: cargo test --workspace --locked
       - name: Test version and packaging tools
@@ -88,3 +146,57 @@ jobs:
           path: local/qt-test-results/
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Build native release packages
+        if: inputs.package_release && (matrix.os == 'ubuntu-22.04' || runner.os != 'Linux')
+        run: python scripts/release/build.py --output dist/release
+      - name: Verify native release package bytes
+        if: inputs.package_release && (matrix.os == 'ubuntu-22.04' || runner.os != 'Linux')
+        run: python scripts/release/verify.py --packages dist/release
+      - name: Test installed MSI or DMG lifecycle
+        if: inputs.package_release && runner.os != 'Linux'
+        run: |
+          set -o pipefail
+          args=(--packages dist/release --ci-disposable-host)
+          if [[ "$RUNNER_OS" == Windows ]]; then
+            args+=(--windows-payload dist/release-stage/windows-payload)
+          fi
+          python scripts/release/test-installed.py "${args[@]}" 2>&1 | tee lifecycle.log
+      - name: Retain verified native packages
+        if: inputs.package_release && (matrix.os == 'ubuntu-22.04' || runner.os != 'Linux')
+        uses: actions/upload-artifact@v6
+        with:
+          name: native-${{ matrix.os }}
+          path: dist/release/*
+          if-no-files-found: error
+          retention-days: 30
+      - name: Export Ubuntu dependency cache
+        if: inputs.package_release && matrix.os == 'ubuntu-22.04'
+        id: native-cache-export
+        run: python3 scripts/ci/native_cache.py pack
+      - name: Retain dependency outputs for following tags
+        if: steps.native-cache-export.outputs.ready == 'true'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.native-cache-source.outputs.artifact_name }}
+          path: local/native-cache-artifact/*
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 14
+      - name: Retain native installer diagnostics
+        if: always() && inputs.package_release
+        uses: actions/upload-artifact@v6
+        with:
+          name: installer-diagnostics-${{ matrix.os }}
+          path: |
+            lifecycle.log
+            local/windows-installer-logs/
+            dist/release-stage/installer.wxs
+            dist/release-stage/installer.wixpdb
+            dist/release/*.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Report Linux compiler cache statistics
+        if: always() && runner.os == 'Linux'
+        run: ccache --show-stats
