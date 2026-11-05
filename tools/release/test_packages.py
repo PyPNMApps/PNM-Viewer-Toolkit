@@ -5,11 +5,13 @@
 """Artifact integrity, size-budget and lifecycle guard regression tests."""
 import importlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -22,6 +24,37 @@ import verify
 
 class PackageContractTests(unittest.TestCase):
     """Reject corrupt artifacts and unsafe execution without native installers."""
+
+    def test_windows_zip_preserves_legacy_notices(self):
+        """Clamp old ZIP dates while preserving bytes, paths and source metadata."""
+        builder = importlib.import_module('build')
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / 'pnm-decode-synthetic-windows-x64'
+            share = source / 'share'
+            share.mkdir(parents=True)
+            files = {share / 'legacy-LICENSE': (b'legacy license bytes', 157809600),
+                     source / 'pnm-decode.exe': (b'synthetic executable', 946728000)}
+            for path, (content, timestamp) in files.items():
+                path.write_bytes(content)
+                os.utime(path, (timestamp, timestamp))
+            original_times = {path: path.stat().st_mtime_ns for path in files}
+            destination = builder.cli_archive(source, root, 'Windows')
+            with zipfile.ZipFile(destination) as archive:
+                self.assertIsNone(archive.testzip())
+                for path, (content, _) in files.items():
+                    name = path.relative_to(root).as_posix()
+                    self.assertEqual(archive.read(name), content)
+                    self.assertEqual(path.read_bytes(), content)
+                    self.assertEqual(path.stat().st_mtime_ns, original_times[path])
+                legacy = archive.getinfo(f'{source.name}/share/legacy-LICENSE')
+                self.assertEqual(legacy.date_time, (1980, 1, 1, 0, 0, 0))
+                modern = archive.getinfo(f'{source.name}/pnm-decode.exe')
+                self.assertEqual(modern.date_time[0], 2000)
+            original_archive = destination.read_bytes()
+            with self.assertRaises(FileExistsError):
+                builder.cli_archive(source, root, 'Windows')
+            self.assertEqual(destination.read_bytes(), original_archive)
 
     def test_size_budget_and_checksum_corruption(self):
         """Reject empty/oversized packages and changed bytes after upload."""

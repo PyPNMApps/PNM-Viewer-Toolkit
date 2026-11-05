@@ -9,9 +9,29 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import zipfile
 
 from common import (ROOT, binary_path, inventory, native_target, notices, qt,
                     release_version, run, verify_artifacts)
+
+
+def cli_archive(source, output, system):
+    """Archive a staged CLI directory, returning the new archive path.
+
+    Windows ZIP entries clamp legacy notice timestamps to ZIP's supported date
+    range without changing staged files, contents or source modification times.
+    Refuse an existing ZIP destination; other hosts retain the gzip tar layout.
+    Filesystem and archive errors propagate, preserving diagnostic output.
+    """
+    if system != 'Windows':
+        return shutil.make_archive(str(output / source.name), 'gztar',
+                                   root_dir=source.parent, base_dir=source.name)
+    destination = output / (source.name + '.zip')
+    with zipfile.ZipFile(destination, 'x', compression=zipfile.ZIP_DEFLATED,
+                         strict_timestamps=False) as archive:
+        for path in [source, *sorted(source.rglob('*'))]:
+            archive.write(path, path.relative_to(source.parent).as_posix())
+    return destination
 
 
 def build(output):
@@ -45,8 +65,7 @@ def build(output):
     shutil.copy2(binary_path(), cli / binary_path().name)
     notices(cli / 'share')
     inventory(cli, output / 'cli-installed-files.json')
-    archive = shutil.make_archive(str(output / cli.name), 'zip' if system == 'Windows' else 'gztar',
-                                  root_dir=cli.parent, base_dir=cli.name)
+    archive = cli_archive(cli, output, system)
     print(f'CLI archive: {archive}', flush=True)
     if system == 'Linux':
         import linux

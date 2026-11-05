@@ -32,6 +32,8 @@ Windows installs per machine under Program Files with a Start Menu shortcut and
 standard Windows Installer registration/repair/uninstall. Qt and MSVC runtime DLLs are app-local. The bundled CLI/manual belong
 to that private application directory; independently installed CLI files and
 PATH entries are untouched. Windows packages are unsigned development builds.
+The standalone CLI ZIP clamps legacy notice timestamps to ZIP's supported date
+range. File contents and staged source timestamps remain unchanged.
 
 The DMG contains the app and an Applications shortcut. Copy the app to an
 Applications directory. Its bundled decoder is at
