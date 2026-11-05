@@ -61,7 +61,20 @@ Use `--tag-minor` or `--tag-major` for the other components. The command:
 
 No force-push, extra tags, automatic public publication or skip-check option is
 provided. If HEAD is already published as the current version tag, a repeat bump
-is a no-op; make a new development commit before preparing another release.
+is a no-op by default. For an intentional rebuild/update test without a new
+application change, pass `--force` with a bump mode:
+
+```bash
+cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
+./tools/git/git-push.sh --tag-patch --force
+```
+
+This creates a new version and tag from an already published clean HEAD. It
+still requires clean master and consistent committed metadata, runs every check,
+and refuses existing target tags. It does not force-push or skip validation.
+Use `--dry-run` with the same options to preview. `--force` is invalid with
+branch-only pushes or `--tag` recovery; an unpublished local release still
+requires recovery with `--tag` rather than another bump.
 Plain `git-push.sh` (also `--master` or `--branch`) still pushes only the current
 main/master branch; it does not bump, commit or tag.
 

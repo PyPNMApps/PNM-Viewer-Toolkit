@@ -79,6 +79,9 @@ Also available: `--tag-minor`, `--tag-major`, and release previews with `--dry-r
 The helper bumps VERSION and Cargo metadata, validates the bumped candidate,
 commits only version files, creates an annotated tag, then atomically pushes
 master and that tag. It never overwrites tags or force-pushes.
+Add `--force` to a bump mode to intentionally create a new version when HEAD is
+already published and there are no new development changes. This still requires
+a clean checkout and runs all checks; it is not a Git force-push option.
 
 Use `--tag vMAJOR.MINOR.PATCH` to validate/push an existing matching tag at HEAD,
 including retries after upload failure without another version bump. No release

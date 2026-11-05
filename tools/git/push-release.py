@@ -52,10 +52,12 @@ def remote_refs(*references):
                 (line.split() for line in output.splitlines()))
 
 
-def release(part, existing_tag, dry_run):
+def release(part, existing_tag, dry_run, force=False):
     """Prepare a bumped release or push an existing tag at HEAD.
 
     part selects major/minor/patch; existing_tag selects recovery without a bump.
+    force allows a new bump from an already published clean HEAD; it never
+    bypasses validation, pending local release recovery or immutable tag checks.
     dry_run performs preflight and remote reads but no validation/build or writes
     to version files, commits, tags or remote refs. Real releases validate the
     exact candidate tree before committing and atomically uploading both refs.
@@ -99,15 +101,18 @@ def release(part, existing_tag, dry_run):
             return
     else:
         published_current = refs.get(current_ref + '^{}', refs.get(current_ref))
-        if published_current == starting_commit:
+        published_head = published_current == starting_commit
+        if published_head and not force:
             print(f'Nothing to release: HEAD is already published as v{current}')
             return
         local_current = git('rev-parse', '--verify', current_ref + '^{commit}', check=False)
-        if local_current.returncode == 0 and local_current.stdout.strip() == starting_commit:
+        if (local_current.returncode == 0 and local_current.stdout.strip() == starting_commit
+                and not (force and published_head)):
             raise RuntimeError(f'HEAD is already tagged v{current}; use git-push.sh --tag v{current} instead of bumping again')
         if local_tag.returncode == 0 or tag_ref in refs:
             raise RuntimeError(f'Tag {tag} already exists; never move a release tag')
-        if git('log', '-1', '--format=%s').stdout.strip() == f'Refactor: Release PNM Viewer Toolkit v{current}':
+        if (git('log', '-1', '--format=%s').stdout.strip() == f'Refactor: Release PNM Viewer Toolkit v{current}'
+                and not (force and published_head)):
             raise RuntimeError(f'HEAD is a release commit without its tag; review and create v{current}, then use --tag v{current}')
     ensure_checkout(starting_commit)
     print(f'PNM Viewer Toolkit {current} -> {version}; master; tag {tag}', flush=True)
@@ -165,9 +170,13 @@ def main():
     modes.add_argument('--bump', choices=('major', 'minor', 'patch'))
     modes.add_argument('--tag', help='Push an existing matching tag at HEAD without bumping')
     parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--force', action='store_true',
+                        help='Allow a bump from an already published clean HEAD; all checks still run')
     arguments = parser.parse_args()
+    if arguments.force and not arguments.bump:
+        parser.error('--force requires --bump')
     try:
-        release(arguments.bump, arguments.tag, arguments.dry_run)
+        release(arguments.bump, arguments.tag, arguments.dry_run, arguments.force)
     except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as error:
         parser.exit(1, f'ERROR: {error}\nReview any local release state; nothing is reset automatically.\n')
 

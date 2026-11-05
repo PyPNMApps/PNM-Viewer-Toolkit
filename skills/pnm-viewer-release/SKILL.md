@@ -28,13 +28,16 @@ Before a release tag, require clean master (the tag workflow checks origin/maste
 the committed file, review validation evidence, and check local and remote tag
 availability. Never replace existing tags. Prefer the combined release modes
 with --dry-run for a preview. They validate the bumped candidate before committing
-and atomically push exact objects; never use `git push --tags` or force.
+and atomically push exact objects; never use `git push --tags` or Git force-push.
 For existing tags or failed uploads use git-push.sh --tag vMAJOR.MINOR.PATCH:
 it checks VERSION/HEAD and revalidates without bumping again. If both origin refs
 match it is a no-op. Preserve local candidate/commit/tag state after failures;
 inspect it before retrying. See docs/development/releasing.md for recovery.
-A bump at an already published current-version HEAD is a no-op; it must not
-create another release with no development change.
+A bump at an already published current-version HEAD is a no-op by default.
+The user may explicitly request `--force` with a bump mode for a rebuild/update
+test without new development changes. This creates a fresh version/tag while
+retaining clean-tree, validation, collision and normal atomic-push checks.
+Do not supply it by default or use it to bypass unpublished release recovery.
 
 The project is in the dev phase. A version or tag alone is not evidence of a
 working application, tested platform, packaged artifact, or published release.

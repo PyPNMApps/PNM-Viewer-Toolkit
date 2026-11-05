@@ -71,6 +71,9 @@ for the preserved original guidance before creating new working plans.
   tag at HEAD without bumping. Supply commands unless asked to execute.
 - The push helper must run scripts/check-before-push.sh successfully and push
   only tested commits/tags. Do not bypass validation or add a skip option.
+- Explicit `--force` with a version-bump mode permits a fresh release from an
+  already published clean HEAD; retain every validation and normal push guard.
+  It is not Git force-push and cannot bypass pending local release recovery.
 - See docs/development/git.md for commands and helper behavior.
 
 ## Versioning

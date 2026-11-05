@@ -17,7 +17,7 @@ REMOTE="origin"
 # Arguments are unused unless described above; failures stop this script.
 usage() {
   cat <<'EOF'
-Usage: git-push.sh [MODE] [--dry-run]
+Usage: git-push.sh [MODE] [--dry-run] [--force]
 
 Modes (choose one):
   --master, --branch  Push main/master only (also the default).
@@ -26,6 +26,7 @@ Modes (choose one):
   --tag-major         Bump major, validate, commit, tag and push.
   --tag TAG           Validate and push an existing tag at HEAD.
   --dry-run           Preview a release; no version edits, builds or push.
+  --force             Allow a bump from an already published clean HEAD.
 
 Release modes require clean master, matching VERSION metadata and origin.
 They atomically push master and only the selected tag; never publish directly.
@@ -52,6 +53,7 @@ die() {
 PUSH_MODE=""
 RELEASE_ARGS=()
 DRY_RUN=0
+FORCE_RELEASE=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --master|--branch|--tag-major|--tag-minor|--tag-patch|--tag)
@@ -71,12 +73,22 @@ while [[ $# -gt 0 ]]; do
       esac
       ;;
     --dry-run) DRY_RUN=1 ;;
+    --force) FORCE_RELEASE=1 ;;
     -h|--help) usage; exit 0 ;;
     *) die "Unknown argument: $1 (see --help)" ;;
   esac
   shift
 done
+if [[ "$FORCE_RELEASE" == 1 ]]; then
+  case "$PUSH_MODE" in
+    --tag-major|--tag-minor|--tag-patch) ;;
+    *) die "--force requires --tag-patch, --tag-minor or --tag-major" ;;
+  esac
+fi
 if [[ ${#RELEASE_ARGS[@]} -gt 0 ]]; then
+  if [[ "$FORCE_RELEASE" == 1 ]]; then
+    RELEASE_ARGS+=(--force)
+  fi
   if [[ "$DRY_RUN" == 1 ]]; then
     RELEASE_ARGS+=(--dry-run)
   fi

@@ -95,6 +95,72 @@ esac
         self.assertIn('Nothing to release', result.stdout)
         self.assertEqual(self.trace.read_text(), '0.1.1\n')
 
+    def publish_baseline(self):
+        """Publish the synthetic baseline so force tests start at a stable tag."""
+        self.git('tag', '-a', 'v0.1.0', '-m', 'Published baseline')
+        self.git('push', 'origin', 'refs/tags/v0.1.0')
+
+    def test_force_published_release_bumps_and_validates_again(self):
+        """Allow consecutive clean releases without rewriting existing tags."""
+        result = self.run_helper('--tag-patch')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        previous = self.git('rev-parse', 'v0.1.1', remote=True).stdout.strip()
+        result = self.run_helper('--force', '--tag-patch')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.trace.read_text(), '0.1.1\n0.1.2\n')
+        self.assertEqual((self.root / 'VERSION').read_text(), '0.1.2\n')
+        self.assertEqual(self.git('rev-parse', 'v0.1.1', remote=True).stdout.strip(), previous)
+        self.assertEqual(self.git('rev-parse', 'v0.1.2^{commit}', remote=True).stdout.strip(),
+                         self.git('rev-parse', 'HEAD').stdout.strip())
+        self.assertEqual(self.git('status', '--porcelain').stdout, '')
+
+    def test_force_dry_run_does_not_mutate_published_checkout(self):
+        """Preview an intentional fresh patch without checks or ref changes."""
+        self.publish_baseline()
+        result = self.run_helper('--tag-patch', '--force', '--dry-run')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('0.1.0 -> 0.1.1', result.stdout)
+        self.assertEqual(self.git('rev-parse', 'HEAD').stdout.strip(), self.start)
+        self.assertEqual(self.git('status', '--porcelain').stdout, '')
+        self.assertEqual(self.git('tag', '--list', remote=True).stdout.strip(), 'v0.1.0')
+        self.assertFalse(self.trace.exists())
+
+    def test_force_still_stops_on_failed_validation(self):
+        """A forced release must validate before creating or pushing a tag."""
+        self.publish_baseline()
+        self.environment['RELEASE_TEST_MODE'] = 'fail'
+        result = self.run_helper('--tag-patch', '--force')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.trace.read_text(), '0.1.1\n')
+        self.assertEqual(self.git('rev-parse', 'master', remote=True).stdout.strip(), self.start)
+        self.assertEqual(self.git('tag', '--list', remote=True).stdout.strip(), 'v0.1.0')
+        self.assertEqual(self.git('rev-parse', 'HEAD').stdout.strip(), self.start)
+
+    def test_force_still_rejects_dirty_tree_and_tag_collision(self):
+        """Force only overrides the published-HEAD no-op, not other guards."""
+        self.publish_baseline()
+        unrelated = self.root / 'user-work'
+        unrelated.write_text('Uncommitted work')
+        result = self.run_helper('--tag-patch', '--force')
+        self.assertNotEqual(result.returncode, 0)
+        unrelated.unlink()
+        self.git('tag', 'v0.1.1')
+        result = self.run_helper('--tag-patch', '--force')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('already exists', result.stderr)
+        self.assertFalse(self.trace.exists())
+        self.assertEqual(self.git('status', '--porcelain').stdout, '')
+        self.assertEqual(self.git('tag', '--list', remote=True).stdout.strip(), 'v0.1.0')
+
+    def test_force_does_not_skip_unpublished_release_recovery(self):
+        """Preserve an unpushed release tag and require explicit --tag recovery."""
+        self.git('tag', '-a', 'v0.1.0', '-m', 'Pending baseline')
+        result = self.run_helper('--tag-patch', '--force')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('already tagged', result.stderr)
+        self.assertFalse(self.trace.exists())
+        self.assert_origin_unchanged()
+
     def test_minor_and_major_modes_reset_lower_components(self):
         """Exercise each public bump mode through real manifests and Git refs."""
         for option, expected in [('--tag-minor', '0.2.0'), ('--tag-major', '1.0.0')]:
@@ -287,7 +353,8 @@ esac
     def test_invalid_modes_and_missing_tags_do_not_modify_checkout(self):
         """Reject conflicting/invalid modes and nonmatching or missing tag identities."""
         for arguments in [('--tag-patch', '--tag-minor'), ('--tag',), ('--dry-run',),
-                          ('--tag', 'bad'), ('--tag', 'v0.2.0'), ('--tag', 'v0.1.0')]:
+                          ('--tag', 'bad'), ('--tag', 'v0.2.0'), ('--tag', 'v0.1.0'),
+                          ('--force',), ('--master', '--force'), ('--tag', 'v0.1.0', '--force')]:
             with self.subTest(arguments=arguments):
                 result = self.run_helper(*arguments)
                 self.assertNotEqual(result.returncode, 0)
