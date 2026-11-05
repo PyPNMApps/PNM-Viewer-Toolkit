@@ -8,6 +8,14 @@ layer in `apps/viewer`, backed by the
 existing Apache-2.0 parsers. Qt Quick renders directly through Qt without a
 browser, WebView or HTTP backend. This is development software.
 
+Linux application startup defaults `QT_QPA_PLATFORMTHEME` to `gtk3` before
+creating Qt, so Open and Export use the operating system's GTK file chooser
+in both development and installed builds. An explicit platform-theme setting
+is preserved. The DEB bundles Qt's GTK platform-theme plugin and depends on
+the system GTK runtime. Windows and macOS retain their native defaults.
+For the existing 0.1.6 installation, launch with
+`QT_QPA_PLATFORMTHEME=gtk3 pnm-viewer` from a graphical desktop terminal.
+
 [Developer index](README.md) · [Measurement implementation](qt-measurements.md)
 
 ## Linux development
@@ -192,7 +200,7 @@ a report may be absent when the process never initialized.
 
 ## Release-update indicator and About
 
-`apps/viewer/src/update.rs` owns read-only GitHub stable-release discovery and
+`apps/viewer/src/updates/release.rs` owns read-only GitHub stable-release discovery and
 version comparison. `apps/qt/src/update.rs` provides an independent CXX-Qt
 controller: one request at a time, on a Rust worker, with queued UI-thread
 completion. Capture busy/status state is unaffected. `UpdateChip.qml` and
@@ -215,3 +223,36 @@ a successful tag, published release, credentials or a live GitHub connection.
 This delivery opens release notes/downloads only. Installer downloads, progress,
 verification, process handoff and restart remain future work; no MSI/MSP helper
 is copied from OSCAR-UI into this NSIS-based Windows package.
+
+## Viewer source organization
+
+`apps/viewer/src/lib.rs` wires three responsibility groups:
+
+```text
+apps/viewer/src/
+├── lib.rs
+├── capture/                 # File ownership, diagnostics and shared charts
+│   ├── mod.rs
+│   ├── file.rs
+│   ├── diagnostic.rs
+│   └── chart.rs
+├── measurements/
+│   ├── mod.rs
+│   ├── channel_estimation/mod.rs
+│   ├── constellation/mod.rs
+│   ├── fec_summary/mod.rs
+│   ├── histogram/mod.rs
+│   ├── modulation_profile/mod.rs
+│   ├── spectrum_analysis/mod.rs
+│   └── upstream_pre_equalization/mod.rs
+└── updates/
+    ├── mod.rs
+    └── release.rs            # HTTP release lookup and comparison
+```
+
+Qt imports capture types from `viewer::capture`, chart DTOs from
+`viewer::capture::chart`, measurement adapters from `viewer::measurements`,
+and release checks from `viewer::updates::release`. Root capture-type exports
+remain convenience imports for existing callers. New implementations reuse their
+owning folder or introduce a relevant feature folder; apply the
+[organization skill](../../skills/viewer-module-organization/SKILL.md).

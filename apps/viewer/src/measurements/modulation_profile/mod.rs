@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 //! Bounded modulation expansion using the existing raw decoder and Shannon math.
-use crate::{
+use crate::capture::{
     chart::{overview_with_limit, ChartMetadata, ChartPoint, ChartViewport, Chip, MeasurementView},
     Diagnostic, MAX_VIEW_SAMPLES,
 };

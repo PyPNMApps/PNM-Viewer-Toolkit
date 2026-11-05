@@ -2,7 +2,10 @@
  * Copyright 2026 PNM Viewer contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
-use viewer::{chart::MeasurementView, constellation::IqBounds, Capture, MAX_VIEW_SAMPLES};
+use viewer::{
+    capture::{chart::MeasurementView, Capture, MAX_VIEW_SAMPLES},
+    measurements::constellation::IqBounds,
+};
 fn capture(code: u16) -> Capture {
     let mut bytes = pnm_fixtures::CONSTELLATION.to_vec();
     bytes[21..23].copy_from_slice(&code.to_be_bytes());

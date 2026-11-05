@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 //! Bounded hit-count bars; retain encoded bin order without inferred normalization.
-use crate::{
+use crate::capture::{
     chart::{ChartMetadata, ChartViewport, Chip},
     Diagnostic, MAX_VIEW_SAMPLES,
 };

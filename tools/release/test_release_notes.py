@@ -4,6 +4,7 @@
 #
 """Exercise release-page links, version agreement and safe local rendering."""
 import copy
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -116,6 +117,52 @@ class ReleasePageTests(unittest.TestCase):
             self.render(repository='https://example.test/repository')
         with self.assertRaisesRegex(ValueError, 'template token'):
             self.render(template=self.template + '\n{{UNKNOWN}}')
+
+    def test_ubuntu_scope_is_explicit_and_does_not_weaken_full_release(self):
+        """Render paired DEBs in temporary mode; retain full target requirements."""
+        template = (ROOT / 'docs/release/ubuntu-deb-notes.md').read_text(encoding='utf-8')
+        page = self.render(template=template, manifests=self.index[:1], ubuntu_only=True)
+        self.assertIn('Ubuntu 22.04 x64 only', page)
+        self.assertIn(f'pnm-decode_{self.version}_amd64.deb', page)
+        self.assertIn('manual publication', ' '.join(page.split()))
+        with self.assertRaisesRegex(ValueError, 'Incomplete'):
+            self.render(manifests=self.index[:1])
+        with self.assertRaisesRegex(ValueError, 'unexpected'):
+            self.render(template=template, ubuntu_only=True)
+
+    def test_ubuntu_draft_requires_both_debs(self):
+        """An archive alone cannot stand in for the CLI's DEB dependency."""
+        modified = copy.deepcopy(self.index[:1])
+        modified[0]['artifacts'] = [artifact for artifact in modified[0]['artifacts']
+                                    if not artifact['name'].startswith('pnm-decode_')]
+        with self.assertRaisesRegex(ValueError, 'matching viewer and CLI DEBs'):
+            self.render(manifests=modified, ubuntu_only=True)
+
+    def test_ubuntu_cli_verifies_downloaded_bytes_before_rendering(self):
+        """Exercise the real CLI with synthetic hashes, then reject tampered bytes."""
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            version = release_version()
+            manifest = manifests(version)[0]
+            checksums = []
+            for artifact in manifest['artifacts']:
+                payload = b'synthetic package for verification tests'
+                (folder / artifact['name']).write_bytes(payload)
+                artifact['bytes'] = len(payload)
+                checksums.append(hashlib.sha256(payload).hexdigest() + '  ' + artifact['name'])
+            (folder / 'release-manifest.json').write_text(json.dumps(manifest))
+            (folder / 'SHA256SUMS').write_text('\n'.join(checksums) + '\n')
+            output = folder / 'page.md'
+            command = [sys.executable, str(ROOT / 'scripts/release/notes.py'), '--ubuntu-only',
+                       '--assets', str(folder), '--tag', 'v' + version, '--output', str(output)]
+            result = subprocess.run(command, cwd=folder, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn('Ubuntu 22.04 development build', output.read_text())
+            (folder / manifest['artifacts'][0]['name']).write_bytes(b'tampered')
+            output.unlink()
+            result = subprocess.run(command, cwd=folder, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse(output.exists())
 
     def test_cli_is_cwd_independent_and_preserves_existing_output(self):
         """Run the real renderer without network access or release publication."""

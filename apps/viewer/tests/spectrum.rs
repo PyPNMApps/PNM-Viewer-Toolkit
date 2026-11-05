@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 //! Spectrum chart contracts: fixture values plus explicitly synthetic edge cases.
-use viewer::{Capture, MAX_VIEW_SAMPLES};
+use viewer::capture::{Capture, MAX_VIEW_SAMPLES};
 
 #[test]
 fn spectrum_fixture_metadata_overview_detail_and_export() {

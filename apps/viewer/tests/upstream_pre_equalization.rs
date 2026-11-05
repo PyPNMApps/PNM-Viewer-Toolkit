@@ -4,7 +4,7 @@
  */
 //! Current and last-update upstream capture views, range bounds and shared CLI/core export contract.
 use pnm::pnm::parser::pnm_file::PnmFile;
-use viewer::{chart::MeasurementView, Capture, MAX_VIEW_SAMPLES};
+use viewer::capture::{chart::MeasurementView, Capture, MAX_VIEW_SAMPLES};
 #[test]
 fn current_views_are_bounded_zoomable_and_preserve_full_export() {
     let capture =

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 use pnm::pnm::parser::{cm_ds_ofdm_fec_summary::CmDsOfdmFecSummary, parse_limits::ParseLimits};
-use viewer::{chart::MeasurementView, Capture, MAX_VIEW_SAMPLES};
+use viewer::capture::{chart::MeasurementView, Capture, MAX_VIEW_SAMPLES};
 
 // Synthetic profiles reuse only the fixture's validated identity/common fields.
 fn synthetic(profiles: &[(u8, Vec<[u32; 4]>)], summary_type: u8) -> Capture {

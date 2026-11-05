@@ -105,7 +105,7 @@ mod bridge {
 use cxx_qt::{CxxQtType, Threading};
 use cxx_qt_lib::{QString, QUrl};
 use std::{path::PathBuf, pin::Pin, sync::Arc};
-use viewer::{chart::MeasurementView, Capture, Diagnostic};
+use viewer::capture::{chart::MeasurementView, Capture, Diagnostic};
 
 /// Rust-owned state; only small strings and UI status cross the Qt boundary.
 pub struct ViewerBackendRust {
@@ -320,7 +320,7 @@ impl bridge::ViewerBackend {
         let Some(capture) = self.rust().capture.clone() else {
             return;
         };
-        let bounds = viewer::constellation::IqBounds {
+        let bounds = viewer::measurements::constellation::IqBounds {
             minimum_i: first_i,
             maximum_i: last_i,
             minimum_q: first_q,
@@ -474,7 +474,9 @@ impl bridge::ViewerBackend {
         });
     }
 
-    fn modulation_carriers(&self) -> Option<Vec<viewer::modulation_profile::CarrierType>> {
+    fn modulation_carriers(
+        &self,
+    ) -> Option<Vec<viewer::measurements::modulation_profile::CarrierType>> {
         match &self.rust().view {
             MeasurementView::ModulationProfile { carrier_types, .. } => carrier_types.clone(),
             _ => None,
@@ -543,10 +545,10 @@ impl bridge::ViewerBackend {
         });
     }
 
-    fn modulation_metric(&self) -> viewer::modulation_profile::ModulationMetric {
+    fn modulation_metric(&self) -> viewer::measurements::modulation_profile::ModulationMetric {
         match &self.rust().view {
             MeasurementView::ModulationProfile { metric, .. } => *metric,
-            _ => viewer::modulation_profile::ModulationMetric::Shannon,
+            _ => viewer::measurements::modulation_profile::ModulationMetric::Shannon,
         }
     }
 
@@ -557,8 +559,8 @@ impl bridge::ViewerBackend {
     /// Updates the chart only after validation; unsupported values retain state.
     pub fn select_modulation_metric(self: Pin<&mut Self>, index: u32) {
         let metric = match index {
-            0 => viewer::modulation_profile::ModulationMetric::Shannon,
-            1 => viewer::modulation_profile::ModulationMetric::BitLoading,
+            0 => viewer::measurements::modulation_profile::ModulationMetric::Shannon,
+            1 => viewer::measurements::modulation_profile::ModulationMetric::BitLoading,
             _ => {
                 self.fail(Diagnostic::new(
                     "UnsupportedView",

@@ -28,7 +28,7 @@ mod bridge {
 use cxx_qt::Threading;
 use cxx_qt_lib::QString;
 use std::pin::Pin;
-use viewer::update::{check_release, RELEASES_URL};
+use viewer::updates::release::{check_release, RELEASES_URL};
 
 /// Small Rust-owned release state exposed to About and the update indicator.
 pub struct UpdateBackendRust {

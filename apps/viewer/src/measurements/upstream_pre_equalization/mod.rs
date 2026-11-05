@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 //! Presentation of current and last-update upstream coefficients using core analysis.
-use crate::{
+use crate::capture::{
     chart::{ChartMetadata, Chip, MeasurementView},
     Diagnostic,
 };

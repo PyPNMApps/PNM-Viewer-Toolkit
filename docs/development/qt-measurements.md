@@ -48,7 +48,7 @@ reported rather than plotted. No smoothing or total-channel-power calculation
 is applied. Specification checks used versioned text extracts, not rendered PDFs.
 
 The shared Qt chart is `MeasurementChart.qml`; Rust owns chart metadata, frequency
-mapping, vertical bounds, and bounded overviews in `apps/viewer/src/chart.rs`.
+mapping, vertical bounds, and bounded overviews in `apps/viewer/src/capture/chart.rs`.
 
 Spectrum native validation on Ubuntu: the fixture displayed 20,736 bins across
 296.264648–903.735351 MHz. Dark/light display, drag zoom/reset, JSON export,
@@ -124,7 +124,7 @@ values; JSON readers may show equivalent decimals. Qt displays microseconds.
 The numbers above illustrate the schema, not the fixture. Core parser and
 `pnm-decode` JSON remain raw; the desktop export adds derived analysis. The
 reusable math lives in `crates/core/src/common/signal_processing/channel_response.rs`;
-`apps/viewer/src/channel_estimation.rs` owns capture mapping and presentation.
+`apps/viewer/src/measurements/channel_estimation/mod.rs` owns capture mapping and presentation.
 
 ## Downstream histogram
 
@@ -147,7 +147,7 @@ or amplitude calibration is inferred. This UI adds no derived JSON section.
 ## FEC Summary
 
 The viewer routes FEC summary files through the existing core parser. The Rust
-presentation module (`apps/viewer/src/fec_summary.rs`) supplies one selected
+presentation module (`apps/viewer/src/measurements/fec_summary/mod.rs`) supplies one selected
 profile, at most 1024 extrema-preserving chronological points, exact window sums
 and last-interval counts. QML renders explicit total/error axes, UTC labels and
 series visibility. Profile changes reset the range; UTC selection maps to record
@@ -170,7 +170,7 @@ Native file-manager drag integration still requires verification on each OS.
 
 ## Modulation Profile
 
-`apps/viewer/src/modulation_profile.rs` expands bounded range/skip assignments
+`apps/viewer/src/measurements/modulation_profile/mod.rs` expands bounded range/skip assignments
 using the existing decoder and the shared Shannon helper in
 `crates/core/src/common/signal_processing/shannon.rs`. QML reuses the common
 frequency chart with step rendering and adds profile toggles, All and metric

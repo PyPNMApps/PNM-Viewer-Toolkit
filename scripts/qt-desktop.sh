@@ -33,11 +33,6 @@ else
 fi
 case "${ACTION}" in
   run)
-    # Linux needs a platform theme with native dialogs; the SDK includes GTK 3.
-    # Preserve an explicitly selected theme (for example a desktop portal).
-    if [[ "$(uname -s)" == Linux ]]; then
-      export QT_QPA_PLATFORMTHEME="${QT_QPA_PLATFORMTHEME:-gtk3}"
-    fi
     # Remote-editor terminals can reuse this user's active VM desktop session.
     # Import only display settings; never evaluate the session environment as code.
     if [[ "$(uname -s)" == Linux && "${QT_QPA_PLATFORM:-xcb}" == xcb && -z "${DISPLAY:-}" ]] && command -v systemctl >/dev/null 2>&1; then

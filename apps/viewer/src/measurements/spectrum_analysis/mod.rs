@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 //! DOCSIS spectrum fields mapped to reusable bandwidth math and derived JSON.
-use crate::Diagnostic;
+use crate::capture::Diagnostic;
 use pnm::{
     common::signal_processing::spectrum::{
         resolution_bandwidth_hz, BandwidthHz, NoiseBandwidthFactor,

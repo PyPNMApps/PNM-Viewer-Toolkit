@@ -22,7 +22,9 @@ Extract it into a fresh directory, keeping one version per directory. It include
 The job enforces version/master ancestry, CodeQL/static checks, Rust and Qt/QML
 checks, package sizes/checksums and installed viewing/export/removal checks on
 Ubuntu 22.04. Failed builds retain diagnostics rather than a successful package
-artifact. The workflow does not publish or modify a GitHub release.
+artifact. A final job creates or refreshes an Ubuntu-only draft release with
+verified package downloads and installation notes. It refuses to change an
+already public release and never publishes automatically.
 
 ## Install or manually upgrade
 
@@ -45,8 +47,35 @@ current lifecycle test installs and removes one version, without a previous
 baseline package. Record the actual installed versions and results separately.
 
 The app's update check reads published stable GitHub releases. Actions artifacts
-are not releases, so these builds will not activate the green Update chip merely
-because a tag succeeded. Download/install manually during this temporary phase.
+are not releases, and drafts are ignored, so a successful tag alone will not
+activate the green Update chip. After reviewing the draft, manually publish it
+as a stable release if it should be offered to users. Downloads/installations
+remain manual in the app.
+
+### Test from the installed 0.1.6 baseline
+
+1. Keep 0.1.6 installed while the next patch tag builds and its draft is reviewed.
+2. Publish the newer stable release, then use **About → Check for updates** in
+   0.1.6. Confirm the newer version and green Update button appear.
+3. Open **Release notes and downloads**, download the matching CLI and viewer
+   DEBs plus checksums, verify them, and install both DEBs together as above.
+4. Relaunch normally, without `QT_QPA_PLATFORMTHEME=gtk3`. Verify Open and
+   Export use the OS file chooser, About shows the new version, and the update
+   check reports the installed version is current. Open a fixture and export JSON.
+
+This is a manual update test; the application does not install its own updates.
+
+## Existing successful tags
+
+A rerun of an old tag uses its old workflow, so v0.1.6 will not acquire the
+new draft-creation step by rerunning it. Its successful run is 41938409457.
+The original package artifact can be downloaded, checksum-verified and attached
+to an Ubuntu-only draft without rebuilding or moving that tag. Render notes
+with `scripts/release/notes.py --ubuntu-only` while VERSION matches the packages.
+Prepared v0.1.6 assets/notes in this checkout are under ignored
+`local/release-backfill-v0.1.6/`; they are not distributed in fresh clones.
+Creating a draft and publishing it remain distinct actions. Do not overwrite
+an already public release to apply the workflow correction.
 
 ## Restore full delivery
 

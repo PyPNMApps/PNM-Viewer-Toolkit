@@ -6,10 +6,13 @@ use pnm::pnm::parser::{
     cm_ds_ofdm_modulation_profile::CmDsOfdmModulationProfile, parse_limits::ParseLimits,
 };
 use viewer::{
-    chart::MeasurementView, modulation_profile::ModulationMetric, Capture, MAX_VIEW_SAMPLES,
+    capture::{chart::MeasurementView, Capture, MAX_VIEW_SAMPLES},
+    measurements::modulation_profile::ModulationMetric,
 };
 
-fn trace(mut viewport: viewer::chart::ChartViewport) -> viewer::chart::ChartViewport {
+fn trace(
+    mut viewport: viewer::capture::chart::ChartViewport,
+) -> viewer::capture::chart::ChartViewport {
     viewport.points = viewport
         .modulation_profiles
         .take()
@@ -374,7 +377,7 @@ fn overlay_limits_cover_total_expansion_and_maximum_profile_count() {
 
 #[test]
 fn every_carrier_type_has_a_filterable_lane_and_exact_marker() {
-    use viewer::modulation_profile::CarrierType;
+    use viewer::measurements::modulation_profile::CarrierType;
     let capture = synthetic(
         &[
             0, 0, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 16, 0, 1, 0, 20, 0, 1, 0, 255, 0, 1,
@@ -464,7 +467,7 @@ fn every_carrier_type_has_a_filterable_lane_and_exact_marker() {
 
 #[test]
 fn grouped_carrier_markers_are_bounded_and_preserve_counts() {
-    use viewer::modulation_profile::{CarrierType, MAX_CARRIER_MARKERS};
+    use viewer::measurements::modulation_profile::{CarrierType, MAX_CARRIER_MARKERS};
     let capture = synthetic(&[1, 1, 20, 255, 255], 0, 0, 25);
     let overlay = capture
         .chart_range(0, 65535)
@@ -504,7 +507,7 @@ fn grouped_carrier_markers_are_bounded_and_preserve_counts() {
 
 #[test]
 fn physical_constellation_filters_preserve_values_and_data_only_bandwidth() {
-    use viewer::modulation_profile::CarrierType;
+    use viewer::measurements::modulation_profile::CarrierType;
     let capture = synthetic(&[0, 2, 0, 1, 0, 1, 0, 1, 0, 20, 0, 1], 0, 0, 25);
     let roles = [
         CarrierType::Data,

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 //! Bounded soft_decisions/hard_decisions I/Q overlays; scientific normalization stays in core.
-use crate::{
+use crate::capture::{
     chart::{ChartMetadata, ChartViewport, Chip},
     Capture, Diagnostic, MAX_VIEW_SAMPLES,
 };

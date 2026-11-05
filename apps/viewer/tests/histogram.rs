@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 use pnm::pnm::parser::{cm_ds_hist::CmDsHist, parse_limits::ParseLimits};
-use viewer::{chart::MeasurementView, Capture, MAX_VIEW_SAMPLES};
+use viewer::capture::{chart::MeasurementView, Capture, MAX_VIEW_SAMPLES};
 
 #[test]
 fn histogram_fixture_has_exact_bars_and_unchanged_json() {

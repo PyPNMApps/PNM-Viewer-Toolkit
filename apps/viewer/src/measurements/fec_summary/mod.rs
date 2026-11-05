@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 //! Bounded per-profile FEC interval counts; preserve the decoder's raw JSON.
-use crate::{
+use crate::capture::{
     chart::{ChartMetadata, ChartViewport, Chip, MeasurementView},
     Diagnostic, MAX_VIEW_SAMPLES,
 };

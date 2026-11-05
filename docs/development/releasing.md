@@ -8,7 +8,8 @@
 Tag push commands are unchanged. They currently trigger only the
 [Ubuntu 22.04 development workflow](../../.github/workflows/ubuntu-deb-temp.yml)
 and produce downloadable Actions artifacts after Ubuntu checks/lifecycle tests.
-They do not create a draft or public release. See
+After verification, a final job creates an Ubuntu-only draft release with
+install/upgrade notes and assets. Public publication remains manual. See
 [DEB installation and upgrade testing](../release/ubuntu-deb-testing.md).
 The preserved full package workflow is manual-only against a selected tag;
 its complete multi-OS gates remain mandatory if explicitly run.

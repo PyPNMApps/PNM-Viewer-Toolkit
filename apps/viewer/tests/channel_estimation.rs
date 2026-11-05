@@ -6,7 +6,7 @@
 use pnm::pnm::parser::{
     cm_ds_ofdm_chan_estimate_coef::CmDsOfdmChanEstimateCoef, parse_limits::ParseLimits,
 };
-use viewer::{chart::MeasurementView, Capture, MAX_VIEW_SAMPLES};
+use viewer::capture::{chart::MeasurementView, Capture, MAX_VIEW_SAMPLES};
 
 #[test]
 fn fixture_views_are_bounded_and_export_preserves_raw_fields() {

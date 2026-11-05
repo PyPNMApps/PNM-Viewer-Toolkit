@@ -10,7 +10,9 @@ only on pushed `v*` tags. It validates VERSION and master ancestry, requires
 CodeQL/static checks, runs the complete local gate on Ubuntu 22.04, builds both
 viewer/CLI DEBs with existing size/checksum gates, and tests installed packages
 on a disposable Ubuntu 22.04 host. Successful packages are retained as workflow
-artifacts for 30 days, not attached to a GitHub release. Diagnostics last 14 days.
+artifacts for 30 days. A final job re-verifies the packages and attaches them to
+an explicitly Ubuntu-only **draft** release; it refuses to change public releases
+and never publishes automatically. Diagnostics last 14 days.
 See [artifact installation and upgrade testing](../release/ubuntu-deb-testing.md).
 
 Master/PR CI still runs CodeQL and static checks automatically. The full native

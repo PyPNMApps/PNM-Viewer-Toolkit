@@ -79,6 +79,13 @@ for the preserved original guidance before creating new working plans.
 - Keep VERSION in MAJOR.MINOR.PATCH format; use tools/bump-version.sh.
 - See docs/release/versioning.md. Version bumps do not authorize commits, tags, or pushes.
 
+## Viewer source organization
+
+Apply skills/viewer-module-organization/SKILL.md when adding or moving
+implementations under apps/viewer/src. Group them in relevant responsibility
+or feature folders; keep lib.rs focused on module wiring. Update affected
+imports, tests and current source references when moving files.
+
 ## Coding style
 
 - Apply the coding-style skill for source, tests and scripts.
@@ -128,5 +135,6 @@ User instruction on 2026-11-04 pauses automatic multi-OS execution. Preserve
 full matrices and package/lifecycle/draft gates for explicit manual runs, while
 master/PR runs keep CodeQL/static checks and v* tags use ubuntu-deb-temp.yml.
 That workflow validates and builds/tests Ubuntu 22.04 development artifacts only,
-without a GitHub release. A temporary green CI result is not full OS validation.
+then creates a clearly scoped Ubuntu-only draft release. Public publication
+remains manual; never modify an already public release. A temporary green CI result is not full OS validation.
 See docs/release/ubuntu-deb-testing.md before restoring automatic scheduling.

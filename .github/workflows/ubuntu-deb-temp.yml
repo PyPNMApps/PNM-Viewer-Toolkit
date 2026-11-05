@@ -106,6 +106,43 @@ jobs:
             echo '### Ubuntu 22.04 development packages'
             echo "Tag: $RELEASE_TAG"
             echo 'Download the ubuntu-22.04-deb artifact for the paired viewer and CLI DEBs, checksums and build metadata.'
-            echo 'Only Ubuntu 22.04 was built and tested. This workflow does not create or publish a GitHub release.'
+            echo 'Only Ubuntu 22.04 was built and tested. A separate job creates an Ubuntu-only draft; public publication remains manual.'
             echo 'Installed smoke tests cover installation, viewing/export and removal. Upgrade from an older package remains a separate test.'
           } >> "$GITHUB_STEP_SUMMARY"
+  draft:
+    name: Create Ubuntu-only draft release
+    needs: deb
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v7
+        with:
+          name: ubuntu-22.04-deb-${{ github.ref_name }}
+          path: release-assets
+      - name: Verify packages and render Ubuntu-only notes
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 scripts/release/notes.py --ubuntu-only --assets release-assets \
+            --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY" --output release-page.md
+      - name: Attach tested packages to a draft only
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft' > draft-state; then
+            test "$(cat draft-state)" = true || { echo 'Refusing to modify a public release'; exit 1; }
+            gh release edit "$RELEASE_TAG" --notes-file release-page.md
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --draft \
+              --title "PNM Viewer Toolkit $RELEASE_TAG — Ubuntu 22.04 development" \
+              --notes-file release-page.md
+          fi
+          gh release upload "$RELEASE_TAG" release-assets/* --clobber

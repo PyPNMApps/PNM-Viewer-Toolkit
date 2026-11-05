@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 //! Measurement-neutral chart data; binary interpretation stays in the core parsers.
-use crate::{spectrum_analysis::SpectrumAnalysis, Capture, Diagnostic, MAX_VIEW_SAMPLES};
+use crate::{
+    capture::{Capture, Diagnostic, MAX_VIEW_SAMPLES},
+    measurements::spectrum_analysis::SpectrumAnalysis,
+};
 use pnm::pnm::{
     data_type::{units::HZ_PER_KHZ, CaptureTime, FrequencyHz},
     parser::pnm_file::DecodedPnm,
@@ -20,8 +23,8 @@ pub enum MeasurementView {
     FecProfile(usize),
     ModulationProfile {
         indices: Option<Vec<usize>>,
-        carrier_types: Option<Vec<crate::modulation_profile::CarrierType>>,
-        metric: crate::modulation_profile::ModulationMetric,
+        carrier_types: Option<Vec<crate::measurements::modulation_profile::CarrierType>>,
+        metric: crate::measurements::modulation_profile::ModulationMetric,
     },
 }
 
@@ -49,9 +52,9 @@ impl Chip {
 #[derive(Serialize)]
 pub struct ChartMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub modulation_profile: Option<crate::modulation_profile::ModulationMetadata>,
+    pub modulation_profile: Option<crate::measurements::modulation_profile::ModulationMetadata>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub fec_summary: Option<crate::fec_summary::FecMetadata>,
+    pub fec_summary: Option<crate::measurements::fec_summary::FecMetadata>,
     pub histogram: bool,
     pub views: Vec<&'static str>,
     pub view_index: u32,
@@ -76,15 +79,15 @@ pub struct ChartPoint {
 #[derive(Serialize)]
 pub struct ChartViewport {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub constellation: Option<crate::constellation::ConstellationViewport>,
+    pub constellation: Option<crate::measurements::constellation::ConstellationViewport>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub modulation_profiles: Option<crate::modulation_profile::ModulationViewport>,
+    pub modulation_profiles: Option<crate::measurements::modulation_profile::ModulationViewport>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub fec_summary: Option<crate::fec_summary::FecViewport>,
+    pub fec_summary: Option<crate::measurements::fec_summary::FecViewport>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub histogram: Option<crate::histogram::HistogramView>,
+    pub histogram: Option<crate::measurements::histogram::HistogramView>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub iq_density: Option<crate::channel_estimation::IqDensity>,
+    pub iq_density: Option<crate::measurements::channel_estimation::IqDensity>,
     pub start: usize,
     pub count: usize,
     pub total: usize,
@@ -106,7 +109,7 @@ impl Capture {
         last: CaptureTime,
     ) -> Result<ChartViewport, Diagnostic> {
         if let DecodedPnm::FecSummary(capture) = self.decoded()? {
-            return crate::fec_summary::time_range(&capture, view, first, last);
+            return crate::measurements::fec_summary::time_range(&capture, view, first, last);
         }
         Err(Diagnostic::new(
             "UnsupportedView",
@@ -134,18 +137,22 @@ impl Capture {
         validate_view(&decoded, &view)?;
         match decoded {
             DecodedPnm::ConstellationDisplay(capture) => {
-                Ok(crate::constellation::metadata(&capture))
+                Ok(crate::measurements::constellation::metadata(&capture))
             }
             DecodedPnm::ModulationProfile(capture) => {
-                crate::modulation_profile::metadata(&capture, view)
+                crate::measurements::modulation_profile::metadata(&capture, view)
             }
-            DecodedPnm::FecSummary(capture) => crate::fec_summary::metadata(&capture, view),
-            DecodedPnm::Histogram(capture) => Ok(crate::histogram::metadata(&capture)),
+            DecodedPnm::FecSummary(capture) => {
+                crate::measurements::fec_summary::metadata(&capture, view)
+            }
+            DecodedPnm::Histogram(capture) => {
+                Ok(crate::measurements::histogram::metadata(&capture))
+            }
             DecodedPnm::UpstreamPreEqualization(capture) => {
-                crate::upstream_pre_equalization::metadata(&capture, view)
+                crate::measurements::upstream_pre_equalization::metadata(&capture, view)
             }
             DecodedPnm::ChannelEstimate(capture) => {
-                crate::channel_estimation::metadata(&capture, view)
+                crate::measurements::channel_estimation::metadata(&capture, view)
             }
             DecodedPnm::RxMer(_) => {
                 let metadata = self.metadata()?;
@@ -241,7 +248,7 @@ impl Capture {
             }
             DecodedPnm::ChannelEstimate(capture) => {
                 let analysis =
-                    crate::channel_estimation::ChannelEstimationAnalysis::from_capture(&capture)?;
+                    crate::measurements::channel_estimation::ChannelEstimationAnalysis::from_capture(&capture)?;
                 let values = if view == MeasurementView::GroupDelay {
                     analysis.group_delay_us()
                 } else {
@@ -352,13 +359,13 @@ impl Capture {
                     "Use I/Q bounds to zoom a constellation.",
                 ));
             }
-            return crate::constellation::viewport(&capture, None);
+            return crate::measurements::constellation::viewport(&capture, None);
         }
         if let DecodedPnm::ModulationProfile(capture) = self.decoded()? {
-            return crate::modulation_profile::viewport(&capture, view, start, count);
+            return crate::measurements::modulation_profile::viewport(&capture, view, start, count);
         }
         if let DecodedPnm::FecSummary(capture) = self.decoded()? {
-            return crate::fec_summary::viewport(&capture, view, start, count);
+            return crate::measurements::fec_summary::viewport(&capture, view, start, count);
         }
         if let DecodedPnm::Histogram(capture) = self.decoded()? {
             if view != MeasurementView::Default {
@@ -367,7 +374,7 @@ impl Capture {
                     "Histogram has no such tab.",
                 ));
             }
-            return crate::histogram::viewport(&capture, start, count);
+            return crate::measurements::histogram::viewport(&capture, start, count);
         }
         if view == MeasurementView::IqScatter {
             let decoded = self.decoded()?;
@@ -397,7 +404,9 @@ impl Capture {
                 count,
                 total: samples.len(),
                 points: vec![],
-                iq_density: Some(crate::channel_estimation::IqDensity::from_samples(&samples)),
+                iq_density: Some(
+                    crate::measurements::channel_estimation::IqDensity::from_samples(&samples),
+                ),
             });
         }
         let samples = self.chart_points(view)?;
