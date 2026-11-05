@@ -172,3 +172,27 @@ fn source_build_cannot_install_or_authenticate() {
     #[cfg(target_os = "linux")]
     assert!(validate_deb(Path::new("/nonexistent"), "pnm-decode", "0.2.0").is_err());
 }
+
+#[test]
+#[cfg(unix)]
+fn download_and_staging_directories_are_private_and_cleaned_up() {
+    use std::os::unix::fs::MetadataExt;
+    for prefix in ["pnm-viewer-update-", "pnm-install-"] {
+        let directory = private_directory(prefix).unwrap();
+        let path = directory.path().to_owned();
+        let metadata = fs::symlink_metadata(&path).unwrap();
+        assert!(metadata.is_dir());
+        assert_eq!(metadata.mode() & 0o777, 0o700);
+        let identity = std::process::Command::new("id").arg("-u").output().unwrap();
+        assert!(identity.status.success());
+        let owner: u32 = String::from_utf8(identity.stdout)
+            .unwrap()
+            .trim()
+            .parse()
+            .unwrap();
+        assert_eq!(metadata.uid(), owner);
+        fs::write(path.join("plan.json"), b"test cleanup").unwrap();
+        drop(directory);
+        assert!(!path.exists());
+    }
+}

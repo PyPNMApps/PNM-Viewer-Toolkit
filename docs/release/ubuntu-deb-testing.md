@@ -53,6 +53,20 @@ workflow gates and remote asset checks pass. Installed Ubuntu x64 builds with
 the installer feature can install both matching packages after OS authentication.
 Older builds need a manual upgrade once to gain that feature.
 
+### Update-directory compatibility
+
+Versions 0.1.8 and 0.1.9 create download directories using tempfile's default
+permissions (normally 0755 with umask 022). The elevated installer correctly
+rejects those directories with "Update directory must be private and owned by
+the authenticated user." New code explicitly creates both download and staging
+directories with mode 0700. Do not weaken the ownership/permission check.
+
+An affected installed viewer needs one manual upgrade to a release containing
+this fix: download and verify both same-version DEBs, install them together with
+apt, and relaunch. Publishing a fixed release cannot change the downloader in an
+already installed older viewer. Test in-app installation again against the next
+newer release. Wayland/accessibility warnings are separate from this rejection.
+
 ### Test from the installed 0.1.6 baseline
 
 1. Keep 0.1.6 installed while the next patch tag builds and publishes automatically.

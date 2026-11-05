@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 //! Unprivileged TLS downloads and shared bounded hash verification.
-use super::{InstallPlan, Package};
+use super::{private_directory, InstallPlan, Package};
 use sha2::{Digest, Sha256};
 use std::{
     fs::{self, File},
@@ -27,10 +27,7 @@ pub fn download(
     progress: impl Fn(u32),
 ) -> Result<tempfile::TempDir, String> {
     plan.validate()?;
-    let directory = tempfile::Builder::new()
-        .prefix("pnm-viewer-update-")
-        .tempdir()
-        .map_err(|error| error.to_string())?;
+    let directory = private_directory("pnm-viewer-update-")?;
     let agent = ureq::AgentBuilder::new()
         .redirects(0)
         .timeout_connect(Duration::from_secs(15))

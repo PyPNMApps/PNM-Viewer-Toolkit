@@ -223,9 +223,15 @@ a successful tag, published release, credentials or a live GitHub connection.
 Ubuntu x64 installation lives in `apps/viewer/src/updates/ubuntu/`. Rust validates
 both release assets, downloads with TLS/redirect/size/time/hash limits and
 cancellation, and requests Polkit authentication only after verification.
+The downloader and elevated installer create their respective temporary
+directories with explicit Unix mode 0700 before writing content.
 The fixed installed executable handles `--install-update` before constructing Qt:
-it copies to root-private staging, rechecks hashes and DEB identity/version/arch,
-requires both candidates to be newer, and runs apt on the pair. It performs no
+it copies to root-private staging and rechecks hashes and DEB identity/version/arch.
+The elevated installer still checks user ownership and
+rejects group/other access. Rust regression tests exercise the shared directory
+creator, including ownership and cleanup; the installed lifecycle test uses a
+Python-created private fixture directory and does not exercise live downloads.
+It requires both candidates to be newer, and runs apt on the pair. It performs no
 network I/O as root. The controller reports progress/failure and exposes an
 explicit restart after success. No Python runtime or shell command strings are
 used. Source builds, Windows and macOS keep release-download links; no Windows

@@ -18,6 +18,7 @@ command -v python3 >/dev/null
 command -v shellcheck >/dev/null
 python3 tools/security/pnm-mac-updater.py
 python3 -m unittest discover -s tools/security -p 'test_*.py'
+python3 -m unittest discover -s tools/ci -p 'test_*.py'
 "${CARGO_COMMAND[@]}" fmt --all -- --check
 "${CARGO_COMMAND[@]}" clippy --workspace --all-targets --locked -- -D warnings
 "${CARGO_COMMAND[@]}" test --workspace --locked

@@ -4,7 +4,7 @@
  */
 //! Privileged staging and apt handoff; no network access or Qt initialization.
 #[cfg(target_os = "linux")]
-use super::{download::copy_verified, InstallPlan, PACKAGES};
+use super::{download::copy_verified, private_directory, InstallPlan, PACKAGES};
 use super::{supported, INSTALLED_VIEWER};
 #[cfg(target_os = "linux")]
 use std::{
@@ -84,10 +84,7 @@ pub fn install_elevated(directory: &Path) -> Result<(), String> {
         let plan: InstallPlan =
             serde_json::from_slice(&bytes).map_err(|_| "Invalid update plan.")?;
         plan.validate()?;
-        let staging = tempfile::Builder::new()
-            .prefix("pnm-install-")
-            .tempdir()
-            .map_err(|error| error.to_string())?;
+        let staging = private_directory("pnm-install-")?;
         let mut destinations = Vec::new();
         for (package, expected) in plan.packages.iter().zip(PACKAGES) {
             let source = directory.join(&package.name);

@@ -38,6 +38,9 @@ jobs:
     needs: code-checks
     runs-on: ubuntu-22.04
     timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
     env:
       CC: ccache cc
       CXX: ccache c++
@@ -49,6 +52,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -63,8 +67,6 @@ jobs:
           key: cpp-ubuntu-22.04-${{ runner.arch }}-${{ hashFiles('scripts/qt-sdk.py') }}-${{ github.sha }}
           restore-keys: |
             cpp-ubuntu-22.04-${{ runner.arch }}-${{ hashFiles('scripts/qt-sdk.py') }}-
-      - name: Initialize compiler cache statistics
-        run: ccache --zero-stats
       - name: Load pinned Rust toolchain
         run: rustup show
       - name: Cache Rust dependencies
@@ -78,6 +80,25 @@ jobs:
             . -> target
             apps/qt -> target
           cache-bin: false
+      - name: Find reusable outputs from a successful ancestor tag
+        id: native-cache-source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/ci/native_cache.py select
+      - name: Download previous native build outputs
+        if: steps.native-cache-source.outputs.run_id != ''
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ steps.native-cache-source.outputs.artifact_name }}
+          path: local/previous-native-cache
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.native-cache-source.outputs.run_id }}
+      - name: Restore validated native build outputs
+        if: steps.native-cache-source.outputs.run_id != ''
+        run: python3 scripts/ci/native_cache.py restore --directory local/previous-native-cache
+      - name: Initialize compiler cache statistics
+        run: ccache --zero-stats
       - name: Cache pinned native Qt SDK
         uses: actions/cache@v4
         with:
@@ -104,6 +125,18 @@ jobs:
           path: dist/release/*
           if-no-files-found: error
           retention-days: 30
+      - name: Export reusable native build outputs
+        id: native-cache-export
+        run: python3 scripts/ci/native_cache.py pack
+      - name: Retain native outputs for subsequent tags
+        if: steps.native-cache-export.outputs.ready == 'true'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.native-cache-source.outputs.artifact_name }}
+          path: local/native-cache-artifact/*
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 14
       - name: Report compiler cache statistics
         if: always()
         run: ccache --show-stats

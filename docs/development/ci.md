@@ -221,3 +221,40 @@ permits. A final statistics step reports hits/misses even after test failure.
 No relaxed ccache correctness settings or disabled tests are used. The running
 tag uses its original workflow; this change applies to a subsequent tag.
 Measure the next run before claiming a speedup.
+
+### Cross-tag reuse of native build outputs
+
+The v0.1.9 run 41958820691 again enters a multi-minute native check phase.
+The previous ccache change helps within a job, but actions/cache cannot restore
+the successful v0.1.8 tag's outputs into v0.1.9. Merely changing keys does not
+remove that ref isolation. We preserve tag-only execution and the existing
+CodeQL/test/package/lifecycle/publication gates.
+
+The temporary Ubuntu job now also retains a separate 14-day **native build cache
+artifact**, not a public release asset. It selects only successful push runs of
+the exact Ubuntu workflow whose stable tag commit is an ancestor of the current
+validated commit. Artifact names include a fingerprint of runner image/ABI,
+Rust compiler, C++ compiler and pinned Qt setup. PR/branch runs, expired artifacts,
+incompatible fingerprints and non-ancestor commits cannot supply the cache.
+
+`scripts/ci/native_cache.py` safely restores Cargo output trees and ccache data,
+preserving executable modes and relative CXX-Qt header links. Archives have
+entry/size/path/link restrictions and are staged before replacing build output.
+Workspace application/test binaries and incremental state are excluded.
+No credentials, user captures, package assets or test results are reused. Cargo
+and ccache still validate source/configuration; every check and installed-package
+test runs again, and public packages are rebuilt for the current version.
+
+The first tag containing this mechanism seeds the artifact. Subsequent compatible
+tags can reuse it; old workflows and the currently running tag cannot acquire
+new cache steps retroactively. Do not promise a measured reduction before the
+next compatible warm run. Compiler cache statistics are reset after restoration
+so the reported hits/misses describe that run rather than prior releases.
+
+Actual v0.1.9 timings: full gate **8m38s**, packaging **4m42s**, total workflow
+**20m46s**. Ccache reported **56 hits / 793 calls (7.06%)**; Rust restoration
+reported `No cache found`. These results confirm the previous changes did not
+provide the requested reduction. The new artifact mechanism targets reuse of
+complete native dependency outputs, not just repeated C++ calls inside one job.
+Oversized/failed optional cache exports are not uploaded and do not block an
+already tested package; no build, test or publication validation is bypassed.

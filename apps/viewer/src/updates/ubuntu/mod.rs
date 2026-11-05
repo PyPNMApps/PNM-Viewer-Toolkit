@@ -123,3 +123,21 @@ pub fn supported() -> bool {
                 .any(|line| matches!(line, "ID=ubuntu" | "ID=\"ubuntu\""))
         })
 }
+
+/// Creates update storage with owner-only access before any content is written.
+/// # Arguments
+/// * `prefix` - Identifies download or elevated staging directories.
+/// # Returns
+/// An owned directory removed automatically when dropped; Unix mode is 0700.
+/// # Errors
+/// Reports temporary-directory creation failures.
+fn private_directory(prefix: &str) -> Result<tempfile::TempDir, String> {
+    let mut builder = tempfile::Builder::new();
+    builder.prefix(prefix);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        builder.permissions(fs::Permissions::from_mode(0o700));
+    }
+    builder.tempdir().map_err(|error| error.to_string())
+}
