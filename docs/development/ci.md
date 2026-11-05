@@ -258,3 +258,32 @@ provide the requested reduction. The new artifact mechanism targets reuse of
 complete native dependency outputs, not just repeated C++ calls inside one job.
 Oversized/failed optional cache exports are not uploaded and do not block an
 already tested package; no build, test or publication validation is bypassed.
+
+### First native-cache artifact: v0.1.11
+
+[Run 41963123796](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/41963123796)
+succeeded and published v0.1.11. Total elapsed time was **17m02s**, compared with
+**20m46s** for v0.1.9 (3m44s shorter, about 18%).
+
+| Stage | Elapsed time |
+| --- | --- |
+| CodeQL job | 4m12s |
+| Full workspace/CLI/tooling/Qt checks | 6m29s |
+| Packaging | 3m35s |
+| Installed-package lifecycle tests | 38s |
+| Native cache export and upload | 33s |
+| Publication job | 12s |
+
+Rust cache restoration missed, and no earlier native-output artifact existed.
+The Qt SDK cache restored successfully. Ccache again reported 56/793 hits
+(7.06%). The shorter run therefore does **not** demonstrate a warm native-cache
+speedup. Qt test compilation took 2m40s, Qt Clippy 2m27s and the optimized Qt
+build 3m00s; compilation remains the main opportunity for savings.
+
+The run successfully retained a native dependency artifact containing 9,052
+entries: 2,132,184,328 expanded bytes and 748,731,628 artifact download bytes.
+The next compatible tag should select run 41963123796 and restore those outputs.
+Verify the selected source, successful restoration, dependency build durations,
+all repeated checks, installed-package tests and total time before claiming a
+cache benefit. Runner-image/compiler/Qt changes may correctly require a cold
+build. Keep all existing validation gates and CodeQL-before-native ordering.
