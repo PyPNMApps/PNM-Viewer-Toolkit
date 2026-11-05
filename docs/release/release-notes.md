@@ -41,7 +41,7 @@ sudo apt remove pnm-viewer-toolkit
 This leaves the separately owned CLI installed. To remove it too, run
 `sudo apt remove pnm-decode`.
 
-[Installation guide]({{SOURCE_URL}}/docs/install/README.md)
+[Installation and uninstall guide]({{SOURCE_URL}}/docs/install/README.md)
 
 ## Windows — x64
 

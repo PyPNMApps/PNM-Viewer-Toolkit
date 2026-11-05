@@ -14,6 +14,8 @@ the packages. Verify downloaded package hashes before installation.
 
 ## Install or manually upgrade
 
+[Installation and uninstall guide]({{SOURCE_URL}}/docs/install/README.md)
+
 Download both DEBs into a fresh directory, then run there:
 
 ```bash
