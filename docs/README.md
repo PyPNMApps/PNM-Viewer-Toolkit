@@ -11,6 +11,7 @@ actual published assets and [CI scope](development/ci.md) for validation status.
 
 - [Desktop user guide and starting screen](ui/README.md)
 - [Measurement screenshots](ui/measurements.md)
+- [Bundled example captures](ui/examples.md)
 
 - [Installation and binary availability](install/README.md)
 - OS installation and removal: [Ubuntu](install/ubuntu.md),

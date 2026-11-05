@@ -60,6 +60,11 @@ Run Qt builds from an initialized **x64 MSVC developer terminal**. GitHub jobs
 initialize this environment with `ilammy/msvc-dev-cmd`. Git Bash can nevertheless
 put its unrelated `Git/usr/bin/link.exe` ahead of Microsoft's linker.
 
+Install the Windows SDK with Visual Studio's C++ workload: the GUI build also
+uses `rc.exe` to embed the branded shell icon. Qt QRC window icons alone do not
+provide Explorer/desktop executable icons. macOS release packaging uses the
+committed ICNS; neither native build requires Pillow at runtime.
+
 The shared `qt_environment()` helper resolves MSVC from `VCToolsInstallDir`,
 validates the x64 compiler/linker/librarian, and prepends their directory to the
 child PATH. It sets Cargo's default

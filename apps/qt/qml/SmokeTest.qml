@@ -28,6 +28,15 @@ Timer {
             return
         }
         if (stage === 0) {
+            const examples = viewerBackend.examples_folder().toString()
+            const currentFolder = openCaptureDialog.currentFolder.toString()
+            if (examples.length > 0 && currentFolder !== examples &&
+                currentFolder !== examples + "/" && currentFolder + "/" !== examples) {
+                console.error("UI_SMOKE_FAILED: initial Open folder is not the bundled examples")
+                stop()
+                Qt.exit(1)
+                return
+            }
             if (Qt.platform.os === "windows" &&
                 ((openCaptureDialog.options & FileDialog.DontUseNativeDialog) !== 0 ||
                  (exportCaptureDialog.options & FileDialog.DontUseNativeDialog) !== 0)) {

@@ -6,8 +6,11 @@
 import hashlib
 import importlib.util
 import json
+import io
+from contextlib import redirect_stderr
 from pathlib import Path
 import tempfile
+import subprocess
 import unittest
 from unittest.mock import patch
 
@@ -18,6 +21,18 @@ SPEC.loader.exec_module(MODULE)
 
 class PublishTests(unittest.TestCase):
     """Use an entirely synthetic GitHub service; no network/publication occurs."""
+
+    def test_cli_failure_reports_stderr_and_preserves_original_error(self):
+        """Expose the API error instead of losing it behind a generic traceback."""
+        failure = subprocess.CalledProcessError(
+            1, ['gh', 'release', 'create'], stderr='HTTP 403: synthetic permission failure')
+        diagnostics = io.StringIO()
+        with patch.object(MODULE.subprocess, 'run', side_effect=failure), \
+                redirect_stderr(diagnostics):
+            with self.assertRaises(subprocess.CalledProcessError) as caught:
+                MODULE.github('release', 'create', 'v0.2.2')
+        self.assertIs(caught.exception, failure)
+        self.assertIn('HTTP 403: synthetic permission failure', diagnostics.getvalue())
 
     def exercise(self, mode, filename="test.deb"):
         """Execute the real coordinator with success, API failure or corrupt assets."""

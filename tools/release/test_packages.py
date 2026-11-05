@@ -44,7 +44,8 @@ class PackageContractTests(unittest.TestCase):
     def test_smoke_rejects_missing_render_marker(self):
         """An exit-zero GUI still fails without positive rendering evidence."""
         with patch.object(smoke.subprocess, 'run', return_value=subprocess.CompletedProcess(
-                [], 0, stdout='', stderr='')):
+                [], 0, stdout='', stderr='')), \
+                patch.object(smoke, 'installed_directory', return_value=ROOT / 'tests/fixtures/pypnm/tests/files'):
             with self.assertRaisesRegex(RuntimeError, 'Installed GUI smoke failed: rxmer.bin'):
                 smoke.smoke(Path('viewer'), Path('decoder'))
 

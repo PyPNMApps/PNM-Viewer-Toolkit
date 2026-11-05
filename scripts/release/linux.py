@@ -10,6 +10,7 @@ from pathlib import Path
 import shutil
 
 from common import ROOT, binary_path, inventory, notices, qt, run
+from samples import bundle
 
 SYSTEM_DEPENDENCIES = (
     'libc6 (>= 2.35), libstdc++6, libgcc-s1, libgl1, libegl1, libopengl0, '
@@ -119,6 +120,7 @@ def build(stage, output, version):
     shutil.copy2(binary_path(gui=True), payload / 'pnm-viewer-qt')
     deploy_qt(payload)
     notices(payload / 'share')
+    bundle(payload / 'share/examples')
     launcher = gui_stage / 'usr/bin'
     launcher.mkdir(parents=True)
     (launcher / 'pnm-viewer').symlink_to('/opt/pnm-viewer-toolkit/pnm-viewer-qt')

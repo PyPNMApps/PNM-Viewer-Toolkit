@@ -158,3 +158,19 @@ aa:bb:cc:dd:ee:ff, as explicitly selected by the user. Run the read-only
 hashes, and regenerate JSON examples and affected screenshots. See
 `tools/security/README.md`. Do not rewrite arbitrary binary/text files or alter
 upstream PyPNM. This policy concerns development fixtures, not user captures.
+
+## Installed branding and examples
+
+User authorization on 2026-11-05 includes the nine sanitized binary captures
+in desktop installers, with upstream license/NOTICE and provenance. Use the
+explicit allowlist in scripts/release/samples.py; do not ship Python tests,
+private evidence or arbitrary customer captures. Standalone CLI archives stay
+capture-free. Installed Open starts in the examples folder and exports target
+user-selected writable locations. Test installed sample bytes and default folder.
+
+Use packaging/ native icons and navy/teal WiX artwork derived from the existing
+desktop PNG. Windows must offer an unchecked desktop-shortcut choice before
+installation; macOS uses its bundle icon and standard user-created Finder alias.
+Keep tools/branding/generate.py reproducible and development-only. Add new host
+build/conversion prerequisites to --development and its docs; do not install
+packages merely to validate script syntax or argument handling.

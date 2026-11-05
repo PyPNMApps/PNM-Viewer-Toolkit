@@ -5,6 +5,7 @@
 //! Native desktop services organized by responsibility.
 pub mod capture;
 pub mod measurements;
+pub mod resources;
 pub mod updates;
 
 // Preserve the established capture type convenience imports for library callers.

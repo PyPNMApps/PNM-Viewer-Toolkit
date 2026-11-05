@@ -37,7 +37,11 @@ download failures stop setup and propagate a nonzero exit status.
 
 ## Dependencies and ownership
 
-- Native build tools: build-essential, CMake, pkg-config and libssl-dev.
+- Native build tools: build-essential, CMake, pkg-config, libssl-dev and `lld`.
+- Packaging/cache tools: `patchelf` and `ccache`; Xvfb/Xauth for headless checks.
+- Artwork conversion: `python3-pil` (Pillow), used only by the
+  [native asset generator](../../packaging/README.md). Released assets are committed;
+  no image library is needed by the installed application.
 - Qt host dependencies: OpenGL/EGL development and runtime libraries, XKB/XCB
   libraries including libxcb-cursor0, GTK 3 for the native Linux file chooser,
   and libb2. The exact package list lives in `scripts/install-development.sh`.

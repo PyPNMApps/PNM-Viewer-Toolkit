@@ -26,6 +26,11 @@ mod bridge {
         #[qproperty(QString, error_message)]
         type ViewerBackend = super::ViewerBackendRust;
 
+        /// Returns the installed example captures folder, or an empty local URL.
+        /// Resolves the executable location without opening captures or writing files.
+        #[qinvokable]
+        fn examples_folder(self: &ViewerBackend) -> QUrl;
+
         /// Selects the embedded desktop icon for the current appearance.
         /// Called on the UI thread; dark selects the dark-theme asset.
         #[qinvokable]
@@ -141,6 +146,21 @@ impl Default for ViewerBackendRust {
             capture: None,
             view: MeasurementView::Default,
         }
+    }
+}
+impl bridge::ViewerBackend {
+    /// Finds packaged examples for the initial native Open dialog location.
+    ///
+    /// # Returns
+    /// A local file URL, or an empty URL when launched without packaged resources.
+    pub fn examples_folder(&self) -> QUrl {
+        std::env::current_exe()
+            .ok()
+            .and_then(|executable| viewer::resources::examples_directory(&executable))
+            .map(|directory| {
+                QUrl::from_local_file(&QString::from(directory.to_string_lossy().as_ref()))
+            })
+            .unwrap_or_default()
     }
 }
 fn local_path(url: &QUrl) -> Result<PathBuf, Diagnostic> {

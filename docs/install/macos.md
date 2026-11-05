@@ -16,6 +16,14 @@ not Apple notarization or a verified Developer ID.
 3. Open the DMG, drag PNM Viewer Toolkit onto Applications, and eject the image.
 4. Launch the app from Applications.
 
+The app uses the branded PNM icon in Finder and the Dock. For a desktop shortcut,
+select the installed app in Finder, choose **File → Make Alias**, and move the
+alias to Desktop. The DMG does not silently modify your desktop.
+
+The first Open dialog starts in the bundled [example captures](../ui/examples.md)
+at `PNM Viewer Toolkit.app/Contents/Resources/share/examples`. Navigation is
+retained for the current viewer session. Export JSON to your own writable folder.
+
 The deployment target is macOS 13 or newer; native CI uses macOS 15 runners.
 Qt and the CLI are included. The app is ad-hoc signed and not notarized.
 If macOS blocks launch, verify its source/checksum and use the operating system's

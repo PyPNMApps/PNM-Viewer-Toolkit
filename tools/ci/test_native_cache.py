@@ -5,6 +5,7 @@
 """Native cache reuse preserves executables and cannot write outside build trees."""
 import importlib.util
 import io
+from contextlib import redirect_stdout
 import os
 import sys
 import json
@@ -104,9 +105,16 @@ class NativeCacheTests(unittest.TestCase):
         """Oversized/broken optional exports do not invalidate tested packages."""
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / 'github-output'
-            with patch.dict(os.environ, {'GITHUB_OUTPUT': str(output)}), patch.object(sys, 'argv', ['native_cache.py', 'pack']), patch.object(CACHE, 'workspace_artifacts', return_value=set()), patch.object(CACHE, 'pack', side_effect=ValueError('synthetic size limit')):
+            diagnostics = io.StringIO()
+            with patch.dict(os.environ, {'GITHUB_OUTPUT': str(output)}), \
+                    patch.object(sys, 'argv', ['native_cache.py', 'pack']), \
+                    patch.object(CACHE, 'workspace_artifacts', return_value=set()), \
+                    patch.object(CACHE, 'pack', side_effect=ValueError('synthetic size limit')), \
+                    redirect_stdout(diagnostics):
                 CACHE.main()
             self.assertEqual(output.read_text(), 'ready=false\n')
+            self.assertIn('::warning::Native cache export unavailable: synthetic size limit',
+                          diagnostics.getvalue())
 
     def test_source_selection_requires_successful_workflow_ancestor_tag(self):
         """Ignore branch runs, non-ancestor commits and expired/missing artifacts."""

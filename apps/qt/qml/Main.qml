@@ -69,7 +69,13 @@ ApplicationWindow {
         title: "Open PNM capture"
         fileMode: FileDialog.OpenFile
         nameFilters: ["PNM captures (*)"]
-        currentFolder: StandardPaths.standardLocations(StandardPaths.HomeLocation)[0]
+        currentFolder: {
+            const examples = backend.examples_folder()
+            if (examples.toString().length > 0) {
+                return examples
+            }
+            return StandardPaths.standardLocations(StandardPaths.HomeLocation)[0]
+        }
         onAccepted: backend.open_file(selectedFile)
     }
     FileDialog {

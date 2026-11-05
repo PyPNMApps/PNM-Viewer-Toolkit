@@ -43,11 +43,32 @@ class WindowsMsiTests(unittest.TestCase):
                          [item.attrib for item in second.findall('.//w:Component', self.names)])
         self.assertIsNone(first.find('.//w:CustomAction', self.names))
         self.assertIsNone(first.find('.//w:Environment', self.names))
-        shortcut = first.find('.//w:Shortcut', self.names)
+        shortcut = first.find('.//w:Shortcut[@Id="StartMenuViewer"]', self.names)
         self.assertEqual(shortcut.get('Advertise'), 'yes')
         for installed in first.findall('.//w:File', self.names):
             self.assertTrue(Path(installed.get('Source')).is_file())
         self.assertEqual(len(first.findall('.//w:File', self.names)), 3)
+
+    def test_branded_installer_offers_an_unchecked_desktop_choice(self):
+        """Use real branding and a conditioned shortcut without launching the app."""
+        source = windows_msi.author(self.payload, '0.2.2', self.root / 'branded.wxs')
+        product = ET.parse(source).find('w:Product', self.names)
+        icon = product.find('w:Icon[@Id="ApplicationIcon"]', self.names)
+        self.assertTrue(Path(icon.get('SourceFile')).is_file())
+        self.assertEqual(product.find('w:Property[@Id="ARPPRODUCTICON"]', self.names).get('Value'), 'ApplicationIcon')
+        for identifier in ('WixUIDialogBmp', 'WixUIBannerBmp'):
+            artwork = product.find(f'w:WixVariable[@Id="{identifier}"]', self.names)
+            self.assertTrue(Path(artwork.get('Value')).is_file())
+        choice = product.find('w:Property[@Id="CREATE_DESKTOP_SHORTCUT"]', self.names)
+        self.assertIsNone(choice.get('Value'))
+        checkbox = product.find('.//w:Control[@Id="DesktopChoice"]', self.names)
+        self.assertEqual(checkbox.get('Property'), 'CREATE_DESKTOP_SHORTCUT')
+        self.assertEqual(checkbox.get('CheckBoxValue'), '1')
+        component = product.find('.//w:Component[@Id="DesktopShortcutComponent"]', self.names)
+        self.assertEqual(component.find('w:Condition', self.names).text, 'CREATE_DESKTOP_SHORTCUT = "1"')
+        self.assertEqual(component.find('w:RegistryValue', self.names).get('KeyPath'), 'yes')
+        self.assertEqual(component.find('w:Shortcut', self.names).get('Icon'), 'ApplicationIcon')
+        self.assertIsNone(product.find('.//w:CustomAction', self.names))
 
     def test_version_bounds_case_collisions_and_existing_source_rejected(self):
         """MSI must reject invalid identity before compiling or modifying installers."""

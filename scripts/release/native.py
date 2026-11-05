@@ -10,6 +10,7 @@ import plistlib
 import shutil
 
 from common import ROOT, binary_path, inventory, notices, qt, run
+from samples import bundle
 
 
 def windows(stage, output, version):
@@ -25,6 +26,7 @@ def windows(stage, output, version):
     shutil.copy2(binary_path(gui=True), gui)
     shutil.copy2(binary_path(), payload / 'pnm-decode.exe')
     notices(payload / 'share')
+    bundle(payload / 'share/examples')
     run([qt.sdk_path() / 'bin/windeployqt.exe', '--release', '--no-translations',
          '--no-compiler-runtime', '--qmldir', ROOT / 'apps/qt/qml', gui], env=qt.qt_environment())
     if not (payload / 'platforms/qwindows.dll').is_file():
@@ -57,11 +59,14 @@ def macos(stage, output, version, architecture):
     shutil.copy2(binary_path(gui=True), gui)
     resources = contents / 'Resources'
     resources.mkdir()
+    shutil.copy2(ROOT / 'packaging/macos/pnm-viewer.icns', resources / 'pnm-viewer.icns')
     shutil.copy2(binary_path(), binaries / 'pnm-decode')
     notices(resources / 'share')
+    bundle(resources / 'share/examples')
     info = {'CFBundleExecutable': 'pnm-viewer', 'CFBundleIdentifier': 'org.pypnm.pnm-viewer-toolkit',
             'CFBundleName': 'PNM Viewer Toolkit', 'CFBundleDisplayName': 'PNM Viewer Toolkit',
-            'CFBundlePackageType': 'APPL', 'CFBundleShortVersionString': version,
+            'CFBundlePackageType': 'APPL', 'CFBundleIconFile': 'pnm-viewer.icns',
+            'CFBundleShortVersionString': version,
             'CFBundleVersion': version, 'NSHighResolutionCapable': True,
             'LSMinimumSystemVersion': os.environ.get('MACOSX_DEPLOYMENT_TARGET', '13.0')}
     (contents / 'Info.plist').write_bytes(plistlib.dumps(info))

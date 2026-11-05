@@ -9,6 +9,7 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 
 
@@ -18,8 +19,15 @@ def github(*arguments):
     Arguments are discrete CLI arguments. Return stdout on success; never print
     credentials or signed artifact URLs. The caller owns release authorization.
     """
-    return subprocess.run(['gh', *map(str, arguments)], check=True,
-                          capture_output=True, text=True).stdout
+    try:
+        return subprocess.run(['gh', *map(str, arguments)], check=True,
+                              capture_output=True, text=True).stdout
+    except subprocess.CalledProcessError as error:
+        # Captured CLI diagnostics contain the actionable HTTP/flag error;
+        # without them CI prints only a generic CalledProcessError traceback.
+        if error.stderr:
+            print(error.stderr, file=sys.stderr, flush=True)
+        raise
 
 
 def publish(assets, notes, tag, repository, title):

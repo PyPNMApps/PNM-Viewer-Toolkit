@@ -125,6 +125,28 @@ will not include the new reporting behavior.
 
 ## Caching and runtime
 
+Linux native jobs install LLVM's `lld` linker, which the pinned Qt build helper
+selects automatically when available. This addresses its missing-linker warning
+on Ubuntu 26.04 without overriding the system linker or relaxing build checks.
+
+The cache-export unit test captures and asserts its deliberately generated
+warning instead of sending a synthetic annotation to GitHub. Real export
+failures still warn and keep optional cache artifacts out of uploads.
+
+Warnings observed in v0.2.2 that need separate follow-up:
+
+- CodeQL reports a column-kind mismatch while merging its own language SARIF
+  files; analysis and result upload succeed. Do not rewrite generated positions
+  or disable a language scan to silence this tooling warning.
+- `ilammy/msvc-dev-cmd@v1` still declares Node 20. Its latest published release,
+  v1.13.0, has no Node 24 replacement as of this investigation. The forced Node
+  24 execution passed; upgrading first-party cache/artifact actions does not
+  change this third-party action's metadata.
+- Qt macOS deployment includes database plugins with private-API warnings and
+  missing external database-client libraries. The viewer lifecycle passes, but
+  these plugin messages require a focused deployment review. Do not suppress
+  warnings or remove required platform/dialog plugins to make logs look clean.
+
 Native validation and package builds cache the pinned Qt SDK under `local/qt`.
 Keys include the exact runner image label, architecture and SDK setup-script
 hash. Setup still checks the SDK version and presentation-test executable on
@@ -148,6 +170,15 @@ Installed GUI smoke subprocesses set `QT_FORCE_STDERR_LOGGING=1`, so Windows
 GUI-subsystem applications send Qt diagnostics and the required render marker
 to the captured stderr pipe. This is test-only; normal desktop launches keep
 their usual logging. A zero exit status without `UI_SMOKE_OK` still fails.
+
+Desktop packages include the nine approved sanitized example captures. Installed
+smoke checks hash them against the source fixtures and use those installed bytes
+for all GUI/CLI exports; they also check the initial native Open folder.
+Windows lifecycle tests opt out of the desktop shortcut on baseline install,
+opt in during upgrade, verify the executable's icon resource and remove the
+shortcut at uninstall. Mac tests require the ICNS referenced by Info.plist.
+Interactive wizard checkbox/navigation and Explorer/Finder appearance still
+require a native desktop review after a successful hosted package run.
 
 [Swatinem/rust-cache](https://github.com/Swatinem/rust-cache) caches Cargo downloads
 and compiled dependencies for both workspaces. The additional key isolates
@@ -192,6 +223,11 @@ already public release. After verifying uploaded metadata and re-downloaded
 bytes, it publishes automatically. External signing and notarization are
 separate. Failed packages, missing targets and packages above
 50,000,000 bytes block publication. See [packaging](../release/packaging.md).
+
+Publication helper failures print captured GitHub CLI stderr and preserve the
+original failure. If only publication fails after every required gate passed,
+retry that failed job with its original tested artifacts. Do not rebuild assets
+under the same public tag or change an already published release.
 
 ## Evidence and badges
 

@@ -44,7 +44,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake python3-venv libgl1-mesa-dev libegl1 libopengl0 libdbus-1-3 libfontconfig1 libfreetype6 libx11-xcb1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-randr0 libxcb-xfixes0 libxcb-sync1 libxcb-render0 libsm6 libice6 libgtk-3-0 libb2-1 ccache patchelf shellcheck
+          sudo apt-get install -y lld build-essential cmake python3-venv libgl1-mesa-dev libegl1 libopengl0 libdbus-1-3 libfontconfig1 libfreetype6 libx11-xcb1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-randr0 libxcb-xfixes0 libxcb-sync1 libxcb-render0 libsm6 libice6 libgtk-3-0 libb2-1 ccache patchelf shellcheck
       - name: Configure Linux compiler cache
         if: runner.os == 'Linux'
         run: |

@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import json
 import os
+import plistlib
 import uuid
 from pathlib import Path
 import shutil
@@ -154,6 +155,9 @@ def windows(packages, payload):
 
     if registrations():
         raise ValueError('Existing viewer MSI registration; refusing lifecycle test')
+    desktop_shortcut = Path(os.environ['PUBLIC']) / 'Desktop/PNM Viewer Toolkit.lnk'
+    if desktop_shortcut.exists():
+        raise ValueError('Existing viewer desktop shortcut; refusing lifecycle test')
     if payload is None or not payload.is_dir():
         raise ValueError('Windows lifecycle requires the fresh packaging payload')
     installer = one(packages, '*-windows-x64.msi')
@@ -166,13 +170,41 @@ def windows(packages, payload):
         baseline = work / 'baseline.msi'
         build(payload, work, baseline, '0.0.0')
         try:
-            execute(['/i', baseline, f'INSTALLFOLDER={prefix}'], logs / 'baseline.log')
+            execute(['/i', baseline, f'INSTALLFOLDER={prefix}', 'CREATE_DESKTOP_SHORTCUT=0'], logs / 'baseline.log')
+            if desktop_shortcut.exists():
+                raise ValueError('Desktop shortcut created despite opt-out')
             if len(registrations()) != 1 or registrations()[0][1] != '0.0.0':
                 raise ValueError('MSI baseline registration missing')
-            execute(['/i', installer, f'INSTALLFOLDER={prefix}'], logs / 'upgrade.log')
+            execute(['/i', installer, f'INSTALLFOLDER={prefix}', 'CREATE_DESKTOP_SHORTCUT=1'], logs / 'upgrade.log')
+            if not desktop_shortcut.is_file():
+                raise ValueError('Selected desktop shortcut missing')
             if len(registrations()) != 1 or registrations()[0][1] != version:
                 raise ValueError('MSI major upgrade did not replace baseline registration')
             smoke(prefix / 'pnm-viewer.exe', prefix / 'pnm-decode.exe')
+            # Resource ID 1 is authored by apps/qt/build.rs from the branded ICO.
+            import ctypes
+            from ctypes import wintypes
+            library = ctypes.WinDLL('kernel32', use_last_error=True)
+            library.LoadLibraryExW.argtypes = (wintypes.LPCWSTR, wintypes.HANDLE, wintypes.DWORD)
+            library.LoadLibraryExW.restype = wintypes.HANDLE
+            library.FindResourceW.argtypes = (wintypes.HANDLE, ctypes.c_void_p, ctypes.c_void_p)
+            library.FindResourceW.restype = wintypes.HANDLE
+            library.FreeLibrary.argtypes = (wintypes.HANDLE,)
+            library.FreeLibrary.restype = wintypes.BOOL
+            load_as_data_file = 0x02
+            load_as_image_resource = 0x20
+            main_icon_id = 1
+            group_icon_resource_type = 14
+            module = library.LoadLibraryExW(str(prefix / 'pnm-viewer.exe'), None,
+                                           load_as_data_file | load_as_image_resource)
+            if not module:
+                raise ValueError('Cannot inspect installed Windows icon resources')
+            try:
+                if not library.FindResourceW(module, ctypes.c_void_p(main_icon_id),
+                                             ctypes.c_void_p(group_icon_resource_type)):
+                    raise ValueError('Installed executable lacks the branded icon resource')
+            finally:
+                library.FreeLibrary(module)
             if not (prefix / 'share/pnm-decode.1').is_file():
                 raise ValueError('Bundled CLI manual missing')
             execute(['/i', baseline, f'INSTALLFOLDER={prefix}'], logs / 'downgrade.log', success=False)
@@ -181,7 +213,7 @@ def windows(packages, payload):
         finally:
             for product_code, _version in registrations():
                 execute(['/x', product_code], logs / 'uninstall.log')
-        if registrations() or (prefix / 'pnm-viewer.exe').exists() or (prefix / 'pnm-decode.exe').exists():
+        if registrations() or (prefix / 'pnm-viewer.exe').exists() or (prefix / 'pnm-decode.exe').exists() or desktop_shortcut.exists():
             raise ValueError('MSI uninstall left application files or registration')
 
 
@@ -202,6 +234,11 @@ def macos(packages, architecture):
         finally:
             run(['hdiutil', 'detach', mount])
         run(['codesign', '--verify', '--deep', '--strict', app])
+        with (app / 'Contents/Info.plist').open('rb') as stream:
+            info = plistlib.load(stream)
+        icon = app / 'Contents/Resources' / info.get('CFBundleIconFile', '')
+        if not icon.is_file() or icon.read_bytes()[:4] != b'icns':
+            raise ValueError('Bundled macOS application icon missing')
         smoke(app / 'Contents/MacOS/pnm-viewer', app / 'Contents/MacOS/pnm-decode')
         if not (app / 'Contents/Resources/share/pnm-decode.1').is_file():
             raise ValueError('Bundled CLI manual missing')

@@ -10,9 +10,10 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
+from samples import CAPTURE_FILES, installed_directory
 
 ROOT = Path(__file__).resolve().parents[2]
-FIXTURES = ('rxmer.bin', 'spectrum_analyzer.bin', 'channel_estimation.bin', 'histogram.bin', 'fec_summary.bin', 'modulation_profile.bin', 'const_display.bin', 'us_pre_equalizer_coef.bin', 'us_pre_equalizer_coef_last.bin')
+FIXTURES = CAPTURE_FILES
 
 
 def clean_environment():
@@ -44,11 +45,12 @@ def smoke(gui, cli):
     exports. Each native GUI subprocess has a timeout and SDK-free environment.
     """
     environment = clean_environment()
+    examples = installed_directory(gui)
     subprocess.run([str(cli), '--version'], check=True, env=environment, timeout=15)
     with tempfile.TemporaryDirectory(prefix='pnm-package-smoke-') as directory:
         output = Path(directory)
         for filename in FIXTURES:
-            capture = ROOT / 'tests/fixtures/pypnm/tests/files' / filename
+            capture = examples / filename
             raw = output / (filename + '.cli.json')
             decoded = output / (filename + '.ui.json')
             subprocess.run([str(cli), str(capture), '--output', str(raw)],

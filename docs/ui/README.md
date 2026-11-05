@@ -2,6 +2,9 @@
 
 [Project README](../../README.md) · [Measurement gallery](measurements.md)
 
+[Bundled example captures](examples.md) are included in desktop installers and
+are the initial location for Open. Standalone CLI archives do not include them.
+
 The application is **under development**. This guide describes the native Qt
 viewer in the current source tree. Screenshots use the repository's preserved
 PyPNM example captures; appearance can vary with the operating system.

@@ -36,6 +36,8 @@ Keep sanitized fixtures unchanged during normal tests; construct truncated/
 corrupted test cases in memory. Use the explicit
 [MAC sanitization tool](../../../tools/security/README.md) when importing or
 intentionally changing fixture identities. Rust integration tests must explicitly load these shared fixtures; a
-root fixture directory does not create a Cargo test target. Do not bundle these
-reference files into application installers. The Python tests have not been run
+root fixture directory does not create a Cargo test target. User authorization on
+2026-11-05 permits the nine sanitized binary captures, upstream license/NOTICE
+and provenance in desktop installers. `scripts/release/samples.py` owns that
+allowlist; Python test references remain excluded. The Python tests have not been run
 in this repository and require PyPNM/pytest if used separately.

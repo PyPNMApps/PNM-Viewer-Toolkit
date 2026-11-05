@@ -254,3 +254,16 @@ formatting and syntax checks suffice. Follow AGENTS.md for project commands.
 
 Verify SPDX scope and position without relabeling upstream material. Validate
 this skill and both discovery links after edits. Keep one canonical copy.
+
+## Installed asset paths and development tools
+
+Resolve packaged resources from the running executable in Rust, using the
+owning resources module. QML consumes the resulting local URL; do not hardcode
+developer home directories or derive installation paths from the caller's cwd.
+Keep read-only examples separate from user-selected export destinations.
+
+Reuse the existing approved artwork when deriving native icon formats or
+installer assets. Keep the conversion reproducible and development-only; do
+not add an image-processing runtime dependency to the viewer. Add required host
+tools to --development and its documentation when introducing build/conversion
+steps, preserving check/dry-run behavior without downloads or system changes.

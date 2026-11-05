@@ -34,6 +34,41 @@ def _identifier(prefix, relative):
     return prefix + hashlib.sha256(relative.casefold().encode()).hexdigest()[:32]
 
 
+def _desktop_options(product):
+    """Offer a pre-install shortcut choice without executing custom actions."""
+    _element('Property', product, Id='CREATE_DESKTOP_SHORTCUT', Secure='yes')
+    ui = _element('UI', product)
+    dialog = _element('Dialog', ui, Id='ShortcutOptionsDlg', Width='370', Height='270',
+                      Title='PNM Viewer Toolkit Setup')
+    _element('Control', dialog, Id='Banner', Type='Bitmap', X='0', Y='0',
+             Width='370', Height='44', TabSkip='yes', Text='WixUI_Bmp_Banner')
+    _element('Control', dialog, Id='Title', Type='Text', X='20', Y='15', Width='280',
+             Height='18', Transparent='yes', Text='{\\WixUI_Font_Title}Desktop shortcut')
+    _element('Control', dialog, Id='DesktopChoice', Type='CheckBox', X='20', Y='80',
+             Width='330', Height='22', Property='CREATE_DESKTOP_SHORTCUT',
+             CheckBoxValue='1', Text='Create a desktop shortcut')
+    _element('Control', dialog, Id='Description', Type='Text', X='20', Y='110',
+             Width='330', Height='40', Text='The application is always available from the Start menu.')
+    _element('Control', dialog, Id='BottomLine', Type='Line', X='0', Y='234', Width='370', Height='0')
+    for identifier, text, position, target in (
+            ('Back', '< Back', '180', 'InstallDirDlg'),
+            ('Next', 'Next >', '236', 'VerifyReadyDlg'),
+            ('Cancel', 'Cancel', '304', 'CancelDlg')):
+        button = _element('Control', dialog, Id=identifier, Type='PushButton',
+                          X=position, Y='243', Width='56', Height='17', Text=text,
+                          **({'Cancel': 'yes'} if identifier == 'Cancel' else {}),
+                          **({'Default': 'yes'} if identifier == 'Next' else {}))
+        event = _element('Publish', button, Event='SpawnDialog' if identifier == 'Cancel' else 'NewDialog', Value=target)
+        event.text = '1'
+    # Stock path validation runs first; the last eligible NewDialog event wins.
+    forward = _element('Publish', ui, Dialog='InstallDirDlg', Control='Next',
+                       Event='NewDialog', Value='ShortcutOptionsDlg', Order='5')
+    forward.text = 'NOT Installed AND (WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID = "1")'
+    backward = _element('Publish', ui, Dialog='VerifyReadyDlg', Control='Back',
+                        Event='NewDialog', Value='ShortcutOptionsDlg', Order='5')
+    backward.text = 'NOT Installed'
+
+
 def author(payload, version, destination):
     """Write fresh MSI authoring with stable file components and rollback-safe upgrades.
 
@@ -64,6 +99,11 @@ def author(payload, version, destination):
     _element('Property', product, Id='WIXUI_INSTALLDIR', Value='INSTALLFOLDER')
     _element('UIRef', product, Id='WixUI_InstallDir')
     _element('WixVariable', product, Id='WixUILicenseRtf', Value=str(destination.with_suffix('.rtf')))
+    for identifier, filename in (('WixUIDialogBmp', 'dialog.bmp'), ('WixUIBannerBmp', 'banner.bmp')):
+        _element('WixVariable', product, Id=identifier, Value=str(ROOT / 'packaging/windows' / filename))
+    _element('Icon', product, Id='ApplicationIcon', SourceFile=str(ROOT / 'packaging/windows/pnm-viewer.ico'))
+    _element('Property', product, Id='ARPPRODUCTICON', Value='ApplicationIcon')
+    _desktop_options(product)
     condition = _element('Condition', product, Message='64-bit Windows is required.')
     condition.text = 'Installed OR VersionNT64'
     root = _element('Directory', product, Id='TARGETDIR', Name='SourceDir')
@@ -71,7 +111,18 @@ def author(payload, version, destination):
     install = _element('Directory', programs, Id='INSTALLFOLDER', Name='PNM Viewer Toolkit')
     menu = _element('Directory', root, Id='ProgramMenuFolder')
     _element('Directory', menu, Id='ApplicationMenu', Name='PNM Viewer Toolkit')
+    _element('Directory', root, Id='DesktopFolder')
     feature = _element('Feature', product, Id='Complete', Title='PNM Viewer Toolkit', Level='1')
+    shortcut_component = _element('Component', install, Id='DesktopShortcutComponent', Win64='yes',
+                                  Guid=str(uuid.uuid5(COMPONENT_NAMESPACE, 'desktop-shortcut')),
+                                  Transitive='yes')
+    _element('Condition', shortcut_component).text = 'CREATE_DESKTOP_SHORTCUT = "1"'
+    _element('Shortcut', shortcut_component, Id='DesktopViewer', Directory='DesktopFolder',
+             Name='PNM Viewer Toolkit', Target='[INSTALLFOLDER]pnm-viewer.exe',
+             WorkingDirectory='INSTALLFOLDER', Icon='ApplicationIcon', IconIndex='0')
+    _element('RegistryValue', shortcut_component, Root='HKCU', Key='Software\\PyPNMApps\\PNMViewerToolkit',
+             Name='DesktopShortcut', Type='integer', Value='1', KeyPath='yes')
+    _element('ComponentRef', feature, Id='DesktopShortcutComponent')
     directories = {'.': install}
     seen = set()
     for path in sorted(payload.rglob('*')):
@@ -92,7 +143,8 @@ def author(payload, version, destination):
         installed = _element('File', component, Id=_identifier('F', spelling), Source=str(path), KeyPath='yes')
         if spelling == 'pnm-viewer.exe':
             _element('Shortcut', installed, Id='StartMenuViewer', Directory='ApplicationMenu',
-                    Name='PNM Viewer Toolkit', Advertise='yes', WorkingDirectory='INSTALLFOLDER')
+                    Name='PNM Viewer Toolkit', Advertise='yes', WorkingDirectory='INSTALLFOLDER',
+                    Icon='ApplicationIcon', IconIndex='0')
             _element('RemoveFolder', component, Id='RemoveApplicationMenu', Directory='ApplicationMenu', On='uninstall')
         _element('ComponentRef', feature, Id=component_id)
     legal = 'Desktop: GPL-3.0-only. Core libraries: Apache-2.0. See bundled notices.\n\n'

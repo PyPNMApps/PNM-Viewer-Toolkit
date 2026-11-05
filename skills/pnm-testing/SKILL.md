@@ -63,3 +63,16 @@ For a focused iteration, use `test -p pnm --test test_<parser_module> --locked`.
 Report actual checks and evidence limits. A passing decoder test does not prove
 DOCSIS compliance, DSP accuracy outside tested cases, or desktop functionality.
 Follow the coding-style skill for banners and descriptive identifiers.
+
+## Installed desktop resources
+
+When changing packaging resources, test executable-relative discovery for
+Windows/Linux and macOS bundle layouts. Installed smoke tests must verify and
+open packaged example bytes, preserve the render marker and CLI/JSON comparison,
+and check the initial Open location. Test missing/corrupt sample failure and
+retain upstream notices/provenance. Source fixtures alone do not prove inclusion.
+
+Windows native lifecycle checks cover shortcut opt-out, opt-in and removal;
+macOS checks its Info.plist icon reference and packaged ICNS. XML/asset checks
+on Linux supplement native MSI/DMG tests; they do not prove interactive wizard,
+Finder or Windows Explorer appearance.

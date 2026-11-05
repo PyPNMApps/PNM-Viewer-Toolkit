@@ -32,6 +32,10 @@ Windows installs per machine under Program Files with a Start Menu shortcut and
 standard Windows Installer registration/repair/uninstall. Qt and MSVC runtime DLLs are app-local. The bundled CLI/manual belong
 to that private application directory; independently installed CLI files and
 PATH entries are untouched. Windows packages are unsigned development builds.
+The GUI executable embeds the project ICO; MSI shell entries and Installed apps
+use it too. Navy/teal WiX artwork follows the existing app branding. A pre-install
+checkbox offers a desktop shortcut, unchecked by default; silent installs use
+`CREATE_DESKTOP_SHORTCUT=1` to opt in. Start-menu integration is always included.
 The standalone CLI ZIP clamps legacy notice timestamps to ZIP's supported date
 range. File contents and staged source timestamps remain unchanged.
 
@@ -41,6 +45,9 @@ Applications directory. Its bundled decoder is at
 under `Contents/Resources/share`. macOS builds use ad-hoc integrity signing,
 not an Apple Developer certificate or notarization. Gatekeeper may require
 explicit user approval. The deployment baseline is macOS 13 or newer.
+The bundle includes `pnm-viewer.icns`, referenced by `CFBundleIconFile`, for
+Finder and Dock integration. Users can create a desktop alias in Finder; the DMG
+does not change Desktop automatically. See [branding inputs](../../packaging/README.md).
 
 ## Local builds
 
@@ -77,7 +84,11 @@ source graphs, including platform-conditional dependencies. Qt notices come from
 pinned source-tag archives cached under `local/release-sources/`, with measured
 source hashes recorded for review. Packaging needs network access for the first
 source/notice collection. Packages include project licenses, NOTICE and CLI
-usage/manual. They exclude captures, private PDFs, development tools and fixtures.
+usage/manual. Desktop installers additionally include the nine explicitly
+approved sanitized [example captures](../ui/examples.md), upstream license/NOTICE
+and provenance; Python tests and other fixtures remain excluded. Standalone CLI
+archives contain no captures. Private PDFs, customer files and development tools
+are never packaged.
 
 Linux still requires its declared distribution libraries; installing those can
 require network access. Offline viewing after setup is supported. This does not

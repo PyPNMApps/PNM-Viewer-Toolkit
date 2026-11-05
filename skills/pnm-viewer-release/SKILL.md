@@ -70,3 +70,23 @@ gates; do not treat legacy Ubuntu-only success as multi-OS validation. Windows
 and macOS in-app installers/MSP patches are deferred; manual installer releases
 come first. External signing/notarization remain separate.
 A workflow file or local build is not proof of hosted platform success.
+
+## Native icons, shortcuts and examples
+
+Use packaging/ assets derived from the existing desktop PNG; regenerate into a
+new review directory with tools/branding/generate.py. Embed the ICO in the GUI
+executable and MSI shell integration; macOS needs CFBundleIconFile and its ICNS.
+WiX artwork uses the project navy/teal palette. Offer an unchecked desktop
+shortcut option before installation, with explicit silent opt-in/out and no
+application-launch custom action. Keep Start-menu integration independent.
+macOS uses conventional Applications/Dock icons and an optional Finder alias.
+
+The user approved nine sanitized demonstration captures in desktop installers
+on 2026-11-05. scripts/release/samples.py owns the allowlist and upstream notices/
+provenance; CLI-only archives remain capture-free. Resolve the initial Open
+folder from the installed executable, fall back to Home for unpackaged builds,
+and never select an installation directory as the default export destination.
+Require installed smoke checks to use and verify bundled examples, not silently
+substitute checkout fixtures. Keep installed icon/shortcut lifecycle checks and
+the 50 MB artifact gate. Add new build/asset-conversion packages to the explicit
+development installer and documentation; do not install them while validating.
