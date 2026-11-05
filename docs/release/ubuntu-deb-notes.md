@@ -12,11 +12,34 @@ downloaded bytes, then automatically publishes the release for update discovery.
 `SHA256SUMS`, license/SBOM and build/dependency metadata are attached alongside
 the packages. Verify downloaded package hashes before installation.
 
-## Install or manually upgrade
+## Ubuntu 22.04 x64 — install or upgrade
 
-[Installation and uninstall guide]({{SOURCE_URL}}/docs/install/README.md)
+[Ubuntu installation and uninstall guide]({{SOURCE_URL}}/docs/install/ubuntu.md)
 
-Download both DEBs into a fresh directory, then run there:
+From a terminal, download this release's matching packages and checksums, verify
+them, and install both. Quit any running viewer first:
+
+```bash
+(
+  set -euo pipefail
+  umask 022
+  download_dir="$(mktemp -d /tmp/pnm-viewer-install.XXXXXX)"
+  chmod 755 "$download_dir"
+  cd "$download_dir"
+  release_url="https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases/download/{{TAG}}"
+  for asset in SHA256SUMS pnm-decode_{{VERSION}}_amd64.deb pnm-viewer-toolkit_{{VERSION}}_amd64.deb; do
+    curl -fL --retry 3 "$release_url/$asset" -o "$asset"
+  done
+  sha256sum --ignore-missing --check SHA256SUMS
+  sudo apt install ./pnm-decode_{{VERSION}}_amd64.deb ./pnm-viewer-toolkit_{{VERSION}}_amd64.deb
+  pnm-decode --version
+)
+```
+
+Launch `pnm-viewer` from a graphical desktop terminal or the application menu.
+The download command uses `curl`; downloaded packages remain under the generated
+`/tmp/pnm-viewer-install.*` directory. To install files already downloaded using
+your browser, open a terminal in their directory and run:
 
 ```bash
 sha256sum --ignore-missing --check SHA256SUMS
@@ -33,6 +56,21 @@ test as proof of an upgrade between two different package versions.
 Ubuntu system-library dependencies may require internet access during setup;
 local capture viewing works offline afterward. Installation on a pristine host
 without network access is not claimed.
+
+## Uninstall
+
+```bash
+sudo apt remove pnm-viewer-toolkit pnm-decode
+```
+
+Remove only `pnm-viewer-toolkit` to keep the CLI. Capture files remain intact.
+
+## Windows and macOS
+
+This Ubuntu-only release does not include Windows or macOS installers. See the
+[Windows guide]({{SOURCE_URL}}/docs/install/windows.md) and
+[macOS guide]({{SOURCE_URL}}/docs/install/macos.md) for configured installation
+steps when those assets are available in a future multi-OS release.
 
 ## Validation and use
 

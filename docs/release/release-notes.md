@@ -41,7 +41,7 @@ sudo apt remove pnm-viewer-toolkit
 This leaves the separately owned CLI installed. To remove it too, run
 `sudo apt remove pnm-decode`.
 
-[Installation and uninstall guide]({{SOURCE_URL}}/docs/install/README.md)
+[Ubuntu installation and uninstall guide]({{SOURCE_URL}}/docs/install/ubuntu.md)
 
 ## Windows — x64
 
@@ -69,6 +69,8 @@ Windows protections globally.
 or run `uninstall.exe` in its installation directory. A separately extracted CLI
 is independent of the desktop installation.
 
+[Windows installation and uninstall guide]({{SOURCE_URL}}/docs/install/windows.md)
+
 ## macOS — Apple Silicon or Intel
 
 1. Choose **arm64** for an Apple M-series Mac or **x64** for an Intel Mac.
@@ -93,6 +95,8 @@ from its versioned folder. The archive includes the manual and license notices.
 
 **Uninstall:** quit the app and move it from Applications to Trash. Any separately
 extracted CLI remains independent.
+
+[macOS installation and uninstall guide]({{SOURCE_URL}}/docs/install/macos.md)
 
 ## First use
 

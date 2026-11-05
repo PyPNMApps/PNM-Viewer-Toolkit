@@ -8,6 +8,16 @@ Tag CI publishes automatically after testing and uploaded-byte verification. If 
 published installer is available, use the [source build](source.md) for the CLI
 or the [Qt development setup](../development/qt.md) for the desktop.
 
+## Installation and uninstall by OS
+
+- [Ubuntu: terminal download, install, update and uninstall](ubuntu.md)
+- [Windows: EXE installation, update and uninstall](windows.md)
+- [macOS: DMG installation, update and uninstall](macos.md)
+
+Automatic releases currently target **Ubuntu 22.04 x64 only**. Windows, macOS
+and the broader Ubuntu matrix remain manual and are not validated by that run.
+The table below describes configured package formats, not current asset availability.
+
 ## Choose a component
 
 | Platform | Desktop viewer | CLI only |

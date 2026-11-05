@@ -13,6 +13,8 @@ is manual-only. See the
 - [Measurement screenshots](ui/measurements.md)
 
 - [Installation and binary availability](install/README.md)
+- OS installation and removal: [Ubuntu](install/ubuntu.md),
+  [Windows](install/windows.md), [macOS](install/macos.md)
 - [Build only the CLI from source](install/source.md)
 - [CLI user guide, output and errors](cli/usage.md)
 - [JSON examples for each PNM file type](cli/usage.md#json-examples-by-file-type)
