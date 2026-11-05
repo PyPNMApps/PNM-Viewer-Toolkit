@@ -25,6 +25,12 @@ Timer {
             return
         }
         if (stage === 0) {
+            if (Qt.platform.os === "linux" && Qt.application.name !== "pnm-viewer-toolkit") {
+                console.error("UI_SMOKE_FAILED: desktop application identity mismatch")
+                stop()
+                Qt.exit(1)
+                return
+            }
             if (Qt.application.arguments.length !== argumentIndex + 3) {
                 console.error("UI_SMOKE_FAILED: expected input and new output file URLs")
                 stop()

@@ -269,3 +269,12 @@ and release checks from `viewer::updates::release`. Root capture-type exports
 remain convenience imports for existing callers. New implementations reuse their
 owning folder or introduce a relevant feature folder; apply the
 [organization skill](../../skills/viewer-module-organization/SKILL.md).
+
+## Ubuntu launcher identity
+
+Before loading QML, the Linux viewer sets its Qt application name and desktop
+file name to `pnm-viewer-toolkit`. The DEB installs the matching desktop entry
+and `StartupWMClass=pnm-viewer-toolkit`. Keep these identifiers aligned so GNOME
+can group running windows and pin the installed launcher. The display title and
+CLI command are separate from this identity. Installed lifecycle checks verify
+the launcher fields. Interactive GNOME pin/unpin behavior needs VM confirmation.

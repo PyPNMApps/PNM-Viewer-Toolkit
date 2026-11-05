@@ -75,3 +75,16 @@ sudo apt remove pnm-viewer-toolkit pnm-decode
 
 To keep the CLI, remove only `pnm-viewer-toolkit`. Your capture files and source
 checkout are separate from the installed packages and remain intact.
+
+## Add to Favorites
+
+Open Ubuntu's application grid, search for **PNM Viewer Toolkit**, right-click
+its launcher and select **Add to Favorites** (or **Pin to Dash**, depending on
+your GNOME version). Dragging an icon from a terminal is not required.
+
+The installed desktop entry is `pnm-viewer-toolkit.desktop`. The viewer sets the
+same Qt desktop ID and X11 window class so GNOME can associate a running window
+with its launcher. After installing a release with this fix, close all older
+viewer windows and reopen it from the application grid before pinning. Remove
+any old duplicate favorite through its context menu first. A source-only build
+has no installed desktop entry unless you install the desktop package.

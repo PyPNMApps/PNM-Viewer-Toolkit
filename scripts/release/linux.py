@@ -126,7 +126,8 @@ def build(stage, output, version):
     applications.mkdir(parents=True)
     (applications / 'pnm-viewer-toolkit.desktop').write_text(
         '[Desktop Entry]\nType=Application\nName=PNM Viewer Toolkit\n'
-        'Exec=pnm-viewer\nIcon=pnm-viewer-toolkit\nTerminal=false\nCategories=Science;\n', encoding='utf-8')
+        'Exec=pnm-viewer\nIcon=pnm-viewer-toolkit\nTerminal=false\n'
+        'StartupWMClass=pnm-viewer-toolkit\nCategories=Science;\n', encoding='utf-8')
     icons = gui_stage / 'usr/share/icons/hicolor/256x256/apps'
     icons.mkdir(parents=True)
     shutil.copy2(ROOT / 'docs/images/desktop-icon-dark.png', icons / 'pnm-viewer-toolkit.png')

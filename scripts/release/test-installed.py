@@ -38,8 +38,14 @@ def linux(packages):
     installed_gui = Path('/opt/pnm-viewer-toolkit/pnm-viewer-qt')
     try:
         run(['sudo', 'apt-get', 'install', '-y', cli, gui])
-        if not Path('/usr/share/applications/pnm-viewer-toolkit.desktop').is_file():
+        desktop_entry = Path('/usr/share/applications/pnm-viewer-toolkit.desktop')
+        if not desktop_entry.is_file():
             raise ValueError('Desktop integration missing')
+        launcher = desktop_entry.read_text(encoding='utf-8').splitlines()
+        for field in ('Exec=pnm-viewer', 'Icon=pnm-viewer-toolkit',
+                      'StartupWMClass=pnm-viewer-toolkit'):
+            if launcher.count(field) != 1:
+                raise ValueError(f'Desktop integration missing or duplicated: {field}')
         smoke(installed_gui, Path('/usr/bin/pnm-decode'))
         linux_upgrade(cli, gui, installed_gui)
     finally:

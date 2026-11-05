@@ -5,6 +5,8 @@
 mod backend;
 mod update;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};
+#[cfg(target_os = "linux")]
+const DESKTOP_ID: &str = "pnm-viewer-toolkit";
 /// Starts the Qt desktop, or handles authenticated Ubuntu installation before Qt.
 ///
 /// The internal --install-update entry point stages verified packages and invokes
@@ -33,6 +35,16 @@ fn main() {
         std::env::set_var("QT_QPA_PLATFORMTHEME", "gtk3");
     }
     let mut application = QGuiApplication::new();
+    #[cfg(target_os = "linux")]
+    {
+        let desktop_id = cxx_qt_lib::QString::from(DESKTOP_ID);
+        // Set before any window exists so X11 WM_CLASS and the desktop entry agree.
+        application
+            .as_mut()
+            .expect("Qt application unavailable")
+            .set_application_name(&desktop_id);
+        QGuiApplication::set_desktop_file_name(&desktop_id);
+    }
     let mut engine = QQmlApplicationEngine::new();
     engine
         .as_mut()
