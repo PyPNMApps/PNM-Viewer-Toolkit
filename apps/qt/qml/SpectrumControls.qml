@@ -13,9 +13,13 @@ RowLayout {
     property int sampleCount: 0
     property int averageWindow: 0
     property bool showAverage: true
+    function presentation() { return {input: input.text, showAverage: showAverage} }
+    function restorePresentation(state) {
+        input.text = state ? state.input : "101"
+        showAverage = state ? state.showAverage : true
+    }
     signal averageRequested(int windowPoints)
     spacing: 8
-    onAverageWindowChanged: showAverage = true
     Label { text: "N-point"; color: controls.theme.muted }
     Basic.TextField {
         id: input

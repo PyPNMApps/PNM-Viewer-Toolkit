@@ -259,3 +259,9 @@ viewer operation rather than a new binary field or CLI default. Tests cover
 independent power references, reflected boundaries, huge N, gaps, 600 dB steps,
 source-aligned zoom and actual red pixels/visibility in both themes. Native Qt
 screenshots of N=101 and the constellation MER/EVM view live in the user gallery.
+
+## Spectrum band integration and range tabs
+
+See [Spectrum power mathematics and ownership](spectrum-power.md) for the
+ENBW-corrected dBmV equation, 10-log versus 20-log explanation, fractional
+boundary treatment, range validation and shared-capture tab lifecycle.

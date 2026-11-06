@@ -52,6 +52,20 @@ ApplicationWindow {
     }
     readonly property var metadata: JSON.parse(backend.metadata_json)
     readonly property var viewport: JSON.parse(backend.viewport_json)
+    property var spectrumPresentations: ({})
+    function saveSpectrumPresentation() {
+        spectrumPresentations[spectrumTools.workspace.active || 0] = spectrumControls.presentation()
+    }
+    function restoreSpectrumPresentation() {
+        spectrumControls.restorePresentation(spectrumPresentations[spectrumTools.workspace.active || 0])
+    }
+    Connections {
+        target: backend
+        function onMetadata_jsonChanged() {
+            window.spectrumPresentations = ({})
+            spectrumControls.restorePresentation(null)
+        }
+    }
     property bool navigationVisible: false
     readonly property bool blocked: backend.busy || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible || profileBandwidth.popupVisible
 
@@ -60,7 +74,7 @@ ApplicationWindow {
         anchors.fill: parent
         z: 1
         theme: appTheme
-        blocked: window.blocked || settingsMenu.visible
+        blocked: window.blocked || settingsMenu.visible || spectrumTools.popupVisible
         onFileDropped: captureUrl => backend.open_file(captureUrl)
     }
 
@@ -340,6 +354,35 @@ ApplicationWindow {
                             onCarrierRequested: index => backend.toggle_modulation_carrier(index)
                             onAllCarriersRequested: backend.select_all_modulation_carriers()
                         }
+                        SpectrumTools {
+                            id: spectrumTools
+                            visible: window.metadata.spectrum_analysis !== undefined
+                            enabled: !window.blocked
+                            theme: appTheme
+                            workspace: JSON.parse(backend.spectrum_workspace_json)
+                            validateRange: (start, stop, unit) => backend.spectrum_range_error(start, stop, unit)
+                            Layout.fillWidth: true
+                            onRangeRequested: (start, stop, unit) => {
+                                window.saveSpectrumPresentation()
+                                backend.open_spectrum_band(start, stop, unit)
+                                window.restoreSpectrumPresentation()
+                            }
+                            onTabRequested: index => {
+                                window.saveSpectrumPresentation()
+                                backend.select_spectrum_tab(index)
+                                window.restoreSpectrumPresentation()
+                            }
+                            onCloseRequested: index => {
+                                window.saveSpectrumPresentation()
+                                backend.close_spectrum_tab(index)
+                                const states = window.spectrumPresentations
+                                for (let tab = index; tab < (spectrumTools.workspace.tabs || []).length; tab++) {
+                                    states[tab] = states[tab + 1]
+                                }
+                                delete states[(spectrumTools.workspace.tabs || []).length]
+                                window.restoreSpectrumPresentation()
+                            }
+                        }
                         SpectrumControls {
                             id: spectrumControls
                             visible: window.metadata.spectrum_analysis !== undefined
@@ -386,6 +429,9 @@ ApplicationWindow {
                             onRangeRequested: (start, count) => backend.show_range(start, count)
                         }
                         MeasurementChart {
+                            spectrumEnabled: window.metadata.spectrum_analysis !== undefined
+                            onFrequencyRequested: spectrumTools.openFrequency()
+                            onPowerRequested: (first, last) => backend.calculate_spectrum_power(first, last)
                             showSpectrumAverage: spectrumControls.showAverage
                             visible: window.viewport.constellation === undefined && window.metadata.view_index !== 2 && window.metadata.histogram !== true && window.metadata.fec_summary === undefined
                             stepPlot: window.metadata.modulation_profile !== undefined

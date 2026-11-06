@@ -11,6 +11,7 @@ CLI behavior belongs in `docs/cli/`.
 | Set up local dependencies | [Development environment](../install/development.md) |
 | Build, launch and check native Qt | [Qt setup](qt.md) |
 | Understand charts and Rust/QML ownership | [Qt measurement internals](qt-measurements.md) |
+| Understand spectrum integration and range tabs | [dBmV integration math](spectrum-power.md) |
 | Work on core APIs, parsers and math | [Rust development](rust.md) |
 | Change compiled QAM resources | [QAM conversion and geometry](qam-resources.md) |
 | Review future IPC and retrieval plans | [API contract](api-contract.md) |

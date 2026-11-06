@@ -22,7 +22,8 @@ Do not change the graph data to improve its appearance.
 
 For each theme, choose Settings → System… → Appearance → Dark or Light. Show
 the left navigation pane on Home with the top-right panel button. Hide it for
-measurement captures to give the charts room. Keep the full reset viewport.
+measurement captures to give the charts room. Keep the full reset viewport,
+except Spectrum's documented range-tab and power-selection example.
 
 Store PNG files under `docs/images/user-guide/` using the pairs below:
 
@@ -30,7 +31,8 @@ Store PNG files under `docs/images/user-guide/` using the pairs below:
 | --- | --- |
 | `home` | Close capture; show navigation |
 | `rxmer` | `rxmer.bin` |
-| `spectrum` | `spectrum_analyzer.bin`, apply WindowAvg with N=101 and show red average |
+| `spectrum` | `spectrum_analyzer.bin`, 300–350 MHz range tab, WindowAvg N=101 and a selected power band |
+| `spectrum-frequency` | Same capture, Frequency dialog with 300000000–350000000 Hz inputs |
 | `channel-magnitude` | `channel_estimation.bin`, Magnitude |
 | `channel-delay` | Same capture, Group delay |
 | `channel-iq` | Same capture, I/Q scatter |
@@ -51,7 +53,9 @@ file dialogs in the gallery.
 - Confirm Home shows the navigation button and expanded pane.
 - Confirm constellation has no numeric axes or sample-count footer; show MER/EVM
   at lower right and its visibility toggle.
-- Confirm Spectrum shows N=101, WindowAvg and enabled Show average with a red trace.
+- Confirm Spectrum shows the original and 300–350 MHz tabs, compact range-close
+  button, N=101, red average, highlighted power band and dBmV result. The lower
+  frequency-selection readout must match the selected power band.
 - Confirm modulation images show all four profiles and the correct metric.
 - Keep README's Home picture and the gallery's `<picture>` paths consistent.
 - Update the user guide when visible controls or supported measurements change.

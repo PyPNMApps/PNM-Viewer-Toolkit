@@ -76,6 +76,18 @@ TestCase {
         controls.sampleCount = 0
         compare(apply.enabled, false)
     }
+    function test_restored_average_keeps_saved_visibility_and_input() {
+        controls.restorePresentation({input: "51", showAverage: false})
+        // A deferred Rust viewport binding must not unmute a restored tab.
+        chart.viewport = Object.assign({}, chart.viewport, {spectrum_average: {
+            window_points: 51, points: chart.viewport.points}})
+        compare(controls.averageWindow, 51)
+        compare(controls.showAverage, false)
+        compare(findChild(controls, "spectrumAverageInput").text, "51")
+        compare(findChild(controls, "spectrumAverageVisibilityButton").checked, false)
+        mouseClick(findChild(controls, "spectrumWindowAverageButton"))
+        compare(controls.showAverage, true)
+    }
     function redAtAverage() {
         const plot = findChild(chart, "measurementPlot")
         const image = grabImage(testCase)

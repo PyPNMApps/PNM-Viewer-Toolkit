@@ -231,7 +231,17 @@ impl Capture {
             )),
         }
     }
-    fn chart_points(&self, view: MeasurementView) -> Result<Vec<ChartPoint>, Diagnostic> {
+    /// Builds original source points for the requested measurement view.
+    /// # Arguments
+    /// * `view` - Supported measurement/metric selection for this capture.
+    /// # Returns
+    /// Full-resolution internal points; desktop callers must use bounded DTOs.
+    /// # Errors
+    /// Rejects unsupported views, invalid source grids and decoding failures.
+    pub(crate) fn chart_points(
+        &self,
+        view: MeasurementView,
+    ) -> Result<Vec<ChartPoint>, Diagnostic> {
         let decoded = self.decoded()?;
         validate_view(&decoded, &view)?;
         match decoded {

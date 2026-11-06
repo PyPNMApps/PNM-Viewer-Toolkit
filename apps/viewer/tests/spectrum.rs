@@ -177,3 +177,51 @@ fn window_average_uses_original_bins_preserves_zoom_and_bounded_export() {
         .unwrap();
     assert!(full.points.len() + full.spectrum_average.unwrap().points.len() <= MAX_VIEW_SAMPLES);
 }
+
+#[test]
+fn frequency_units_bounds_and_original_source_power() {
+    let mut bytes = truncated_spectrum(257);
+    // Synthetic constant 0-dBmV trace, preserving the fixture's frequency grid.
+    bytes[39..].fill(0);
+    let capture = Capture::from_bytes(bytes, "constant.bin".into()).unwrap();
+    let original = capture.json().unwrap();
+    for (start, stop, unit) in [
+        (300_000_000.0, 303_000_000.0, "Hz"),
+        (300_000.0, 303_000.0, "kHz"),
+        (300.0, 303.0, "MHz"),
+        (0.300, 0.303, "GHz"),
+    ] {
+        let band = capture.spectrum_band(start, stop, unit, true).unwrap();
+        assert_eq!(band.start_hz, 300_000_000.0);
+        assert_eq!(band.stop_hz, 303_000_000.0);
+        assert_eq!(band.bandwidth_hz, 3_000_000.0);
+        // Flat 0 dBmV: 10 log10(3 MHz / 32226.5625 Hz).
+        assert!((band.level_dbmv.unwrap() - 19.689_072_714_815_868).abs() < 1e-9);
+        assert!(band.sample_count > 2);
+        assert!(capture
+            .spectrum_band(start, stop, unit, false)
+            .unwrap()
+            .level_dbmv
+            .is_none());
+    }
+    for (start, stop, unit) in [
+        (1.0, 303.0, "MHz"),
+        (300.0, 400.0, "MHz"),
+        (303.0, 300.0, "MHz"),
+        (300.0, 300.0, "MHz"),
+        (f64::NAN, 303.0, "MHz"),
+        (300.0, f64::INFINITY, "MHz"),
+        (300.0, 303.0, "invalid"),
+    ] {
+        assert!(capture.spectrum_band(start, stop, unit, false).is_err());
+    }
+    assert!(capture
+        .spectrum_band(300_000_000.0, 300_000_001.0, "Hz", false)
+        .is_err());
+    assert!(capture
+        .spectrum_band(300_000_000.0, 300_000_001.0, "Hz", true)
+        .is_ok());
+    assert_eq!(capture.json().unwrap(), original);
+    let rxmer = Capture::from_bytes(pnm_fixtures::RXMER.to_vec(), "rxmer.bin".into()).unwrap();
+    assert!(rxmer.spectrum_band(640.0, 650.0, "MHz", true).is_err());
+}

@@ -4,6 +4,8 @@
  */
 //! Native Qt adapter for the Rust capture and presentation layer.
 //! Unsafe extern declarations are confined to CXX-Qt's typed interop boundary.
+mod spectrum;
+
 #[cxx_qt::bridge]
 mod bridge {
     unsafe extern "C++" {
@@ -21,6 +23,7 @@ mod bridge {
         #[qproperty(bool, busy)]
         #[qproperty(bool, loaded)]
         #[qproperty(QString, metadata_json)]
+        #[qproperty(QString, spectrum_workspace_json)]
         #[qproperty(QString, viewport_json)]
         #[qproperty(QString, status)]
         #[qproperty(QString, error_message)]
@@ -55,6 +58,31 @@ mod bridge {
         /// Invalid requests leave the previous trace and selection intact.
         #[qinvokable]
         fn apply_spectrum_average(self: Pin<&mut ViewerBackend>, window_points: u32);
+
+        /// Opens a validated frequency range as a new spectrum tab.
+        #[qinvokable]
+        fn open_spectrum_band(self: Pin<&mut ViewerBackend>, start: f64, stop: f64, unit: &QString);
+
+        /// Returns an empty message only for a valid spectrum frequency range.
+        #[qinvokable]
+        fn spectrum_range_error(
+            self: &ViewerBackend,
+            start: f64,
+            stop: f64,
+            unit: &QString,
+        ) -> QString;
+
+        /// Selects a spectrum tab, preserving the previous tab zoom/average.
+        #[qinvokable]
+        fn select_spectrum_tab(self: Pin<&mut ViewerBackend>, index: u32);
+
+        /// Removes a derived tab; the original spectrum cannot be removed.
+        #[qinvokable]
+        fn close_spectrum_tab(self: Pin<&mut ViewerBackend>, index: u32);
+
+        /// Integrates a dragged fraction range from the current spectrum view.
+        #[qinvokable]
+        fn calculate_spectrum_power(self: Pin<&mut ViewerBackend>, first: f64, last: f64);
 
         /// Queries a square I/Q window; invalid requests preserve the prior view.
         #[qinvokable]
@@ -124,6 +152,8 @@ pub struct ViewerBackendRust {
     loaded: bool,
     metadata_json: QString,
     viewport_json: QString,
+    spectrum_workspace_json: QString,
+    spectrum_workspace: spectrum::Workspace,
     status: QString,
     error_message: QString,
     capture: Option<Arc<Capture>>,
@@ -148,6 +178,8 @@ impl Default for ViewerBackendRust {
             viewport_json: QString::from("{\"start\":0,\"total\":0,\"points\":[]}"),
             status: QString::from("Ready to open a local capture"),
             error_message: QString::default(),
+            spectrum_workspace_json: QString::from("{}"),
+            spectrum_workspace: spectrum::Workspace::default(),
             capture: None,
             view: MeasurementView::Default,
         }
@@ -187,7 +219,8 @@ impl bridge::ViewerBackend {
             Ok(json) => {
                 self.as_mut().rust_mut().view = MeasurementView::SpectrumAverage { window_points };
                 self.as_mut().set_error_message(QString::default());
-                self.set_viewport_json(QString::from(&json));
+                self.as_mut().set_viewport_json(QString::from(&json));
+                self.save_spectrum_tab();
             }
             Err(error) => self.fail(error),
         }
@@ -278,6 +311,7 @@ impl bridge::ViewerBackend {
                             backend
                                 .as_mut()
                                 .set_viewport_json(QString::from(&loaded.viewport));
+                            backend.as_mut().reset_spectrum_workspace();
                             backend.as_mut().set_loaded(true);
                             backend
                                 .as_mut()
@@ -352,14 +386,16 @@ impl bridge::ViewerBackend {
         let Some(capture) = self.rust().capture.clone() else {
             return;
         };
+        let (start, count) = self.spectrum_zoom_bounds(start as usize, count as usize);
         match capture
-            .chart_range_for(self.rust().view.clone(), start as usize, count as usize)
+            .chart_range_for(self.rust().view.clone(), start, count)
             .and_then(|viewport| {
                 serde_json::to_string(&viewport).map_err(|error| Diagnostic::new("Json", error))
             }) {
             Ok(json) => {
                 self.as_mut().set_error_message(QString::default());
                 self.as_mut().set_viewport_json(QString::from(&json));
+                self.as_mut().save_spectrum_tab();
                 self.set_status(QString::from("Sample window updated"));
             }
             Err(error) => self.fail(error),
@@ -680,6 +716,9 @@ impl bridge::ViewerBackend {
         if *self.busy() {
             return;
         }
+        self.as_mut().rust_mut().spectrum_workspace = spectrum::Workspace::default();
+        self.as_mut()
+            .set_spectrum_workspace_json(QString::from("{}"));
         self.as_mut().rust_mut().capture = None;
         self.as_mut().rust_mut().view = MeasurementView::Default;
         self.as_mut().set_loaded(false);

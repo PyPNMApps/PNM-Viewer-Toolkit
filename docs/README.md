@@ -27,6 +27,7 @@ actual published assets and [CI scope](development/ci.md) for validation status.
 - [Developer starting point](development/README.md)
 - [Native Qt setup, launch and checks](development/qt.md)
 - [Qt measurement implementation](development/qt-measurements.md)
+- [Spectrum power math and frequency tabs](development/spectrum-power.md)
 - [Development environment](install/development.md)
 - [Rust APIs, numeric helpers and tests](development/rust.md)
 - [QAM resource conversion and decision boundaries](development/qam-resources.md)

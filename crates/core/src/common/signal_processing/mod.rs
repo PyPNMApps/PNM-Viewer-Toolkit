@@ -10,3 +10,4 @@ pub mod ofdm;
 pub mod qam;
 pub mod shannon;
 pub mod spectrum;
+pub mod spectrum_power;

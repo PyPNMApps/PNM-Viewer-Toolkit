@@ -124,3 +124,5 @@ pub(crate) fn window_average_view(
         points: overview_with_limit(&samples[start..end], MAX_VIEW_SAMPLES / 2),
     })
 }
+
+pub mod range;

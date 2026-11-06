@@ -4,12 +4,18 @@
  */
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 
 ColumnLayout {
     id: chart
     required property Theme theme
     property var viewport: ({start: 0, total: 0, points: []})
+    property bool spectrumEnabled: false
+    property bool selectingPower: false
+    property bool powerSelected: false
+    signal frequencyRequested()
+    signal powerRequested(real first, real last)
     property bool stepPlot: false
     property bool showSpectrumAverage: true
     onShowSpectrumAverageChanged: plot.requestPaint()
@@ -56,6 +62,8 @@ ColumnLayout {
     readonly property int visibleCount: viewport.count === undefined ? pointCount : viewport.count
     signal rangeRequested(int start, int count)
     function resetZoom() {
+        selectingPower = false
+        powerSelected = false
         rangeRequested(0, viewport.total)
     }
     function zoomAt(fraction, zoomIn) {
@@ -70,8 +78,8 @@ ColumnLayout {
         if (!points.length) { return "No frequency selection" }
         const first = points[0].frequency_hz
         const span = points[points.length - 1].frequency_hz - first
-        const lower = selection.dragging ? Math.min(selection.startFraction, selection.endFraction) : 0
-        const upper = selection.dragging ? Math.max(selection.startFraction, selection.endFraction) : 1
+        const lower = selection.dragging || chart.powerSelected ? Math.min(selection.startFraction, selection.endFraction) : 0
+        const upper = selection.dragging || chart.powerSelected ? Math.max(selection.startFraction, selection.endFraction) : 1
         return "Frequency selection: " + ((first + lower * span) / hzPerMhz).toFixed(3)
             + " – " + ((first + upper * span) / hzPerMhz).toFixed(3) + " MHz"
     }
@@ -83,15 +91,51 @@ ColumnLayout {
         const last = Math.ceil(upper * (visibleCount - 1))
         rangeRequested(visibleStart + first, Math.max(2, last - first + 1))
     }
-    onViewportChanged: { carrierHoverText = ""; selection.dragging = false; selectedIndex = 0; plot.requestPaint() }
+    onViewportChanged: { powerSelected = false; selectingPower = false; carrierHoverText = ""; selection.dragging = false; selectedIndex = 0; plot.requestPaint() }
     onSelectedIndexChanged: plot.requestPaint()
     onMinimumChanged: plot.requestPaint()
     onMaximumChanged: plot.requestPaint()
     onUnitChanged: plot.requestPaint()
     onAxisLabelChanged: plot.requestPaint()
     onStepPlotChanged: plot.requestPaint()
+    Keys.onEscapePressed: {
+        selectingPower = false
+        powerSelected = false
+    }
     spacing: 10
 
+    Basic.Menu {
+        id: contextMenu
+        parent: Overlay.overlay
+        popupType: Popup.Item
+        width: 220
+        objectName: "spectrumContextMenu"
+        background: Rectangle { color: chart.theme.panel; border.color: chart.theme.line; radius: 4 }
+        Basic.MenuItem {
+            id: calculatePowerItem
+            objectName: "calculateSpectrumPower"
+            text: "Calculate power…"
+            contentItem: Label { text: calculatePowerItem.text; color: chart.theme.text }
+            background: Rectangle { color: parent.highlighted ? chart.theme.accentSoft : "transparent" }
+            onTriggered: {
+                chart.selectingPower = true
+                chart.powerSelected = false
+            }
+        }
+        Basic.MenuItem {
+            id: frequencyItem
+            objectName: "selectSpectrumFrequency"
+            text: "Frequency…"
+            contentItem: Label { text: frequencyItem.text; color: chart.theme.text }
+            background: Rectangle { color: parent.highlighted ? chart.theme.accentSoft : "transparent" }
+            onTriggered: chart.frequencyRequested()
+        }
+    }
+    Label {
+        visible: chart.selectingPower
+        text: "Drag across the graph to calculate integrated dBmV"
+        color: chart.theme.accent
+    }
     TextMetrics {
         id: axisLabelMetrics
         font.family: "sans-serif"
@@ -224,7 +268,7 @@ ColumnLayout {
             }
         }
         Rectangle {
-            visible: selection.dragging
+            visible: selection.dragging || chart.powerSelected
             x: plot.leftMargin + Math.min(selection.startFraction, selection.endFraction) * (plot.width - plot.leftMargin - plot.rightMargin)
             y: plot.topMargin
             width: Math.abs(selection.endFraction - selection.startFraction) * (plot.width - plot.leftMargin - plot.rightMargin)
@@ -236,6 +280,7 @@ ColumnLayout {
         MouseArea {
             id: selection
             anchors.fill: parent
+            acceptedButtons: chart.spectrumEnabled ? Qt.LeftButton | Qt.RightButton : Qt.LeftButton
             property bool dragging: false
             property real startFraction: 0
             property real endFraction: 0
@@ -244,6 +289,13 @@ ColumnLayout {
                 return Math.max(0, Math.min(1, (horizontal - plot.leftMargin) / (plot.width - plot.leftMargin - plot.rightMargin)))
             }
             onPressed: mouse => {
+                if (mouse.button === Qt.RightButton) {
+                    const position = plot.mapToItem(contextMenu.parent, mouse.x, mouse.y)
+                    contextMenu.popup(position.x, position.y)
+                    return
+                }
+                chart.forceActiveFocus()
+                chart.powerSelected = false
                 chart.carrierHoverText = "";
                 if (mouse.x < plot.leftMargin || mouse.x > plot.width - plot.rightMargin
                     || mouse.y < plot.topMargin || mouse.y > plot.height - plot.bottomMargin) {
@@ -259,7 +311,15 @@ ColumnLayout {
                 endFraction = fractionAt(mouse.x)
                 const distance = Math.abs(endFraction - startFraction) * (plot.width - plot.leftMargin - plot.rightMargin)
                 dragging = false
-                if (distance >= 6) { chart.selectRange(startFraction, endFraction) }
+                if (distance >= 6) {
+                    if (chart.selectingPower) {
+                        chart.powerSelected = true
+                        chart.selectingPower = false
+                        chart.powerRequested(startFraction, endFraction)
+                    } else {
+                        chart.selectRange(startFraction, endFraction)
+                    }
+                }
             }
             onCanceled: dragging = false
             hoverEnabled: true
