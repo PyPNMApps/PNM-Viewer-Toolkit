@@ -74,3 +74,33 @@ unit average energy, finite-window clipping and unknown modulation. A separate
 brute-force oracle checks boundary positions against every reference symbol;
 it does not reuse the triangulation algorithm. CLI and Qt exports use the same
 core reference metadata. Native UI checks cover toggles, zoom, reset and themes.
+
+## Decision-directed MER overlay
+
+`pnm/analysis/constellation/mer.rs` pairs every original decoded sample with its
+nearest normalized table symbol and accumulates f64 signal/error powers. It
+indexes actual QAM rows and binary-searches I candidates, pruning rows whose Q
+error already exceeds the best squared distance. Missing cross-QAM corners are
+preserved; no fixed-spacing approximation or canvas geometry is used. Equal
+squared-distance ties choose lower Q, then lower I. The parser stores the result
+in `constellation_analysis.mer`; CLI and Qt JSON use this same calculation.
+
+The viewer passes this small result alongside every constellation viewport.
+`ConstellationMerOverlay.qml` only formats and renders it, inside the square
+Canvas's upper-right plotting area. It owns no input handlers or analysis and
+adds no layout margins. Zoom and toggles never affect the measurement sample set.
+Unknown modulation, missing/invalid samples and count mismatches yield explicit
+statuses and no numeric MER. Exact zero error is `perfect_reference`, with null
+MER and zero RMS EVM, so JSON never substitutes a finite ceiling for infinity.
+
+This decision-directed estimate can be optimistic when symbol decisions are
+wrong. It is not OFDM per-subcarrier RxMER or evidence of the modem's actual
+hard decisions. No transmitted-symbol identities exist in this PNM layout.
+The format/scaling evidence remains the authorized I27/I13 text extracts cited
+in the [format contract](../reference/formats.md#constellation-display-reference-analysis).
+
+Tests cover independent 30/40 dB references, I/Q errors, all supported QAM tables
+against a brute-force oracle, unavailable/perfect statuses, unchanged source
+samples, CLI/desktop JSON equality, zoom and layer independence, badge alignment
+on resize and mouse gestures initiated through the badge. Native Windows/macOS
+validation remains separate from local offscreen Qt checks.

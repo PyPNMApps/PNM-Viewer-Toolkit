@@ -89,6 +89,8 @@ impl IqBounds {
 /// Only bounded display samples cross IPC; counts distinguish shown and source points.
 #[derive(Serialize)]
 pub struct ConstellationViewport {
+    /// Full-capture estimate, independent of display sampling and zoom.
+    pub mer: pnm::pnm::analysis::constellation::mer::MerResult,
     pub bounds: IqBounds,
     pub soft_decisions: Vec<IqPair>,
     pub hard_decisions: Vec<IqPair>,
@@ -235,6 +237,7 @@ pub(crate) fn viewport(
         .unwrap_or_default();
     Ok(ChartViewport {
         constellation: Some(ConstellationViewport {
+            mer: capture.constellation_analysis.mer,
             bounds,
             soft_decisions: soft_points,
             hard_decisions: hard_points,

@@ -8,6 +8,7 @@ use crate::{
     pnm::data_type::ConstellationModulationOrder,
 };
 use serde::Serialize;
+pub mod mer;
 
 /// Analysis serialized identically by the parser, CLI and desktop exports.
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -16,6 +17,7 @@ pub struct ConstellationAnalysis {
     pub decision_rule: &'static str,
     pub normalization: &'static str,
     pub soft_samples_rescaled: bool,
+    pub mer: mer::MerResult,
 }
 impl ConstellationAnalysis {
     /// Resolves reference geometry while preserving original measured samples.
@@ -23,12 +25,14 @@ impl ConstellationAnalysis {
     /// * `modulation_type` - The header's DsOfdmModulationType code.
     /// # Returns
     /// Embedded reference or null for unsupported modulation; no guessed geometry.
+    /// MER is unavailable until the parser analyzes the received samples.
     pub fn from_modulation_type(modulation_type: ConstellationModulationOrder) -> Self {
         Self {
             reference: reference_for_modulation_type(modulation_type),
             decision_rule: "nearest_reference_euclidean",
             normalization: "unit_average_symbol_power",
             soft_samples_rescaled: false,
+            mer: mer::MerResult::unavailable(0, mer::MerStatus::NoSamples),
         }
     }
 }

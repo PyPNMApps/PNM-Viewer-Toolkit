@@ -34179,6 +34179,14 @@
     },
     "decision_rule": "nearest_reference_euclidean",
     "normalization": "unit_average_symbol_power",
-    "soft_samples_rescaled": false
+    "soft_samples_rescaled": false,
+    "mer": {
+      "mer_db": 39.929194882245184,
+      "sample_count": 8192,
+      "signal_power": 8168.705882352755,
+      "error_power": 0.8302975781660373,
+      "rms_evm_percent": 1.0081850563345345,
+      "calculation_status": "available"
+    }
   }
 }

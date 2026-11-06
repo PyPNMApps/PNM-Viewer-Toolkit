@@ -197,6 +197,17 @@ shows the nearest-reference regions for those symbols. All three controls have
 the same size. Numeric X/Y scales and decorative axis grids are omitted.
 I increases to the right and Q increases upward.
 
+The upper-right **Estimated MER** badge shows full-capture, decision-directed
+constellation MER to one decimal place. It uses all received samples and their
+nearest ideal symbols, independently of toggles, displayed point limits and
+zoom. It stays in the plot corner when resized and does not intercept the mouse.
+`Estimated MER —` means no finite valid estimate is available, including an
+exact perfect reference (internally marked infinite), unknown modulation or
+inconsistent sample counts. This is not OFDM per-subcarrier RxMER. Incorrect
+symbol decisions under severe noise or distortion can make the estimate
+optimistic. The [JSON contract](../reference/formats.md#estimated-constellation-mer)
+preserves its status, power sums and sample count.
+
 For square QAM, boundaries sit halfway between adjacent hard points, making
 square interior cells. The cross-QAM tables require diagonal boundaries at their
 missing corners. Outer decision regions extend indefinitely and are clipped by

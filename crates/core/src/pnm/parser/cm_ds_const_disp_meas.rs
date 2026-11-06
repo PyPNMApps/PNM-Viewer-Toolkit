@@ -76,7 +76,7 @@ impl<'input> CmDsConstDispMeas<'input> {
             format: QFormat::S2_13,
             excluded_pair: false,
         };
-        Ok(Self {
+        let mut capture = Self {
             header,
             channel_id,
             mac_address,
@@ -90,7 +90,10 @@ impl<'input> CmDsConstDispMeas<'input> {
                 crate::pnm::analysis::constellation::ConstellationAnalysis::from_modulation_type(
                     actual_modulation_order,
                 ),
-        })
+        };
+        capture.constellation_analysis.mer =
+            crate::pnm::analysis::constellation::mer::from_capture(&capture);
+        Ok(capture)
     }
     /// Serializes the capture directly into bounded pretty JSON.
     ///

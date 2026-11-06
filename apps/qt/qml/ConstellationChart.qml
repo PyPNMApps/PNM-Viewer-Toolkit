@@ -204,6 +204,15 @@ ColumnLayout {
                     wheel.accepted = true
                 }
             }
+            ConstellationMerOverlay {
+                theme: chart.theme
+                result: chart.constellation.mer || null
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.rightMargin: plot.leftMargin + 6
+                anchors.topMargin: plot.topMargin + 6
+                z: 2
+            }
         }
     }
 }

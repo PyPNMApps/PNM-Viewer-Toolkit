@@ -69,3 +69,8 @@ with explicit overhead exclusions; see [the contract](../../reference/formats.md
 
 All example MAC fields, including the synthetic latency example, use
 `aa:bb:cc:dd:ee:ff` (`aabb.ccdd.eeff`). Measurement values are unchanged.
+
+Constellation JSON also includes `constellation_analysis.mer`: the full-capture,
+Rust-calculated decision-directed MER result and availability status. The desktop
+uses the same result. See the [MER contract](../../reference/formats.md#estimated-constellation-mer)
+for power sums, null/perfect-reference handling and interpretation limits.

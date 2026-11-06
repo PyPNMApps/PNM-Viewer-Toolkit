@@ -29,11 +29,61 @@ TestCase {
         chart.showBoundaries = true
         chart.requested = []
         chart.resets = 0
+        chart.width = 800
+        chart.height = 650
         chart.constellation = {bounds: {minimum_i: -2, maximum_i: 2, minimum_q: -2, maximum_q: 2},
             soft_decisions: [[0.5,0.5],[-0.5,-0.5]],hard_decisions: [[1,1],[-1,-1]],
             soft_visible: 2,hard_visible: 2,reference_available: true, decision_boundaries: [[[0,-2],[0,2]],[[-2,0],[2,0]]],
-            soft_label: "Soft decisions: 2 of 2 visible",hard_label: "Hard decisions: 2 of 2 visible"}
+            soft_label: "Soft decisions: 2 of 2 visible",hard_label: "Hard decisions: 2 of 2 visible",
+            mer: {calculation_status: "available", mer_db: 40.24, sample_count: 8192}}
         wait(20)
+    }
+    function test_mer_updates_with_capture_and_ignores_layer_toggles() {
+        const badge = findChild(chart, "constellationMerOverlay")
+        compare(badge.label, "Estimated MER 40.2 dB")
+        for (const name of ["constellationSoftToggle", "constellationHardToggle", "constellationBoundaryToggle"]) {
+            mouseClick(findChild(chart, name))
+            compare(badge.label, "Estimated MER 40.2 dB")
+            compare(chart.constellation.mer.sample_count, 8192)
+        }
+        chart.constellation = Object.assign({}, chart.constellation, {
+            mer: {calculation_status: "available", mer_db: 30.04, sample_count: 512}})
+        compare(badge.label, "Estimated MER 30.0 dB")
+        for (const status of ["perfect_reference", "no_samples", "invalid_samples", "sample_count_mismatch",
+            "zero_signal_power", "non_finite_result", "unsupported_modulation"]) {
+            chart.constellation = Object.assign({}, chart.constellation, {
+                mer: {calculation_status: status, mer_db: null}})
+            compare(badge.label, "Estimated MER —")
+        }
+        for (const invalid of [NaN, Infinity, -Infinity, null]) {
+            chart.constellation = Object.assign({}, chart.constellation, {
+                mer: {calculation_status: "available", mer_db: invalid}})
+            compare(badge.label, "Estimated MER —")
+        }
+    }
+    function test_mer_badge_tracks_plot_corner_and_does_not_capture_mouse() {
+        const plot = findChild(chart, "constellationPlot")
+        const badge = findChild(chart, "constellationMerOverlay")
+        for (const dimensions of [[800, 650], [620, 480]]) {
+            chart.width = dimensions[0]
+            chart.height = dimensions[1]
+            waitForPolish(chart)
+            verify(waitForRendering(plot))
+            fuzzyCompare(badge.x + badge.width, plot.width - plot.leftMargin - 6, 0.1)
+            fuzzyCompare(badge.y, plot.topMargin + 6, 0.1)
+            compare(plot.width, plot.height)
+            const horizontal = badge.x + badge.width / 2
+            const vertical = badge.y + badge.height / 2
+            chart.requested = []
+            mousePress(plot, horizontal, vertical)
+            mouseMove(plot, plot.width / 2, plot.height / 2)
+            mouseRelease(plot, plot.width / 2, plot.height / 2)
+            compare(chart.requested.length, 4)
+            chart.requested = []
+            mouseWheel(plot, horizontal, vertical, 0, 120)
+            compare(chart.requested.length, 4)
+            compare(badge.label, "Estimated MER 40.2 dB")
+        }
     }
     function test_independent_layer_controls_and_unknown_reference() {
         const soft_decisions=findChild(chart,"constellationSoftToggle")

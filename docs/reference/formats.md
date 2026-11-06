@@ -231,7 +231,45 @@ Evidence, using authorized text extracts:
 - PyPNM `analysis.py` and `auto_gen_qam_lut.py` provide the compatibility
   pattern: normalize the hard-reference table, preserve measured soft samples.
 
-This does not establish rendered-PDF verification, decode codewords or estimate MER.
+This does not establish rendered-PDF verification or decode codewords.
+
+### Estimated constellation MER
+
+`constellation_analysis.mer` is calculated in Rust from the complete decoded
+capture and exported identically by the CLI and desktop. It contains:
+
+| Field | Meaning |
+| --- | --- |
+| `mer_db` | `10 log10(signal_power / error_power)`, or null |
+| `sample_count` | Original received sample count, including invalid samples |
+| `signal_power` | Sum of squared paired reference I/Q amplitudes |
+| `error_power` | Sum of squared I/Q differences between received and paired reference symbols |
+| `rms_evm_percent` | `100 sqrt(error_power / signal_power)`, or null |
+| `calculation_status` | `available`, `perfect_reference`, `no_samples`, `invalid_samples`, `sample_count_mismatch`, `zero_signal_power`, `non_finite_result`, or `unsupported_modulation` |
+
+The source contains only soft decisions. Each received point selects its own
+nearest Euclidean symbol from the existing normalized reference table. This
+does not pair the two plotted arrays by index. Exact distance ties choose lower
+Q, then lower I; this deterministic convention is not modem slicer telemetry.
+The signed s2.13 decoder already divides raw amplitudes by 8192; no second
+normalization, fitted gain/phase correction, clipping or outlier rejection occurs.
+Power sums and calculations use f64. References cover every currently supported
+viewer modulation, including cross-shaped QAM tables.
+
+An exact zero error sum has `perfect_reference`, `mer_db: null` and
+`rms_evm_percent: 0`; it represents infinite MER without invalid JSON or an
+arbitrary finite ceiling. Invalid/unavailable calculations never serialize
+non-finite values. Valid power sums remain exposed for zero-signal and
+perfect-reference conditions. The header's sample count must agree with the
+decoded payload for a numeric MER. This marks the analysis unavailable without
+changing the parser's input policy.
+
+This is **decision-directed estimated constellation MER**, not DOCSIS OFDM
+per-subcarrier RxMER. Incorrect symbol decisions under strong noise/distortion
+can make it optimistic. The file lacks transmitted-symbol identities, so this
+estimate cannot validate modem hard decisions or recover true transmitted-symbol
+MER. Toggle state, zoom and bounded display sampling never select the samples
+used by this calculation. See the [complete CLI JSON](../cli/examples/constellation.json).
 
 
 ### Constellation decision-boundary JSON

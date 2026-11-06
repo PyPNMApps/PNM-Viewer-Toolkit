@@ -22,6 +22,16 @@ fn fixture_has_equal_axes_and_bounded_measured_ideal_overlay() {
         .iter()
         .any(|chip| chip.title == "QAM" && chip.value == "256-QAM"));
     let plot = capture.chart_range(0, 8192).unwrap().constellation.unwrap();
+    assert_eq!(plot.mer.sample_count, 8192);
+    assert_eq!(
+        plot.mer.calculation_status,
+        pnm::pnm::analysis::constellation::mer::MerStatus::Available
+    );
+    let export: serde_json::Value = serde_json::from_str(&capture.json().unwrap()).unwrap();
+    assert_eq!(
+        serde_json::to_value(plot.mer).unwrap(),
+        export["constellation_analysis"]["mer"]
+    );
     assert!(plot.soft_decisions.len() + plot.hard_decisions.len() <= MAX_VIEW_SAMPLES);
     assert_eq!(plot.decision_boundaries.len(), 30);
     for edge in &plot.decision_boundaries {
@@ -53,6 +63,12 @@ fn fixture_has_equal_axes_and_bounded_measured_ideal_overlay() {
 #[test]
 fn zoom_filters_in_rust_and_restores_exact_detail_for_dense_qam() {
     let capture = capture(13);
+    let original_mer = capture
+        .chart_range(0, 8192)
+        .unwrap()
+        .constellation
+        .unwrap()
+        .mer;
     let bounds = IqBounds {
         minimum_i: -0.1,
         maximum_i: 0.1,
@@ -64,6 +80,7 @@ fn zoom_filters_in_rust_and_restores_exact_detail_for_dense_qam() {
         .unwrap()
         .constellation
         .unwrap();
+    assert_eq!(plot.mer, original_mer);
     assert_eq!(plot.hard_total, 16384);
     assert_eq!(plot.hard_visible, 100);
     assert_eq!(plot.hard_decisions.len(), 100);
@@ -100,12 +117,17 @@ fn zoom_filters_in_rust_and_restores_exact_detail_for_dense_qam() {
         .constellation
         .unwrap();
     assert!(empty.soft_decisions.is_empty() && empty.hard_decisions.is_empty());
+    assert_eq!(empty.mer, original_mer);
 }
 #[test]
 fn unknown_modulation_empty_samples_and_invalid_bounds_remain_explicit() {
     let capture = capture(u16::MAX);
     let plot = capture.chart_range(0, 8192).unwrap().constellation.unwrap();
     assert!(!plot.reference_available);
+    assert_eq!(
+        plot.mer.calculation_status,
+        pnm::pnm::analysis::constellation::mer::MerStatus::UnsupportedModulation
+    );
     assert!(plot.decision_boundaries.is_empty());
     assert!(plot.hard_decisions.is_empty());
     assert_eq!(plot.soft_total, 8192);
@@ -139,4 +161,38 @@ fn unknown_modulation_empty_samples_and_invalid_bounds_remain_explicit() {
     assert_eq!(plot.soft_total, 0);
     assert!(plot.soft_decisions.is_empty());
     assert_eq!(plot.hard_total, 256);
+    assert_eq!(
+        plot.mer.calculation_status,
+        pnm::pnm::analysis::constellation::mer::MerStatus::NoSamples
+    );
+}
+
+#[test]
+fn loading_another_channel_supplies_fresh_full_capture_mer() {
+    let original = capture(7)
+        .chart_range(0, 8192)
+        .unwrap()
+        .constellation
+        .unwrap()
+        .mer;
+    let mut bytes = pnm_fixtures::CONSTELLATION[..30].to_vec();
+    bytes[10] = 77;
+    bytes[23..25].copy_from_slice(&1_u16.to_be_bytes());
+    bytes[26..30].copy_from_slice(&4_u32.to_be_bytes());
+    bytes.extend_from_slice(&8192_i16.to_be_bytes());
+    bytes.extend_from_slice(&0_i16.to_be_bytes());
+    let next = Capture::from_bytes(bytes, "another-channel.bin".into()).unwrap();
+    assert!(next
+        .chart_metadata()
+        .unwrap()
+        .chips
+        .iter()
+        .any(|chip| chip.title == "Channel" && chip.value == "77"));
+    let result = next.chart_range(0, 1).unwrap().constellation.unwrap().mer;
+    assert_eq!(result.sample_count, 1);
+    assert_ne!(result.mer_db, original.mer_db);
+    assert_eq!(
+        result.calculation_status,
+        pnm::pnm::analysis::constellation::mer::MerStatus::Available
+    );
 }
