@@ -35,13 +35,31 @@ ColumnLayout {
             id: dropZone
             objectName: "preEqAttachmentTarget"
             Layout.fillWidth: true
-            implicitHeight: 76
+            implicitHeight: 112
             radius: 8
             color: panel.theme.button
             border.color: panel.theme.line
-            Label { anchors.fill: parent; anchors.margins: 10; text: "Drop Last Update here\nor choose a file"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; color: panel.theme.text; wrapMode: Text.Wrap }
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 10
+                Label {
+                    text: "Drop Last Update here"
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    color: panel.theme.text
+                    wrapMode: Text.Wrap
+                }
+                ThemeButton {
+                    objectName: "choosePreEqUpdate"
+                    theme: panel.theme
+                    text: "Browse…"
+                    Accessible.name: "Browse for a Last Update file"
+                    Layout.fillWidth: true
+                    enabled: !panel.working
+                    onClicked: panel.chooseFile()
+                }
+            }
         }
-        ThemeButton { objectName: "choosePreEqUpdate"; theme: panel.theme; text: panel.checkedPair ? "Replace correction…" : "Choose Last Update…"; Layout.fillWidth: true; enabled: !panel.working; onClicked: panel.chooseFile() }
         ComboBox {
             id: mode
             objectName: "preEqUpdateMode"

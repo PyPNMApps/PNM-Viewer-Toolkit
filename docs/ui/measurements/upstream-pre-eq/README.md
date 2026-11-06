@@ -90,7 +90,7 @@ The **Compare** tool opens its attachment and calculation controls. Choose
 attached pair and completed comparison are retained.
 
 1. Drop one Last Update file onto **Drop Last Update here**, or choose it with
-   **Choose Last Update…** using the OS file picker. Dropping there attaches it;
+   **Browse…** using the OS file picker. Dropping there attaches it;
    dropping elsewhere keeps the usual behavior of opening a new capture.
 2. Wait for the mode selector to become available. Rust requires a PNN7 correction and checks the
    format version, channel, **CM MAC and CMTS MAC**, zero frequency, first-active
