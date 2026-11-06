@@ -368,7 +368,7 @@ TestCase {
         chart.selectedIndex = 1
         verify(chart.reading.indexOf("Unavailable") >= 0)
         scatter.density = {minimum: -1, maximum: 1, grid_side: 32, valid_count: 5,
-            excluded_count: 1, maximum_cell_count: 5, cells: [{column: 16, row: 16, count: 5}]}
+            excluded_count: 1, maximum_cell_count: 5, points: [[0, 0]], cells: [{column: 16, row: 16, count: 5}]}
         scatter.visible = true
         wait(50)
         verify(findChild(scatter, "iqDensityPlot").width > 0)
@@ -378,6 +378,54 @@ TestCase {
             excluded_count: 0, maximum_cell_count: 0, cells: []}
         wait(50)
         scatter.visible = false
+    }
+    SignalSpy {
+        id: iqPainted
+        target: findChild(scatter, "iqDensityPlot")
+        signalName: "painted"
+    }
+    function test_iq_dot_and_density_modes_and_colors() {
+        chart.visible = false
+        scatter.visible = true
+        scatter.densityMode = false
+        scatter.density = {minimum: -1, maximum: 1, grid_side: 32, valid_count: 11,
+            excluded_count: 0, maximum_cell_count: 10, points: [[0.1, 0.1]],
+            cells: [{column: 5, row: 5, count: 1}, {column: 25, row: 25, count: 10}]}
+        const dots = findChild(scatter, "iqDotsButton")
+        const density = findChild(scatter, "iqDensityButton")
+        verify(waitForRendering(density))
+        compare(dots.width, density.width)
+        compare(scatter.densityMode, false)
+        mouseClick(density)
+        compare(scatter.densityMode, true)
+        compare(density.checked, true)
+        compare(dots.checked, false)
+        const plot = findChild(scatter, "iqDensityPlot")
+        for (const preference of [1, 2]) {
+            appearance.preference = preference
+            iqPainted.clear()
+            plot.requestPaint()
+            tryVerify(() => iqPainted.count > 0)
+            const image = grabImage(scatter)
+            const cellSize = (plot.width - 80) / 32
+            const sparsePosition = plot.mapToItem(scatter, 60 + 5.5 * cellSize, 20 + 26.5 * cellSize)
+            const densePosition = plot.mapToItem(scatter, 60 + 25.5 * cellSize, 20 + 6.5 * cellSize)
+            const sparse = image.pixel(Math.floor(sparsePosition.x), Math.floor(sparsePosition.y))
+            const dense = image.pixel(Math.floor(densePosition.x), Math.floor(densePosition.y))
+            verify(sparse.b > sparse.r)
+            verify(dense.r > dense.b)
+        }
+        iqPainted.clear()
+        mouseClick(dots)
+        compare(scatter.densityMode, false)
+        tryVerify(() => iqPainted.count > 0)
+        const dotImage = grabImage(scatter)
+        const size = plot.width - 80
+        const dotPosition = plot.mapToItem(scatter, 60 + 0.55 * size, 20 + 0.45 * size)
+        const dot = dotImage.pixel(Math.round(dotPosition.x), Math.round(dotPosition.y))
+        verify(dot.g > dot.r)
+        scatter.visible = false
+        appearance.preference = 1
     }
     HistogramChart {
         id: histogramChart

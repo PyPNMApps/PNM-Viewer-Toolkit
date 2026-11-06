@@ -5,7 +5,7 @@
 //! Downstream channel-response analysis and bounded I/Q presentation.
 use crate::capture::{
     chart::{ChartMetadata, Chip, MeasurementView},
-    Diagnostic,
+    Diagnostic, MAX_VIEW_SAMPLES,
 };
 use pnm::{
     common::signal_processing::channel_response::{
@@ -114,7 +114,7 @@ pub struct IqDensityCell {
     pub row: usize,
     pub count: usize,
 }
-/// Equal I/Q axis limits and counts for a bounded density scatter overview.
+/// Equal I/Q bounds, bounded original dots and full-capture density counts.
 #[derive(Serialize)]
 pub struct IqDensity {
     pub minimum: f64,
@@ -124,6 +124,8 @@ pub struct IqDensity {
     pub excluded_count: usize,
     pub maximum_cell_count: usize,
     pub cells: Vec<IqDensityCell>,
+    /// Bounded original I/Q coordinates for dot rendering, never cell centers.
+    pub points: Vec<IqPair>,
 }
 impl IqDensity {
     /// Aggregates all valid complex pairs into at most 1024 occupied cells.
@@ -131,7 +133,9 @@ impl IqDensity {
     /// * `samples` - Decoded I/Q, retaining zero pairs and skipping excluded pairs.
     /// # Returns
     /// Symmetric equal axes, grid counts and valid/excluded totals. Empty inputs
-    /// use [-1, 1] bounds; no normalization is applied to the response.
+    /// use [-1, 1] bounds; no normalization is applied to the response. Dot
+    /// coordinates sample valid pairs evenly in capture order, retaining both
+    /// endpoints and at most MAX_VIEW_SAMPLES original pairs.
     pub fn from_samples(samples: &[Option<IqPair>]) -> Self {
         let valid: Vec<_> = samples
             .iter()
@@ -166,6 +170,13 @@ impl IqDensity {
                 count,
             })
             .collect();
+        let point_count = valid.len().min(MAX_VIEW_SAMPLES);
+        let points = (0..point_count)
+            .map(|index| {
+                let source_index = index * (valid.len() - 1) / (point_count - 1).max(1);
+                *valid[source_index]
+            })
+            .collect();
         Self {
             minimum: -extent,
             maximum: extent,
@@ -174,6 +185,7 @@ impl IqDensity {
             excluded_count: samples.len() - valid.len(),
             maximum_cell_count,
             cells,
+            points,
         }
     }
 }

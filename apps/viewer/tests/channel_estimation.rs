@@ -122,6 +122,10 @@ fn excluded_and_zero_pairs_are_not_fake_zero_db_or_delay() {
         .unwrap()
         .iq_density
         .unwrap();
+    assert_eq!(
+        density.points,
+        [[1.0, 0.0], [0.0, 0.0], [1.0, 0.0], [0.0, -1.0]]
+    );
     assert_eq!(density.valid_count, 4); // A zero pair still belongs in I/Q.
     assert_eq!(density.excluded_count, 1);
     let json: serde_json::Value = serde_json::from_str(&capture.json().unwrap()).unwrap();
@@ -163,4 +167,31 @@ fn empty_invalid_grid_and_wrong_tabs_are_handled() {
     assert!(rxmer
         .chart_range_for(MeasurementView::IqScatter, 0, 7480)
         .is_err());
+}
+
+#[test]
+fn dot_overview_retains_original_coordinates_and_bounded_endpoints() {
+    use viewer::measurements::channel_estimation::IqDensity;
+    let samples: Vec<_> = (0..4097)
+        .map(|index| Some([index as f64 / 8192.0, -0.25]))
+        .collect();
+    let overview = IqDensity::from_samples(&samples);
+    assert_eq!(overview.points.len(), MAX_VIEW_SAMPLES);
+    assert_eq!(overview.points.first(), Some(&[0.0, -0.25]));
+    assert_eq!(overview.points.last(), Some(&[0.5, -0.25]));
+    assert!(overview
+        .points
+        .iter()
+        .all(|pair| samples.contains(&Some(*pair))));
+    assert_eq!(
+        overview.cells.iter().map(|cell| cell.count).sum::<usize>(),
+        4097
+    );
+    let invalid = IqDensity::from_samples(&[None, Some([f64::NAN, 0.0])]);
+    assert!(invalid.points.is_empty());
+    assert_eq!(invalid.excluded_count, 2);
+    assert_eq!(
+        IqDensity::from_samples(&[Some([0.0, 0.0])]).points,
+        [[0.0, 0.0]]
+    );
 }

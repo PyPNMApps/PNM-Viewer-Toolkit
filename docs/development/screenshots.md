@@ -35,7 +35,10 @@ Store PNG files under `docs/images/user-guide/` using the pairs below:
 | `spectrum-frequency` | Same capture, Frequency dialog with 300000000–350000000 Hz inputs |
 | `channel-magnitude` | `channel_estimation.bin`, Magnitude |
 | `channel-delay` | Same capture, Group delay |
-| `channel-iq` | Same capture, I/Q scatter |
+| `channel-iq` | Same capture, I/Q scatter → Density (blue sparse/red dense) |
+| `channel-iq-dots` | Same capture, I/Q scatter → Dots |
+| `upstream-pre-eq-iq` / `upstream-pre-eq-iq-dots` | `us_pre_equalizer_coef.bin`, Density / Dots |
+| `upstream-pre-eq-last-iq` / `upstream-pre-eq-last-iq-dots` | `us_pre_equalizer_coef_last.bin`, Density / Dots |
 | `histogram` | `histogram.bin` |
 | `fec-summary` | `fec_summary.bin`, initial profile |
 | `modulation-profile` | `modulation_profile.bin`, All profiles, dB |

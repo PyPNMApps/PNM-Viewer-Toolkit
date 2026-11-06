@@ -10,11 +10,67 @@ ColumnLayout {
     id: chart
     required property var theme
     property var density: ({})
+    property bool densityMode: false
+    readonly property color sparseColor: "#3b82f6"
+    readonly property color denseColor: "#ef4444"
+    /*
+     * Maps a cell count to the blue-to-red display palette.
+     * count is a valid cell's sample count; the maximum comes from Rust.
+     * Returns a display color only; Rust owns binning and sample counts.
+     */
+    function densityColor(count) {
+        const fraction = count / Math.max(1, density.maximum_cell_count || 0)
+        return Qt.rgba(sparseColor.r + fraction * (denseColor.r - sparseColor.r),
+            sparseColor.g + fraction * (denseColor.g - sparseColor.g),
+            sparseColor.b + fraction * (denseColor.b - sparseColor.b), 1)
+    }
     spacing: 6
+    onDensityModeChanged: plot.requestPaint()
     onDensityChanged: plot.requestPaint()
     Connections {
         target: chart.theme
         function onDarkChanged() { plot.requestPaint() }
+    }
+    RowLayout {
+        Layout.fillWidth: true
+        Label { text: "Display"; color: chart.theme.muted }
+        ButtonGroup { id: displayModes }
+        ThemeButton {
+            objectName: "iqDotsButton"
+            theme: chart.theme
+            text: "Dots"
+            checkable: true
+            checked: !chart.densityMode
+            highlighted: checked
+            ButtonGroup.group: displayModes
+            Layout.preferredWidth: 90
+            onClicked: chart.densityMode = false
+        }
+        ThemeButton {
+            objectName: "iqDensityButton"
+            theme: chart.theme
+            text: "Density"
+            checkable: true
+            checked: chart.densityMode
+            highlighted: checked
+            ButtonGroup.group: displayModes
+            Layout.preferredWidth: 90
+            onClicked: chart.densityMode = true
+        }
+        Item { Layout.fillWidth: true }
+        Label { visible: chart.densityMode; text: "Sparse"; color: chart.theme.muted }
+        Rectangle {
+            visible: chart.densityMode
+            Layout.preferredWidth: 110
+            Layout.preferredHeight: 8
+            radius: 4
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: chart.sparseColor }
+                GradientStop { position: 1; color: chart.denseColor }
+            }
+        }
+        Label { visible: chart.densityMode; text: "Dense"; color: chart.theme.muted }
     }
     Item {
         Layout.fillWidth: true
@@ -26,7 +82,7 @@ ColumnLayout {
             width: Math.min(parent.width, parent.height)
             height: width
             Accessible.role: Accessible.Graphic
-            Accessible.name: "I/Q density scatter plot"
+            Accessible.name: chart.densityMode ? "I/Q density map" : "I/Q dot scatter plot"
             onWidthChanged: requestPaint()
             onHeightChanged: requestPaint()
             onVisibleChanged: requestPaint()
@@ -61,10 +117,23 @@ ColumnLayout {
                 const cellSize = size / chart.density.grid_side
                 const cells = chart.density.cells || []
                 context.fillStyle = chart.theme.accent
-                for (let index = 0; index < cells.length; index++) {
-                    const cell = cells[index]
-                    context.globalAlpha = 0.25 + 0.75 * Math.sqrt(cell.count / chart.density.maximum_cell_count)
-                    context.fillRect(margin + cell.column * cellSize, 20 + size - (cell.row + 1) * cellSize, cellSize, cellSize)
+                if (chart.densityMode) {
+                    for (let index = 0; index < cells.length; index++) {
+                        const cell = cells[index]
+                        context.fillStyle = chart.densityColor(cell.count)
+                        context.fillRect(margin + cell.column * cellSize, 20 + size - (cell.row + 1) * cellSize, cellSize, cellSize)
+                    }
+                } else {
+                    const points = chart.density.points || []
+                    context.globalAlpha = 0.8
+                    for (let index = 0; index < points.length; index++) {
+                        const point = points[index]
+                        const horizontal = margin + (point[0] - lower) / (upper - lower) * size
+                        const vertical = 20 + size - (point[1] - lower) / (upper - lower) * size
+                        context.beginPath()
+                        context.arc(horizontal, vertical, 1.8, 0, 2 * Math.PI)
+                        context.fill()
+                    }
                 }
                 context.globalAlpha = 1
                 context.fillStyle = chart.theme.muted
@@ -82,7 +151,9 @@ ColumnLayout {
         }
     }
     Label {
-        text: "I/Q density · " + (chart.density.valid_count || 0) + " valid · " + (chart.density.excluded_count || 0) + " excluded · Color intensity indicates sample count"
+        text: (chart.densityMode ? "Density · Blue = sparse, red = dense"
+            : "Dots · " + (chart.density.points || []).length + " displayed")
+            + " · " + (chart.density.valid_count || 0) + " valid · " + (chart.density.excluded_count || 0) + " excluded"
         color: chart.theme.muted
         font.pixelSize: 11
         Layout.fillWidth: true

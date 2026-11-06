@@ -55,6 +55,11 @@ fn current_views_are_bounded_zoomable_and_preserve_full_export() {
         .unwrap()
         .iq_density
         .unwrap();
+    assert_eq!(density.points.len(), MAX_VIEW_SAMPLES);
+    let expected_first: [f64; 2] = serde_json::from_value(json["iq"][0].clone()).unwrap();
+    let expected_last: [f64; 2] = serde_json::from_value(json["iq"][1775].clone()).unwrap();
+    assert_eq!(density.points.first(), Some(&expected_first));
+    assert_eq!(density.points.last(), Some(&expected_last));
     assert_eq!(density.valid_count, 1776);
     assert_eq!(density.excluded_count, 0);
     assert_eq!(
@@ -131,6 +136,11 @@ fn last_update_views_use_their_own_metadata_and_shared_core_json() {
         .unwrap()
         .iq_density
         .unwrap();
+    assert_eq!(density.points.len(), MAX_VIEW_SAMPLES);
+    let expected_first: [f64; 2] = serde_json::from_value(json["iq"][0].clone()).unwrap();
+    let expected_last: [f64; 2] = serde_json::from_value(json["iq"][1775].clone()).unwrap();
+    assert_eq!(density.points.first(), Some(&expected_first));
+    assert_eq!(density.points.last(), Some(&expected_last));
     assert_eq!(density.valid_count, 1776);
     assert_eq!(density.excluded_count, 0);
     assert!(density.cells.len() <= MAX_VIEW_SAMPLES);

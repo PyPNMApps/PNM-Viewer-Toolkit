@@ -103,11 +103,51 @@ Example: `channel_estimation.bin`.
   <img alt="Channel-estimation group-delay plot" src="../images/user-guide/channel-delay-dark.png" width="1000">
 </picture>
 
-## DS Channel Estimation — I/Q density
+## DS Channel Estimation — I/Q scatter
 
-The full complex response on equal in-phase and quadrature axes. Color intensity represents sample count per cell; the footer gives valid and excluded totals. This view has no range zoom.
+The I/Q view places the channel's complex coefficients on equal in-phase (I)
+and quadrature (Q) axes. Choose **Dots** (the default) or **Density**.
+
+### Why use this view?
+
+Each coefficient has an amplitude and a phase. Its distance from the center
+shows its amplitude; its angle around the center shows its phase. Seeing both
+together can reveal groups, spread and unusual coefficients that are harder to
+spot when looking at magnitude alone. Use the frequency plots to investigate
+where a pattern occurs along the channel.
+
+- **Dots** shows individual decoded coefficient positions. It is useful for
+  spotting isolated points and the shape of the response. Up to 1,024 actual
+  pairs are selected evenly in capture order, including the first and last
+  valid pair. Larger captures are sampled for display; points are not grid-cell
+  centers. Identical coordinates can overlap, and display sampling may omit
+  isolated coefficients; Density includes all valid coefficients.
+- **Density** includes every valid pair in a 32 × 32 grid. **Blue means fewer
+  samples and red means more samples in that cell**, relative to the busiest
+  cell in this capture. It makes overlapping clusters easier to see. Color
+  does not mean distance from the origin, signal power, or good/bad quality.
+
+These are **response coefficients, not received QAM symbols**. This view does
+not measure constellation MER, locate a cable fault or diagnose its cause.
+The same guidance applies to both upstream pre-EQ formats: those points describe
+an equalizer correction or update, rather than the downstream channel response.
+Do not compare their absolute amplitudes as if they were the same measurement.
+
+Both modes cover the full capture without range zoom. The footer reports valid
+and excluded totals; Dots also reports the number displayed. Exported JSON and
+CLI output retain all original I/Q pairs, regardless of the display mode.
 
 Example: `channel_estimation.bin`.
+
+**Dots**
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/channel-iq-dots-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/channel-iq-dots-light.png">
+  <img alt="DS channel-estimation original-coordinate I/Q dots" src="../images/user-guide/channel-iq-dots-dark.png" width="1000">
+</picture>
+
+**Density**
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/channel-iq-dark.png">
@@ -307,8 +347,10 @@ with compact metadata and frequency-domain inspection:
 - Group delay is derived from the unwrapped coefficient phase and shown in µs.
   It describes the correction response, not measured cable propagation delay.
   Phase steps beyond π are ambiguous; no absolute delay is recovered.
-- I/Q density includes every coefficient on equal I/Q axes; cell intensity
-  represents sample count. This overview has no range zoom.
+- I/Q scatter offers **Dots** and **Density** on equal axes. Dots shows up to
+  1,024 original pairs; Density counts every valid pair, blue for sparse areas
+  and red for dense clusters. See [why use this view](#why-use-this-view).
+  This overview has no range zoom.
 
 Drag to zoom a frequency range, use the mouse wheel around the pointer, and
 double-click to reset. Switching tabs resets the range. Rust computes all
@@ -344,7 +386,17 @@ and [complete CLI example](../cli/examples/upstream-pre-eq.json).
   <img alt="Current upstream coefficient group delay" src="../images/user-guide/upstream-pre-eq-delay-dark.png" width="1000">
 </picture>
 
-**I/Q density**
+**I/Q scatter**
+
+**Dots**
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/upstream-pre-eq-iq-dots-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/upstream-pre-eq-iq-dots-light.png">
+  <img alt="Current upstream pre-EQ original-coordinate I/Q dots" src="../images/user-guide/upstream-pre-eq-iq-dots-dark.png" width="1000">
+</picture>
+
+**Density**
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/upstream-pre-eq-iq-dark.png">
@@ -371,7 +423,9 @@ Choose **Magnitude**, **Group delay**, or **I/Q scatter**. Update magnitude is
 in dB relative to unit amplitude. Update group delay is derived from unwrapped
 coefficient phase and shown in µs; it is not absolute cable propagation delay.
 The same drag/wheel zoom and double-click reset work on both frequency plots.
-I/Q density always covers the full capture. Switching tabs resets the range.
+I/Q scatter offers **Dots** and **Density**, always covering the full capture.
+Dots shows up to 1,024 original pairs; Density uses blue for sparse cells and red
+for dense cells. See [why use this view](#why-use-this-view). Switching tabs resets the range.
 All calculations, decimation and density aggregation run in shared Rust code.
 Zero coefficients remain in raw I/Q and appear as gaps for undefined magnitude
 and delay. Signed minimum pairs are valid coefficients.
@@ -398,7 +452,17 @@ and [complete last-update example](../cli/examples/upstream-pre-eq-last.json).
   <img alt="Last upstream pre-equalization update group delay" src="../images/user-guide/upstream-pre-eq-last-delay-dark.png" width="1000">
 </picture>
 
-**I/Q density**
+**I/Q scatter**
+
+**Dots**
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/upstream-pre-eq-last-iq-dots-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/upstream-pre-eq-last-iq-dots-light.png">
+  <img alt="Last-update upstream pre-EQ original-coordinate I/Q dots" src="../images/user-guide/upstream-pre-eq-last-iq-dots-dark.png" width="1000">
+</picture>
+
+**Density**
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/upstream-pre-eq-last-iq-dark.png">

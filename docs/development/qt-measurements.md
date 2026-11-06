@@ -97,11 +97,18 @@ three or more carriers, and two-carrier runs use their shared slope. Phase steps
 larger than pi are ambiguous; these plots do not recover absolute cable delay.
 No echo detection, cable-distance estimate or smoothing is included yet.
 
-I/Q scatter is a 32-by-32 density overview with equal I/Q scales. Every valid
-pair contributes to one cell; color intensity indicates relative count. Zero pairs
+I/Q scatter defaults to original-coordinate dots with a Dots/Density selector.
+Rust selects at most 1,024 valid pairs evenly in capture order, retaining both
+endpoints; QML never synthesizes points from density cell centers. Density
+is a 32-by-32 overview with equal I/Q scales. Every valid
+pair contributes to one cell; a blue-to-red palette indicates relative count
+(blue sparse, red dense), with a matching legend. This is not a distance scale. Zero pairs
 remain valid here. The footer reports valid and excluded counts. This view
 shows the full capture and has no frequency zoom or individual-sample tooltip.
-At most 1,024 occupied cells cross the UI boundary.
+At most 1,024 occupied cells and 1,024 original-coordinate dots cross the UI
+boundary. Both presentations share bounds and valid/excluded totals, and the
+same adapter serves DS channel estimation and both US pre-EQ formats.
+CLI and exported measurement JSON are unchanged.
 
 Desktop JSON export preserves every raw parser field, including the full `iq`
 array, and adds this section (arrays align with the original carrier indices):
