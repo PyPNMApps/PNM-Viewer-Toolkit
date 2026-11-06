@@ -13,4 +13,9 @@ export RUSTUP_HOME="${PROJECT_DIR}/local/rustup"
 export CARGO_HOME="${PROJECT_DIR}/local/cargo"
 export PATH="${CARGO_HOME}/bin:${PATH}"
 cd "${PROJECT_DIR}"
+case "${1:-}" in
+  build|test|check|clippy|run)
+    python3 "${PROJECT_DIR}/tools/maintenance/rust_clean.py" --if-disk-full
+    ;;
+esac
 exec "${CARGO_HOME}/bin/cargo" "$@"

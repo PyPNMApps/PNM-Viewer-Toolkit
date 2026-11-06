@@ -16,7 +16,8 @@ A `v*` tag starts [Native releases](../../.github/workflows/release.yml):
 5. Verify the complete asset set, hashes and 50 MB budgets, then upload to a draft,
    verify remote metadata and downloaded bytes, and publish automatically.
 
-Every stage is required; failures/cancellations/skips block publication. Windows
+Every stage is required for a complete stable release. Failed platforms remain
+failed, while successful ones can publish a partial prerelease as described below. Windows
 Server 2022 is the x64 test host, not proof of Windows 11 security-dialog behavior.
 Mac builds use native Cocoa QML event delivery; Linux/Windows QML tests use
 software/offscreen rendering. No failing interaction or pixel assertion is skipped.
@@ -121,6 +122,16 @@ required. Re-running the old tag uses its original workflow, without this fix.
 
 ## QML failure diagnostics
 
+v0.2.6's Intel Mac QML run reported profile index 1 after the modulation test
+clicked index 0. That test used a fixed 50 ms delay after replacing the model.
+Profile interaction tests now wait for both GridLayout and Flow polish and a
+rendered button before sending clicks, assert non-overlapping geometry, and
+verify the requested index after every toggle. This addresses a possible layout
+race without retrying tests or weakening selection assertions; native Mac
+confirmation is still required on the next tag.
+A focused regression replaces one-, three- and two-profile models and clicks
+every profile on and off, checking the exact routed index after each event.
+
 Native Qt checks run QML before native compilation and preserve explicit text,
 JUnit XML and process logs under `local/qt-test-results/`. CI uploads those files
 as `qml-tests-<runner>` artifacts even when the check fails. They are retained
@@ -217,6 +228,28 @@ an existing release tag to apply these optimizations.
 
 ## Tags
 
+### Partial releases after a platform failure
+
+Successful native jobs finish and retain their packages even when another OS
+fails. The package-discovery job runs after the matrix regardless of its result;
+Ubuntu's three installer lifecycle jobs run if the baseline DEBs passed native
+checks. This avoids skipping Ubuntu installation merely because a Mac failed.
+
+Publication selects only same-run packages whose native jobs passed. Linux also
+requires native checks and installed lifecycle checks on all three Ubuntu
+versions. Global identity, CodeQL and code checks remain mandatory. Failed,
+canceled, missing or ambiguous platform evidence excludes that platform.
+No passing targets means no release. Package hashes, sizes, uploaded metadata
+and re-downloaded bytes are verified for every included target.
+
+If anything failed, successful installers appear in a clearly labeled **Partial
+release — CI failed** prerelease. Its page lists unavailable platforms. CI stays
+red, the partial release is not marked latest, and stable in-app update checks
+do not offer it. Downloads remain available manually on Releases. Published
+assets are immutable, so a subsequent fix uses a new tag. All-pass runs still
+publish a complete stable development release. Existing tags retain their old
+workflow; these changes do not retroactively publish v0.2.6 packages.
+
 [Native releases](../../.github/workflows/release.yml) runs on `v*` pushes and
 can be manually dispatched against a selected tag. It requires exact `vMAJOR.MINOR.PATCH` agreement with VERSION and every
 manifest/lockfile, plus tag-commit ancestry in `origin/master`. It calls the same
@@ -228,12 +261,13 @@ native installers/images. Every test checks package hashes, GUI open/render/JSON
 export for all current measurements, CLI operation, manual installation and
 removal. Linux also verifies that removing the viewer preserves the CLI package.
 
-Only after every lifecycle job succeeds does one job assemble the complete
+After every lifecycle job succeeds, one job assembles the complete
 artifact set and attach it to a **draft** GitHub release. It refuses to modify an
 already public release. After verifying uploaded metadata and re-downloaded
 bytes, it publishes automatically. External signing and notarization are
-separate. Failed packages, missing targets and packages above
-50,000,000 bytes block publication. See [packaging](../release/packaging.md).
+separate. Failed packages are never published; missing targets block stable
+publication. Packages above 50,000,000 bytes block their platform. See
+[packaging](../release/packaging.md) and the partial-release policy above.
 
 Publication helper failures print captured GitHub CLI stderr and preserve the
 original failure. If only publication fails after every required gate passed,

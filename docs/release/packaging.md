@@ -4,7 +4,10 @@
 
 The project remains **under development**. Tag releases require native tests,
 installer lifecycle checks and complete-set integrity/size validation before
-verified automatic publication. The same Ubuntu baseline is tested on three
+verified stable publication. A platform failure keeps CI failed while successful
+platforms can publish a labeled partial prerelease with the same integrity checks;
+see [partial release policy](../development/ci.md#partial-releases-after-a-platform-failure).
+The same Ubuntu baseline is tested on three
 versions; Windows x64 produces an MSI and both Mac architectures produce DMGs.
 This describes configured gates; use the tagged workflow's results as evidence.
 External signing and Apple notarization remain separate actions.

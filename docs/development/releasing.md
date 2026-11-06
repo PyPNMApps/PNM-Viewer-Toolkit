@@ -145,8 +145,12 @@ use the already-prepared-version procedure instead.
 
 The [tag workflow](ci.md#tags) validates version/master ancestry, repeats all
 required OS checks, builds native packages and tests installed behavior. Only a
-complete passing artifact set is uploaded to a temporary draft, checked remotely
-and automatically published; the project remains in development.
+complete passing artifact set is marked stable/latest. If a platform fails,
+successful platforms can publish a clearly labeled partial prerelease after
+their own lifecycle checks; the workflow remains failed and the previous stable
+release remains latest. Every uploaded asset is checked remotely before
+publication. See [CI partial-release policy](ci.md#partial-releases-after-a-platform-failure).
+The project remains in development.
 
 
 ## Release page and automatic publication

@@ -15,6 +15,7 @@ else
   CARGO_COMMAND=(cargo)
 fi
 command -v python3 >/dev/null
+python3 tools/maintenance/rust_clean.py --if-disk-full
 command -v shellcheck >/dev/null
 python3 tools/security/pnm-mac-updater.py
 python3 -m unittest discover -s tools/security -p 'test_*.py'

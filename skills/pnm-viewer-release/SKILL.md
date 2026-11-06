@@ -61,9 +61,19 @@ checks separately from native install/remove checks. Ubuntu installs the same
 22.04-built DEBs on all three versions, and removing the UI must preserve the CLI.
 
 User authorization on 2026-11-04 supersedes the earlier draft-only rule.
-Only a complete validated artifact set may be uploaded to a temporary draft.
+Complete stable releases require every target and installed lifecycle gate.
+On 2026-11-05 the user authorized publishing successful same-run platforms as
+a labeled partial prerelease when another target fails. Keep all failed jobs
+and the overall workflow failed. Global identity/CodeQL/code checks must pass;
+every included platform must pass native and installed checks. Linux needs all
+three Ubuntu native/lifecycle checks. Continue Ubuntu installation tests when
+its baseline is available despite an unrelated failure. Exclude failed targets,
+list missing platforms, reject an empty set and use prerelease/latest=false.
+Never offer partial releases through the stable in-app update path. Existing
+public assets remain immutable; missing targets need a new version/tag.
 Verify uploaded sizes, GitHub DEB SHA-256 digests and re-downloaded bytes before
-automatically publishing and marking latest. Never mutate a public release.
+automatically publishing; only complete passing releases are marked latest.
+Never mutate a public release.
 The user restored automatic full tag delivery on 2026-11-04; the old Ubuntu-only
 workflow is manual troubleshooting only. Require MSI/DMG and all Ubuntu lifecycle
 gates; do not treat legacy Ubuntu-only success as multi-OS validation. Windows

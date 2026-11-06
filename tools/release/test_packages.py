@@ -4,6 +4,7 @@
 #
 """Artifact integrity, size-budget and lifecycle guard regression tests."""
 import importlib
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -133,6 +134,31 @@ class PackageContractTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Incomplete'):
                 collect.collect(source, root / 'assets')
             self.assertFalse((root / 'assets').exists())
+
+    def test_explicit_partial_assembly_omits_failed_platform_and_verifies_bytes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / 'artifacts'
+            windows = source / 'native-windows-2022'
+            windows.mkdir(parents=True)
+            payload = b'synthetic verified MSI'
+            (windows / 'test.msi').write_bytes(payload)
+            (windows / 'SHA256SUMS').write_text(hashlib.sha256(payload).hexdigest() + '  test.msi\n')
+            (windows / 'release-manifest.json').write_text(json.dumps({
+                'version': common.release_version(), 'system': 'Windows', 'architecture': 'x64',
+                'artifacts': [{'name': 'test.msi', 'bytes': len(payload)}]}))
+            (source / 'native-macos-15-intel').mkdir()
+            with self.assertRaisesRegex(ValueError, 'Incomplete'):
+                collect.collect(source, root / 'full', include_artifacts=['native-windows-2022'])
+            collect.collect(source, root / 'partial', allow_partial=True,
+                            include_artifacts=['native-windows-2022'])
+            self.assertEqual((root / 'partial/test.msi').read_bytes(), payload)
+            self.assertEqual(len(json.loads((root / 'partial/release-index.json').read_text())), 1)
+            (windows / 'test.msi').write_bytes(b'corrupt')
+            with self.assertRaisesRegex(ValueError, 'Checksum'):
+                collect.collect(source, root / 'corrupt', allow_partial=True,
+                                include_artifacts=['native-windows-2022'])
+            self.assertFalse((root / 'corrupt').exists())
 
     def test_native_target_and_existing_output(self):
         """Reject unsupported hosts and preserve existing output without builds."""

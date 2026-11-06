@@ -196,6 +196,15 @@ replace native Qt integration validation.
 Keep the installed executable's Fusion control style aligned with development
 and CI; a launcher-only style setting does not cover desktop shortcuts. Check
 rendered button contrast in both themes. Preserve native Open/Save dialogs.
+For QML tests that click dynamically positioned controls, wait for layout polish
+and rendering before sending mouse events. Fixed sleeps do not establish stable
+geometry. Retain exact action/index assertions and cover model replacement.
+
+Keep Rust cleanup in tools/maintenance/rust_clean.py. Build entry points call
+its disk check instead of duplicating deletion logic. At 95% filesystem usage,
+clean only marked project targets through cargo clean, then recheck free space.
+Preserve dependency downloads/toolchains/SDKs, reject tracked or redirected
+targets, and use dry runs or mocks when validating destructive maintenance.
 
 ## SPDX headers
 

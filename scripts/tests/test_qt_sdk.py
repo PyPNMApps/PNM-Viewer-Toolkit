@@ -290,11 +290,13 @@ class QmlReportTests(unittest.TestCase):
         """Avoid expensive Rust builds after a known presentation-suite failure."""
         failure = subprocess.CalledProcessError(1, ['qmltestrunner'])
         with patch.object(QT, 'qt_environment', return_value=self.environment), \
+                patch.object(QT, 'ensure_space') as space_check, \
                 patch.object(QT, 'qml_check', side_effect=failure), \
                 patch.object(QT, 'run') as native:
             with self.assertRaises(subprocess.CalledProcessError):
                 QT.check()
             native.assert_not_called()
+            space_check.assert_called_once_with(QT.ROOT)
 
     def test_mac_uses_native_cocoa_for_interaction_tests(self):
         """Use WindowServer event delivery without skipping any QML test input."""

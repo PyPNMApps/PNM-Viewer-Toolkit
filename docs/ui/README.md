@@ -104,6 +104,9 @@ appears near the top-right navigation toggle. Click it to open About, see the
 latest version and open **Release notes and downloads**. Draft releases and tags
 without a published release are not updates. Until a release is published,
 **No published release is available yet** is a normal result.
+Partial releases appear on GitHub as prereleases for manual download. They
+contain only platforms that passed validation and are excluded from the stable
+update check; their associated workflow can still show failure for another OS.
 
 Installed Ubuntu x64 builds offer **Install update and restart** when the
 release has matching viewer/CLI DEBs with SHA-256 digests. Downloading and

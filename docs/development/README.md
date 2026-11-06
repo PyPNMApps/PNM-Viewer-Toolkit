@@ -16,6 +16,7 @@ CLI behavior belongs in `docs/cli/`.
 | Review future IPC and retrieval plans | [API contract](api-contract.md) |
 | Save and push changes | [Git workflow](git.md) |
 | Understand required OS checks | [CI and platform matrix](ci.md) |
+| Reclaim Rust build space | [Maintenance and 95% disk guard](maintenance.md) |
 | Bump versions or prepare the first tag | [Release preparation](releasing.md) |
 | Refresh README and gallery pictures | [Screenshots](screenshots.md) |
 

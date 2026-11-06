@@ -36,9 +36,33 @@ jobs:
     with:
       run_native_checks: true
       package_release: true
+  available-packages:
+    name: Find successful platform packages
+    needs: [tag, validate]
+    if: ${{ !cancelled() && needs.tag.result == 'success' && (needs.validate.result == 'success' || needs.validate.result == 'failure') }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      ubuntu: ${{ steps.targets.outputs.ubuntu }}
+      any: ${{ steps.targets.outputs.names != '[]' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Select same-run packages after native checks
+        id: targets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs?per_page=100&filter=latest" > jobs.json
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" > artifacts.json
+          python3 scripts/release/targets.py --jobs jobs.json --artifacts artifacts.json --output "$GITHUB_OUTPUT"
   ubuntu-install:
     name: DEB lifecycle / ${{ matrix.os }}
-    needs: validate
+    needs: available-packages
+    if: ${{ !cancelled() && needs.available-packages.outputs.ubuntu == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -71,33 +95,59 @@ jobs:
           if-no-files-found: warn
   publish:
     name: Publish verified native release
-    needs: [validate, ubuntu-install]
+    needs: [tag, validate, available-packages, ubuntu-install]
+    if: ${{ !cancelled() && needs.tag.result == 'success' && needs.available-packages.result == 'success' && needs.available-packages.outputs.any == 'true' }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+      actions: read
+    env:
+      PARTIAL_RELEASE: ${{ needs.validate.result != 'success' || needs.ubuntu-install.result != 'success' }}
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+      - name: Select platforms with successful installer checks
+        id: targets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UBUNTU_RESULT: ${{ needs.ubuntu-install.result }}
+        run: |
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs?per_page=100&filter=latest" > jobs.json
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" > artifacts.json
+          python3 scripts/release/targets.py --jobs jobs.json --artifacts artifacts.json --output "$GITHUB_OUTPUT" --ubuntu-result "$UBUNTU_RESULT"
       - uses: actions/download-artifact@v7
         with:
           pattern: native-*
           path: artifacts
-      - name: Verify complete asset set
-        run: python3 scripts/release/collect.py --source artifacts --output release-assets
+      - name: Verify eligible asset set
+        env:
+          ELIGIBLE_ARTIFACTS: ${{ steps.targets.outputs.names }}
+        run: |
+          args=(--source artifacts --output release-assets --include-artifacts "$ELIGIBLE_ARTIFACTS")
+          if [[ "$PARTIAL_RELEASE" == true ]]; then args+=(--allow-partial); fi
+          python3 scripts/release/collect.py "${args[@]}"
       - name: Render release page with installation instructions
         env:
           RELEASE_TAG: ${{ github.ref_name }}
           RELEASE_REPOSITORY: ${{ github.repository }}
         run: |
+          args=()
+          if [[ "$PARTIAL_RELEASE" == true ]]; then args+=(--partial); fi
           python3 scripts/release/notes.py --assets release-assets \
-            --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY" --output release-page.md
+            --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY" --output release-page.md "${args[@]}"
       - name: Verify uploaded bytes and publish automatically
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_REPOSITORY: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
+          args=()
+          title="PNM Viewer Toolkit $RELEASE_TAG — Development build"
+          if [[ "$PARTIAL_RELEASE" == true ]]; then
+            args+=(--partial)
+            title="PNM Viewer Toolkit $RELEASE_TAG — Partial release — CI failed"
+          fi
           python3 scripts/release/publish.py --assets release-assets --notes release-page.md \
             --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY" \
-            --title "PNM Viewer Toolkit $RELEASE_TAG — Development build"
+            --title "$title" "${args[@]}"

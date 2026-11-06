@@ -34,7 +34,7 @@ class PublishTests(unittest.TestCase):
         self.assertIs(caught.exception, failure)
         self.assertIn('HTTP 403: synthetic permission failure', diagnostics.getvalue())
 
-    def exercise(self, mode, filename="test.deb"):
+    def exercise(self, mode, filename="test.deb", partial=False):
         """Execute the real coordinator with success, API failure or corrupt assets."""
         with tempfile.TemporaryDirectory() as directory:
             assets = Path(directory) / 'assets'
@@ -59,12 +59,14 @@ class PublishTests(unittest.TestCase):
                 return ''
             with patch.object(MODULE, 'github', side_effect=github):
                 if mode in ('ok', 'new'):
-                    MODULE.publish(assets, Path('notes'), 'v0.2.0', 'owner/repo', 'Title')
+                    MODULE.publish(assets, Path('notes'), 'v0.2.0', 'owner/repo', 'Title', partial)
                     self.assertIn('--draft=false', calls[-1])
-                    self.assertIn('--latest', calls[-1])
+                    self.assertIn('--latest=false' if partial else '--latest', calls[-1])
+                    if partial:
+                        self.assertIn('--prerelease', calls[-1])
                 else:
                     with self.assertRaises((ValueError, RuntimeError)):
-                        MODULE.publish(assets, Path('notes'), 'v0.2.0', 'owner/repo', 'Title')
+                        MODULE.publish(assets, Path('notes'), 'v0.2.0', 'owner/repo', 'Title', partial)
                     self.assertFalse(any('--draft=false' in call for call in calls))
                     if mode in ('public', 'api-error'):
                         self.assertFalse(any(call[:2] == ('release', 'upload') for call in calls))
@@ -73,6 +75,10 @@ class PublishTests(unittest.TestCase):
         """Publish last after successful remote metadata and download verification."""
         self.exercise('ok')
         self.exercise('new')
+
+    def test_partial_release_is_verified_prerelease_and_not_latest(self):
+        for mode in ('new', 'ok', 'public', 'size', 'digest', 'bytes'):
+            self.exercise(mode, partial=True)
 
     def test_msi_and_dmg_digests_are_verified_before_publication(self):
         """Both new platform installer types require matching GitHub SHA-256."""

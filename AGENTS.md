@@ -141,13 +141,30 @@ on Ubuntu 22.04/24.04/26.04, complete assets, budgets and verified publication.
 Tests and packaging share native hosts to avoid a second cold compilation matrix.
 The old Ubuntu-only workflow is manual troubleshooting only; never trigger both
 for an automatic tag. Master/PR remains lean CodeQL/static, with native checks
-available manually. No failing native tests may be skipped to publish.
+available manually. No failing native tests may be skipped to make CI pass.
+User authorization on 2026-11-05 permits a clearly labeled partial prerelease
+from successful same-run platforms when another platform fails. Global identity,
+CodeQL and code checks must pass. Each published platform must pass its native
+and installed lifecycle checks; Linux requires all three Ubuntu versions. Keep
+the workflow failed, omit failed targets and never mark a partial release latest.
+Complete stable publication still requires the full matrix. Public assets remain
+immutable; missing platforms require a new tag rather than modifying a release.
 Windows x64 uses MSI; macOS arm64/x64 use DMGs. Windows/macOS in-app install and
 restart are deferred by explicit user choice; Ubuntu keeps automatic restart.
 Follow OSCAR-UI's Windows security guidance without disabling OS protections,
 execution-policy bypasses, blanket unblock or elevated application launches.
 Native hosted results and Windows 11/macOS interactive approvals require evidence.
 Never modify an already public release. Signing/notarization remain separate.
+
+## Build disk maintenance
+
+Use tools/maintenance/rust_clean.py as the single Rust cleanup implementation.
+Build helpers call its 95% filesystem-usage check before compilation. It calls
+cargo clean for marked checkout target directories only; preserve SDKs, Cargo
+downloads, toolchains, custom/external target directories and other repositories.
+Reject redirects/tracked files before cleanup and stop if disk usage stays high.
+See docs/development/maintenance.md for manual and dry-run commands. Never clean
+active outputs by deleting directories directly; let Cargo own build locking.
 
 ## Fixture MAC hygiene
 

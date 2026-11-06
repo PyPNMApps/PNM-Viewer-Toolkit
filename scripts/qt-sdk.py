@@ -15,6 +15,8 @@ import time
 import venv
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'tools/maintenance'))
+from rust_clean import ensure_space
 QT_VERSION = '6.8.3'
 AQT_VERSION = '3.3.0'
 MAX_DOWNLOAD_ATTEMPTS = 3
@@ -229,6 +231,7 @@ def check():
     A failed presentation test stops before expensive native compilation; all
     existing checks still run on success. Propagate the original failure.
     """
+    ensure_space(ROOT)
     environment = qt_environment()
     qml_check(environment)
     cargo = [str(ROOT / 'scripts/cargo-local.sh')] if os.name != 'nt' and (ROOT / 'local/cargo/bin/cargo').exists() else ['cargo']

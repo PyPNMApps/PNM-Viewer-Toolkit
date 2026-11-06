@@ -85,6 +85,18 @@ class ReleasePageTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Target installer|duplicate'):
                 self.render(manifests=changed)
 
+    def test_partial_page_lists_only_verified_downloads_and_missing_platforms(self):
+        template = (ROOT / 'docs/release/partial-notes.md').read_text()
+        page = self.render(template=template, manifests=self.index[:2], partial=True)
+        self.assertIn('Partial release', page)
+        self.assertIn('CI failed', page)
+        self.assertIn('prerelease', page)
+        self.assertIn('macOS Intel', page)
+        self.assertIn('windows-x64.msi', page)
+        self.assertNotIn('macos-arm64.dmg', page)
+        with self.assertRaisesRegex(ValueError, 'Incomplete'):
+            self.render(template=template, manifests=[], partial=True)
+
     def test_mismatched_tag_or_mixed_version_is_rejected(self):
         """Prevent a release page from pointing at another version's assets."""
         with self.assertRaisesRegex(ValueError, 'tag'):

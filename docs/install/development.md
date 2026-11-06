@@ -1,5 +1,10 @@
 # Development setup
 
+Project build helpers check disk usage before compilation. At 95% or higher,
+`tools/maintenance/rust_clean.py` uses `cargo clean` for this checkout's marked
+build directories. See [maintenance](../development/maintenance.md) for manual
+cleanup, dry-run commands and the directories that are preserved.
+
 PNM Viewer Toolkit remains under development. The Rust parsers, CLI and native
 Qt viewer have runnable source builds. See the [desktop user guide](../ui/README.md)
 for the Qt workflow and the [developer index](../development/README.md) for code guides.

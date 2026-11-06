@@ -46,6 +46,7 @@ def build(output):
     output = output.resolve()
     if output.exists():
         raise ValueError(f'Output exists; move it aside before retrying: {output}')
+    qt.ensure_space(ROOT)
     environment = qt.qt_environment()
     # Match Qt 6.8's supported macOS baseline; do not mislabel older compatibility.
     if system == 'Darwin':

@@ -30,7 +30,7 @@ def github(*arguments):
         raise
 
 
-def publish(assets, notes, tag, repository, title):
+def publish(assets, notes, tag, repository, title, partial=False):
     """Publish a tested tag only after exact remote asset bytes are verified.
 
     Args:
@@ -39,8 +39,10 @@ def publish(assets, notes, tag, repository, title):
         tag: Validated tag from the workflow's identity gate.
         repository: GitHub owner/repository, passed explicitly to every gh call.
         title: Public development-release title stating its platform scope.
+        partial: Publish as prerelease without replacing the latest stable release.
     Returns:
-        None after publication, with the release marked latest for discovery.
+        None after publication. Complete releases are latest; partial releases
+        are prereleases and preserve the previous stable release as latest.
     Raises:
         ValueError: Existing public release, invalid/empty local asset directory,
             mismatched upload or missing GitHub SHA-256 package digests.
@@ -58,7 +60,7 @@ def publish(assets, notes, tag, repository, title):
     if matching:
         if not matching[0]['draft']:
             raise ValueError('Refusing to modify a public release')
-        github('release', 'edit', tag, '--repo', repository, '--notes-file', notes)
+        github('release', 'edit', tag, '--repo', repository, '--title', title, '--notes-file', notes)
     else:
         github('release', 'create', tag, '--repo', repository, '--verify-tag', '--draft',
                '--title', title, '--notes-file', notes)
@@ -86,7 +88,8 @@ def publish(assets, notes, tag, repository, title):
             downloaded = Path(directory) / source.name
             if not downloaded.is_file() or hashlib.sha256(source.read_bytes()).digest() != hashlib.sha256(downloaded.read_bytes()).digest():
                 raise ValueError('Downloaded release bytes do not match verified artifacts')
-    github('release', 'edit', tag, '--repo', repository, '--draft=false', '--latest')
+    visibility = ['--prerelease', '--latest=false'] if partial else ['--latest']
+    github('release', 'edit', tag, '--repo', repository, '--draft=false', *visibility)
 
 
 def main():
@@ -97,8 +100,9 @@ def main():
     parser.add_argument('--tag', required=True)
     parser.add_argument('--repository', required=True)
     parser.add_argument('--title', required=True)
+    parser.add_argument('--partial', action='store_true')
     args = parser.parse_args()
-    publish(args.assets, args.notes, args.tag, args.repository, args.title)
+    publish(args.assets, args.notes, args.tag, args.repository, args.title, args.partial)
 
 
 if __name__ == '__main__':

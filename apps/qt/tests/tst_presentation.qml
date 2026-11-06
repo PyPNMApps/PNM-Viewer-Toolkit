@@ -132,22 +132,37 @@ TestCase {
         }
         onMetricRequested: index => metricRequest = index
     }
+    function clickProfileToggle(button, expectedIndex) {
+        // Model changes queue both GridLayout and Flow positioning. Wait for
+        // real geometry before Cocoa maps the click into window coordinates.
+        verify(waitForPolish(modulationControls))
+        verify(waitForPolish(button.parent))
+        verify(waitForRendering(button))
+        modulationControls.profileRequest = -1
+        mouseClick(button)
+        tryCompare(modulationControls, "profileRequest", expectedIndex)
+    }
     function test_modulation_profile_metric_controls_and_step_chart() {
+        chart.visible = false
         modulationControls.visible = true
         modulationControls.metadata = {profiles: [{profile_id: 3}, {profile_id: 0}], selected_indices: [1], metric_index: 0,
             assignment_summary: "256-QAM: 7408 · Pilots: 56 · PLC: 16"}
         const first = findChild(modulationControls, "modulationProfileToggle0")
         const second = findChild(modulationControls, "modulationProfileToggle1")
         const all = findChild(modulationControls, "modulationAllProfiles")
-        wait(50)
+        verify(waitForPolish(modulationControls))
+        verify(waitForPolish(first.parent))
+        const firstPosition = first.mapToItem(modulationControls, 0, 0)
+        const secondPosition = second.mapToItem(modulationControls, 0, 0)
+        verify(firstPosition.x + first.width <= secondPosition.x,
+            "Profile buttons must finish layout without overlapping")
         verify(!first.checked)
         verify(second.checked)
-        mouseClick(first)
-        tryCompare(modulationControls, "profileRequest", 0)
+        clickProfileToggle(first, 0)
         verify(first.checked && second.checked)
-        mouseClick(second)
+        clickProfileToggle(second, 1)
         verify(first.checked && !second.checked)
-        mouseClick(first)
+        clickProfileToggle(first, 0)
         verify(!first.checked && !second.checked)
         all.forceActiveFocus()
         keyClick(Qt.Key_Space)
@@ -182,6 +197,26 @@ TestCase {
         chart.axisLabel = "RxMER"
         chart.maximum = 64
         appearance.preference = 1
+    }
+    function test_profile_model_changes_route_each_mouse_click() {
+        chart.visible = false
+        modulationControls.visible = true
+        // Replace differently sized models without a fixed delay, exercising
+        // the queued Flow positioning that can otherwise route a click wrongly.
+        for (const profileIds of [[3], [3, 2, 0], [0, 3]]) {
+            modulationControls.metadata = {profiles: profileIds.map(profileId => ({profile_id: profileId})),
+                selected_indices: [], metric_index: 0, carrier_types: [], selected_carrier_types: []}
+            for (let index = 0; index < profileIds.length; index++) {
+                const button = findChild(modulationControls, "modulationProfileToggle" + index)
+                verify(button !== null)
+                clickProfileToggle(button, index)
+                verify(button.checked)
+                clickProfileToggle(button, index)
+                verify(!button.checked)
+            }
+        }
+        modulationControls.visible = false
+        chart.visible = true
     }
     function test_modulation_overlay_rendering_and_empty_selection() {
         chart.visible = true

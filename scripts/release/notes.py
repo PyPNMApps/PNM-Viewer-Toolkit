@@ -22,16 +22,17 @@ PLATFORMS = {
 }
 
 
-def render(template, manifests, version, tag, repository, ubuntu_only=False):
+def render(template, manifests, version, tag, repository, ubuntu_only=False, partial=False):
     """Render a tag-pinned page without uploading or changing release state.
 
     Args:
         template: Markdown with the documented uppercase template tokens.
-        manifests: Complete platform manifests produced by collect.py.
+        manifests: Verified platform manifests produced by collect.py.
         version: Validated canonical VERSION string.
         tag: Stable release tag, which must equal v plus version.
         repository: GitHub owner/name used for download and source links.
         ubuntu_only: Explicit temporary scope; require the paired Ubuntu DEBs.
+        partial: Explicitly allow a nonempty subset and list missing platforms.
     Returns:
         Markdown with measured download sizes and links to the verified assets.
     Raises:
@@ -93,16 +94,17 @@ def render(template, manifests, version, tag, repository, ubuntu_only=False):
         if not required_packages[target].issubset(target_names):
             raise ValueError('Target installer or CLI package missing; require MSI/DMG/DEB for the correct architecture')
         targets[target] = ' | '.join((platforms[target], '<br>'.join(viewer), '<br>'.join(cli)))
-    if set(targets) != expected_targets:
+    if not targets or (not partial and set(targets) != expected_targets):
         raise ValueError('Incomplete release platform set')
     table = ['| Platform | Desktop installer | CLI only |', '| --- | --- | --- |']
-    table.extend('| ' + targets[target] + ' |' for target in platforms)
+    table.extend('| ' + targets[target] + ' |' for target in platforms if target in targets)
     replacements = {
         '{{TAG}}': tag,
         '{{VERSION}}': version,
         '{{ASSET_TABLE}}': '\n'.join(table),
         '{{SOURCE_URL}}': base + '/blob/' + tag,
         '{{RUNS_URL}}': base + '/actions?query=' + quote('event:push branch:' + tag),
+        '{{UNAVAILABLE_PLATFORMS}}': ', '.join(PLATFORMS[target] for target in PLATFORMS if target not in targets) or 'None; see failed workflow checks.',
     }
     for token, value in replacements.items():
         template = template.replace(token, value)
@@ -122,8 +124,10 @@ def main():
     parser.add_argument('--tag', required=True)
     parser.add_argument('--repository', default='PyPNMApps/PNM-Viewer-Toolkit')
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--ubuntu-only', action='store_true',
+    scope = parser.add_mutually_exclusive_group()
+    scope.add_argument('--ubuntu-only', action='store_true',
                         help='Render a temporary Ubuntu-only draft from verified packages')
+    scope.add_argument('--partial', action='store_true')
     args = parser.parse_args()
     try:
         if args.ubuntu_only:
@@ -132,9 +136,11 @@ def main():
         else:
             manifests = json.loads((args.assets / 'release-index.json').read_text(encoding='utf-8'))
             template_path = ROOT / 'docs/release/release-notes.md'
+            if args.partial:
+                template_path = ROOT / 'docs/release/partial-notes.md'
         template = template_path.read_text(encoding='utf-8')
         notes = render(template, manifests, release_version(), args.tag, args.repository,
-                       ubuntu_only=args.ubuntu_only)
+                       ubuntu_only=args.ubuntu_only, partial=args.partial)
         with args.output.open('x', encoding='utf-8') as output:
             output.write(notes)
     except (ValueError, KeyError, TypeError, OSError) as error:
