@@ -13,6 +13,7 @@ ColumnLayout {
     property bool showSoft: true
     property bool showHard: true
     property bool showBoundaries: true
+    property bool showOverlay: true
     readonly property color referenceColor: theme.dark ? "#fb7185" : "#b42345"
     signal boundsRequested(real firstI, real lastI, real firstQ, real lastQ)
     signal resetRequested()
@@ -25,7 +26,8 @@ ColumnLayout {
         target: chart.theme
         function onDarkChanged() { plot.requestPaint() }
     }
-    RowLayout {
+    Flow {
+        Layout.fillWidth: true
         spacing: 6
         MeasurementToggle {
             objectName: "constellationSoftToggle"
@@ -59,7 +61,16 @@ ColumnLayout {
             enabled: chart.constellation.reference_available === true
             onClicked: chart.showBoundaries = !chart.showBoundaries
         }
-        Item { Layout.fillWidth: true }
+        MeasurementToggle {
+            objectName: "constellationOverlayToggle"
+            text: "MER / EVM"
+            Accessible.name: "Show MER and EVM overlay"
+            theme: chart.theme
+            implicitWidth: 164
+            traceColor: chart.theme.accent
+            checked: chart.showOverlay
+            onClicked: chart.showOverlay = !chart.showOverlay
+        }
     }
     Item {
         Layout.fillWidth: true
@@ -205,12 +216,13 @@ ColumnLayout {
                 }
             }
             ConstellationMerOverlay {
+                visible: chart.showOverlay
                 theme: chart.theme
                 result: chart.constellation.mer || null
                 anchors.right: parent.right
-                anchors.top: parent.top
+                anchors.bottom: parent.bottom
                 anchors.rightMargin: plot.leftMargin + 6
-                anchors.topMargin: plot.topMargin + 6
+                anchors.bottomMargin: plot.topMargin + 6
                 z: 2
             }
         }

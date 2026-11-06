@@ -86,9 +86,11 @@ squared-distance ties choose lower Q, then lower I. The parser stores the result
 in `constellation_analysis.mer`; CLI and Qt JSON use this same calculation.
 
 The viewer passes this small result alongside every constellation viewport.
-`ConstellationMerOverlay.qml` only formats and renders it, inside the square
-Canvas's upper-right plotting area. It owns no input handlers or analysis and
-adds no layout margins. Zoom and toggles never affect the measurement sample set.
+`ConstellationMerOverlay.qml` formats MER (one decimal dB) and RMS EVM (two
+decimal percent), inside the square Canvas's lower-right plotting area. It owns
+no input handlers or analysis and adds no layout margins. The MER / EVM toggle
+only hides/shows the badge; the control row wraps on narrow windows. Zoom and
+toggles never affect the measurement sample set.
 Unknown modulation, missing/invalid samples and count mismatches yield explicit
 statuses and no numeric MER. Exact zero error is `perfect_reference`, with null
 MER and zero RMS EVM, so JSON never substitutes a finite ceiling for infinity.

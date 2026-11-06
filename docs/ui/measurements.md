@@ -193,20 +193,24 @@ Open or drop `const_display.bin`. Channel/MAC, QAM and sample chips identify
 one captured constellation. The square chart overlays **Soft decisions**
 (received I/Q samples) in teal and **Hard decisions** (ideal reference symbols)
 as contrasting crosses. Toggle either layer independently. **Decision boundaries**
-shows the nearest-reference regions for those symbols. All three controls have
+shows the nearest-reference regions for those symbols. All toggle buttons have
 the same size. Numeric X/Y scales and decorative axis grids are omitted.
 I increases to the right and Q increases upward.
 
-The upper-right **Estimated MER** badge shows full-capture, decision-directed
-constellation MER to one decimal place. It uses all received samples and their
-nearest ideal symbols, independently of toggles, displayed point limits and
-zoom. It stays in the plot corner when resized and does not intercept the mouse.
-`Estimated MER —` means no finite valid estimate is available, including an
-exact perfect reference (internally marked infinite), unknown modulation or
-inconsistent sample counts. This is not OFDM per-subcarrier RxMER. Incorrect
-symbol decisions under severe noise or distortion can make the estimate
-optimistic. The [JSON contract](../reference/formats.md#estimated-constellation-mer)
-preserves its status, power sums and sample count.
+The lower-right overlay shows **MER** in dB to one decimal place and **EVM**
+as RMS percent to two decimal places. The **MER / EVM** button hides or shows
+the overlay; it is shown by default. Both values come from the full capture,
+independently of layer toggles, displayed point limits and zoom. The badge stays
+in the plot corner when resized and does not intercept the mouse. Controls wrap
+when needed to keep all buttons accessible in narrow windows.
+
+`MER —` means no finite valid estimate is available. An exact perfect reference
+shows `MER —` and `EVM 0.00 %`; its infinite MER is distinct in JSON. Missing or
+invalid results show dashes. These remain decision-directed constellation
+estimates, not OFDM per-subcarrier RxMER. Incorrect symbol decisions under severe
+noise or distortion can make the results optimistic. The
+[JSON contract](../reference/formats.md#estimated-constellation-mer) preserves
+availability status, power sums and sample count.
 
 For square QAM, boundaries sit halfway between adjacent hard points, making
 square interior cells. The cross-QAM tables require diagonal boundaries at their

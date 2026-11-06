@@ -8,10 +8,14 @@ Rectangle {
     id: overlay
     required property Theme theme
     property var result: null
-    readonly property string label: "Estimated MER " + (
+    readonly property string label: "MER " + (
         result && result.calculation_status === "available"
         && typeof result.mer_db === "number" && isFinite(result.mer_db)
             ? result.mer_db.toFixed(1) + " dB" : "—")
+        + "\nEVM " + (result && (result.calculation_status === "available"
+            || result.calculation_status === "perfect_reference")
+            && typeof result.rms_evm_percent === "number" && isFinite(result.rms_evm_percent)
+                ? result.rms_evm_percent.toFixed(2) + " %" : "—")
     objectName: "constellationMerOverlay"
     width: caption.implicitWidth + 16
     height: caption.implicitHeight + 10

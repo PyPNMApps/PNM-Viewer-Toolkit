@@ -27,6 +27,7 @@ TestCase {
         chart.showSoft = true
         chart.showHard = true
         chart.showBoundaries = true
+        chart.showOverlay = true
         chart.requested = []
         chart.resets = 0
         chart.width = 800
@@ -35,31 +36,47 @@ TestCase {
             soft_decisions: [[0.5,0.5],[-0.5,-0.5]],hard_decisions: [[1,1],[-1,-1]],
             soft_visible: 2,hard_visible: 2,reference_available: true, decision_boundaries: [[[0,-2],[0,2]],[[-2,0],[2,0]]],
             soft_label: "Soft decisions: 2 of 2 visible",hard_label: "Hard decisions: 2 of 2 visible",
-            mer: {calculation_status: "available", mer_db: 40.24, sample_count: 8192}}
+            mer: {calculation_status: "available", mer_db: 40.24, rms_evm_percent: 0.9723, sample_count: 8192}}
         wait(20)
     }
     function test_mer_updates_with_capture_and_ignores_layer_toggles() {
         const badge = findChild(chart, "constellationMerOverlay")
-        compare(badge.label, "Estimated MER 40.2 dB")
+        compare(badge.label, "MER 40.2 dB\nEVM 0.97 %")
         for (const name of ["constellationSoftToggle", "constellationHardToggle", "constellationBoundaryToggle"]) {
             mouseClick(findChild(chart, name))
-            compare(badge.label, "Estimated MER 40.2 dB")
+            compare(badge.label, "MER 40.2 dB\nEVM 0.97 %")
             compare(chart.constellation.mer.sample_count, 8192)
         }
         chart.constellation = Object.assign({}, chart.constellation, {
-            mer: {calculation_status: "available", mer_db: 30.04, sample_count: 512}})
-        compare(badge.label, "Estimated MER 30.0 dB")
+            mer: {calculation_status: "available", mer_db: 30.04, rms_evm_percent: 3.1472, sample_count: 512}})
+        compare(badge.label, "MER 30.0 dB\nEVM 3.15 %")
         for (const status of ["perfect_reference", "no_samples", "invalid_samples", "sample_count_mismatch",
             "zero_signal_power", "non_finite_result", "unsupported_modulation"]) {
             chart.constellation = Object.assign({}, chart.constellation, {
                 mer: {calculation_status: status, mer_db: null}})
-            compare(badge.label, "Estimated MER —")
+            compare(badge.label, "MER —\nEVM —")
         }
         for (const invalid of [NaN, Infinity, -Infinity, null]) {
             chart.constellation = Object.assign({}, chart.constellation, {
                 mer: {calculation_status: "available", mer_db: invalid}})
-            compare(badge.label, "Estimated MER —")
+            compare(badge.label, "MER —\nEVM —")
         }
+    }
+    function test_overlay_toggle_hides_badge_without_changing_measurement() {
+        const badge = findChild(chart, "constellationMerOverlay")
+        const toggle = findChild(chart, "constellationOverlayToggle")
+        const original = JSON.stringify(chart.constellation.mer)
+        compare(toggle.width, findChild(chart, "constellationSoftToggle").width)
+        verify(badge.visible)
+        mouseClick(toggle)
+        compare(badge.visible, false)
+        compare(JSON.stringify(chart.constellation.mer), original)
+        mouseClick(toggle)
+        compare(badge.visible, true)
+        compare(badge.label, "MER 40.2 dB\nEVM 0.97 %")
+        chart.constellation = Object.assign({}, chart.constellation, {
+            mer: {calculation_status: "perfect_reference", mer_db: null, rms_evm_percent: 0}})
+        compare(badge.label, "MER —\nEVM 0.00 %")
     }
     function test_mer_badge_tracks_plot_corner_and_does_not_capture_mouse() {
         const plot = findChild(chart, "constellationPlot")
@@ -69,8 +86,11 @@ TestCase {
             chart.height = dimensions[1]
             waitForPolish(chart)
             verify(waitForRendering(plot))
+            const toggle = findChild(chart, "constellationOverlayToggle")
+            const togglePosition = toggle.mapToItem(chart, 0, 0)
+            verify(togglePosition.x >= 0 && togglePosition.x + toggle.width <= chart.width)
             fuzzyCompare(badge.x + badge.width, plot.width - plot.leftMargin - 6, 0.1)
-            fuzzyCompare(badge.y, plot.topMargin + 6, 0.1)
+            fuzzyCompare(badge.y + badge.height, plot.height - plot.topMargin - 6, 0.1)
             compare(plot.width, plot.height)
             const horizontal = badge.x + badge.width / 2
             const vertical = badge.y + badge.height / 2
@@ -82,7 +102,7 @@ TestCase {
             chart.requested = []
             mouseWheel(plot, horizontal, vertical, 0, 120)
             compare(chart.requested.length, 4)
-            compare(badge.label, "Estimated MER 40.2 dB")
+            compare(badge.label, "MER 40.2 dB\nEVM 0.97 %")
         }
     }
     function test_independent_layer_controls_and_unknown_reference() {

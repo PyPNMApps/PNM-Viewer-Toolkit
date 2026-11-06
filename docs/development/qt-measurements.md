@@ -230,6 +230,7 @@ JSON exports retain the full capture and reference geometry.
 
 Constellation viewports include the core `constellation_analysis.mer` result,
 computed over original samples before zoom or display sampling. The
-`ConstellationMerOverlay.qml` component renders its finite value or an em dash
-at the Canvas's upper-right plotting corner; it neither changes layout nor
-accepts mouse events. See [MER ownership and limits](qam-resources.md#decision-directed-mer-overlay).
+`ConstellationMerOverlay.qml` component renders MER and RMS EVM, or em dashes,
+at the Canvas's lower-right plotting corner. The MER / EVM button hides/shows
+the overlay without changing calculations. The badge neither changes plot
+margins nor accepts mouse events. See [MER ownership and limits](qam-resources.md#decision-directed-mer-overlay).
