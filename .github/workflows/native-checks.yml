@@ -26,6 +26,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          # Cross-tag cache provenance requires real commit ancestry.
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@v6
         with:
@@ -87,13 +89,13 @@ jobs:
             . -> target
             apps/qt -> target
           cache-bin: false
-      - name: Find reusable Ubuntu outputs from an ancestor release
-        if: inputs.package_release && matrix.os == 'ubuntu-22.04'
+      - name: Find reusable native outputs from an ancestor release
+        if: inputs.package_release && (matrix.os == 'ubuntu-22.04' || runner.os == 'macOS')
         id: native-cache-source
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/ci/native_cache.py select
-      - name: Download prior Ubuntu dependency outputs
+      - name: Download prior native dependency outputs
         if: steps.native-cache-source.outputs.run_id != ''
         uses: actions/download-artifact@v7
         with:
@@ -102,7 +104,7 @@ jobs:
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
           run-id: ${{ steps.native-cache-source.outputs.run_id }}
-      - name: Restore validated Ubuntu dependency outputs
+      - name: Restore validated native dependency outputs
         if: steps.native-cache-source.outputs.run_id != ''
         run: python3 scripts/ci/native_cache.py restore --directory local/previous-native-cache
       - name: Initialize compiler cache statistics
@@ -170,8 +172,8 @@ jobs:
           path: dist/release/*
           if-no-files-found: error
           retention-days: 30
-      - name: Export Ubuntu dependency cache
-        if: inputs.package_release && matrix.os == 'ubuntu-22.04'
+      - name: Export native dependency cache
+        if: inputs.package_release && (matrix.os == 'ubuntu-22.04' || runner.os == 'macOS')
         id: native-cache-export
         run: python3 scripts/ci/native_cache.py pack
       - name: Retain dependency outputs for following tags

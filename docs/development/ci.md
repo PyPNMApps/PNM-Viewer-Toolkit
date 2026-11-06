@@ -30,11 +30,22 @@ native test matrix without packages; tags always require it with packages.
 is now manual troubleshooting only; it has no tag trigger, avoiding duplicate
 release builds. Never run it against an already published tag to change assets.
 
-Ubuntu dependency artifacts may come from successful ancestor runs of either
-release workflow with matching compiler/image/Qt identity. Qt test setup changes
+Ubuntu and both macOS architectures carry dependency artifacts between successful
+ancestor release runs with matching compiler/image/Qt identity. Native checkout
+uses full history so ancestry can be verified; a shallow checkout fails explicitly
+instead of silently missing every older commit. Mac artifacts use a separate
+prefix, with architecture included in the fingerprint. Only Ubuntu 22.04 and
+the two Mac packaging hosts export/restore these archives; Windows retains its
+existing Rust/Qt caches. Qt test setup changes
 correctly change the current fingerprint, so the first revised release may be
 cold; subsequent matching tags can reuse its cache. Other platforms use their
 native Cargo/Qt caches. No test results or public packages are reused.
+
+The first tag with the Mac artifact steps seeds those caches. Earlier tags,
+including v0.2.5, cannot acquire the new steps while running. A later compatible
+tag must demonstrate restoration and shorter compilation before claiming a
+speedup. Cargo still validates dependencies; workspace binaries, test results
+and incremental state are excluded. All native and installer tests run again.
 
 ## Full CI mode
 

@@ -21,6 +21,7 @@ MAX_BYTES = 6_000_000_000
 MAX_ARCHIVE_BYTES = 1_500_000_000
 MAX_ENTRIES = 200_000
 ARTIFACT_NAME = 'ubuntu-22.04-native-build-cache'
+MACOS_ARTIFACT_NAME = 'macos-native-build-cache'
 
 
 def run(*arguments):
@@ -199,11 +200,14 @@ def restore(directory):
 
 def select_run(repository, output):
     """Select only successful exact-workflow push artifacts from ancestor commits."""
+    if run('git', '-C', ROOT, 'rev-parse', '--is-shallow-repository').strip() != 'false':
+        raise ValueError('Native cache selection requires checkout fetch-depth: 0')
     runs = []
     for workflow in ('release.yml', 'ubuntu-deb-temp.yml'):
         endpoint = f'repos/{repository}/actions/workflows/{workflow}/runs?event=push&status=success&per_page=30'
         runs.extend(json.loads(run('gh', 'api', endpoint))['workflow_runs'])
-    artifact_name = ARTIFACT_NAME + '-' + identity()[:20]
+    prefix = MACOS_ARTIFACT_NAME if platform.system() == 'Darwin' else ARTIFACT_NAME
+    artifact_name = prefix + '-' + identity()[:20]
     selected = None
     for candidate in runs:
         tag = candidate.get('head_branch', '')

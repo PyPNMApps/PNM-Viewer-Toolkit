@@ -71,6 +71,12 @@ and macOS in-app installers/MSP patches are deferred; manual installer releases
 come first. External signing/notarization remain separate.
 A workflow file or local build is not proof of hosted platform success.
 
+Native dependency artifacts span successful ancestor tags for Ubuntu 22.04 and
+both Mac architectures. Preserve full checkout history, compiler/image/Qt and
+architecture fingerprints, bounded extraction and exclusion of workspace/test
+outputs. The first revised Mac tag seeds its cache; measure restoration on a
+later compatible tag. Never skip tests or change public assets to warm a cache.
+
 ## Native icons, shortcuts and examples
 
 Use packaging/ assets derived from the existing desktop PNG; regenerate into a

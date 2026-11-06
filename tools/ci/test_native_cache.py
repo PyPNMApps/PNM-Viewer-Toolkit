@@ -127,15 +127,71 @@ class NativeCacheTests(unittest.TestCase):
                 {'id': 4, 'head_branch': 'v0.3.0', 'head_sha': 'd' * 40},
             ]
             def run(*arguments):
+                if arguments[0] == 'git':
+                    return 'false\n'
                 if 'workflows/' in arguments[-1]:
                     self.assertIn('event=push&status=success', arguments[-1])
                     return json.dumps({'workflow_runs': candidates})
                 expired = '/3/' in arguments[-1]
                 return json.dumps({'artifacts': [{'name': CACHE.ARTIFACT_NAME + '-fixture', 'expired': expired, 'size_in_bytes': 100}]})
-            with patch.object(CACHE, 'identity', return_value='fixture'), patch.object(CACHE, 'run', side_effect=run), patch.object(CACHE.subprocess, 'run') as git:
+            with patch.object(CACHE.platform, 'system', return_value='Linux'), patch.object(CACHE, 'identity', return_value='fixture'), patch.object(CACHE, 'run', side_effect=run), patch.object(CACHE.subprocess, 'run') as git:
                 git.side_effect = [type('Result', (), {'returncode': value})() for value in (1, 0, 0)]
                 CACHE.select_run('owner/repo', output)
             self.assertEqual(output.read_text(), 'run_id=4\nartifact_name=' + CACHE.ARTIFACT_NAME + '-fixture\n')
+
+    def test_shallow_checkout_rejected_before_github_lookup(self):
+        """Do not silently miss every ancestor when checkout has one commit."""
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(CACHE, 'run', return_value='true\n') as command:
+            output = Path(directory) / 'output'
+            with self.assertRaisesRegex(ValueError, 'fetch-depth: 0'):
+                CACHE.select_run('owner/repo', output)
+            self.assertEqual(command.call_count, 1)
+            self.assertFalse(output.exists())
+
+    def test_macos_artifact_is_separate_from_ubuntu_and_other_architecture(self):
+        """Never select Linux or another Mac architecture's dependency archive."""
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'output'
+            candidate = {'id': 7, 'head_branch': 'v0.2.4', 'head_sha': 'a' * 40}
+            def run(*arguments):
+                if arguments[0] == 'git':
+                    return 'false\n'
+                if 'workflows/' in arguments[-1]:
+                    return json.dumps({'workflow_runs': [candidate]})
+                return json.dumps({'artifacts': [
+                    {'name': prefix + '-' + fingerprint, 'expired': False, 'size_in_bytes': 100}
+                    for prefix, fingerprint in ((CACHE.ARTIFACT_NAME, 'fixture'),
+                                                (CACHE.MACOS_ARTIFACT_NAME, 'other-architecture'))]})
+            with patch.object(CACHE.platform, 'system', return_value='Darwin'), \
+                    patch.object(CACHE, 'identity', return_value='fixture'), \
+                    patch.object(CACHE, 'run', side_effect=run), \
+                    patch.object(CACHE.subprocess, 'run') as git:
+                git.return_value.returncode = 0
+                CACHE.select_run('owner/repo', output)
+            self.assertEqual(output.read_text(), 'run_id=\nartifact_name=macos-native-build-cache-fixture\n')
+
+    def test_macos_selects_matching_successful_ancestor_artifact(self):
+        """Mac caches use the same commit provenance gate as Ubuntu caches."""
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'output'
+            def run(*arguments):
+                if arguments[0] == 'git':
+                    return 'false\n'
+                if 'workflows/' in arguments[-1]:
+                    return json.dumps({'workflow_runs': [
+                        {'id': 7, 'head_branch': 'v0.2.4', 'head_sha': 'a' * 40}]})
+                return json.dumps({'artifacts': [
+                    {'name': 'macos-native-build-cache-fixture', 'expired': False, 'size_in_bytes': 100}]})
+            with patch.object(CACHE.platform, 'system', return_value='Darwin'), \
+                    patch.object(CACHE, 'identity', return_value='fixture'), \
+                    patch.object(CACHE, 'run', side_effect=run), \
+                    patch.object(CACHE.subprocess, 'run') as git:
+                git.return_value.returncode = 0
+                CACHE.select_run('owner/repo', output)
+                git.assert_called_once_with(['git', 'merge-base', '--is-ancestor', 'a' * 40, 'HEAD'],
+                                            cwd=CACHE.ROOT, capture_output=True)
+            self.assertEqual(output.read_text(), 'run_id=7\nartifact_name=macos-native-build-cache-fixture\n')
 
 
 if __name__ == '__main__':
