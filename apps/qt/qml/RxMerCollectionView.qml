@@ -22,7 +22,7 @@ ColumnLayout {
     signal rangeRequested(int start, int count)
     signal bitLoadingRequested(int start, int count)
     signal exportRequested()
-    readonly property bool popupVisible: deviceDialog.visible || detailsDialog.visible
+    readonly property bool popupVisible: deviceDialog.visible || detailsDialog.visible || channelDialog.visible
     onCatalogChanged: {
         devices = Array.from(new Set((catalog.groups || []).map(group => group.mac_address)))
         selectedMac = ""
@@ -39,25 +39,22 @@ ColumnLayout {
         ThemeButton { objectName: "chooseRxmerDirectory"; theme: workspace.theme; text: "Choose folder…"; enabled: !workspace.working; onClicked: workspace.chooseDirectory() }
         ThemeButton { objectName: "chooseRxmerArchive"; theme: workspace.theme; text: "Open archive…"; enabled: !workspace.working; onClicked: workspace.chooseArchive() }
         ThemeButton { objectName: "chooseRxmerDevice"; theme: workspace.theme; text: "Choose MAC…"; enabled: !workspace.working && workspace.devices.length>0; onClicked: deviceDialog.open() }
+        ThemeButton { theme: workspace.theme; text: "Change channel…"; enabled: !workspace.working && workspace.groups.length>1; onClicked: channelDialog.open() }
         ThemeButton { theme: workspace.theme; text: "Import details…"; visible: !!workspace.catalog.groups; onClicked: detailsDialog.open() }
         ThemeButton { theme: workspace.theme; text: "Export JSON"; enabled: workspace.hasResult && !workspace.working; onClicked: workspace.exportRequested() }
         ThemeButton { theme: workspace.theme; text: "Cancel"; visible: workspace.working; onClicked: workspace.cancelImport() }
         BusyIndicator { running: workspace.working; visible: running; implicitWidth: 28; implicitHeight: 28 }
     }
-    RowLayout {
+    Flow {
         Layout.fillWidth: true
-        visible: workspace.selectedMac.length>0
-        Label { text: workspace.selectedMac; color: workspace.theme.accent; font.bold: true }
-        ComboBox {
-            id: channelChoice
-            objectName: "rxmerCollectionChannel"
-            Accessible.name: "RxMER channel and frequency grid"
-            Layout.fillWidth: true
-            enabled: !workspace.working
-            model: workspace.groups
-            textRole: "label"
-            onActivated: if (currentIndex>=0) workspace.groupRequested(workspace.groups[currentIndex].id)
-        }
+        spacing: 8
+        visible: workspace.hasResult
+        MetadataChip { theme: workspace.theme; title: "MAC"; value: workspace.hasResult ? workspace.viewport.group.mac_address || "—" : "—" }
+        MetadataChip { theme: workspace.theme; title: "Channel"; value: workspace.hasResult ? workspace.viewport.group.channel_id : "—" }
+        MetadataChip { theme: workspace.theme; title: "Zero frequency"; value: workspace.hasResult ? (workspace.viewport.group.zero_frequency_hz || 0) + " Hz" : "—" }
+        MetadataChip { theme: workspace.theme; title: "First carrier"; value: workspace.hasResult ? workspace.viewport.group.first_active_subcarrier_index || 0 : "—" }
+        MetadataChip { theme: workspace.theme; title: "Spacing"; value: workspace.hasResult ? (workspace.viewport.group.spacing_hz || 0) + " Hz" : "—" }
+        MetadataChip { theme: workspace.theme; title: "Carriers"; value: workspace.hasResult ? workspace.viewport.group.sample_count || 0 : "—" }
     }
     Flow {
         Layout.fillWidth: true
@@ -110,6 +107,32 @@ ColumnLayout {
             workspace.selectedMac=workspace.devices[deviceChoice.currentIndex]
             channelChoice.currentIndex=0
             if (workspace.groups.length>0) workspace.groupRequested(workspace.groups[0].id)
+        }
+    }
+    Dialog {
+        id: channelDialog
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+        width: Math.min(760,parent.width-32)
+        modal: true
+        title: "Select channel and frequency grid"
+        background: Rectangle { color: workspace.theme.panel; border.color: workspace.theme.line; radius: 10 }
+        header: Label { text: channelDialog.title; padding: 16; color: workspace.theme.text; font.bold: true }
+        contentItem: ComboBox {
+            id: channelChoice
+            objectName: "rxmerCollectionChannel"
+            Accessible.name: "RxMER channel and frequency grid"
+            enabled: !workspace.working
+            model: workspace.groups
+            textRole: "label"
+            onActivated: if (currentIndex>=0) {
+                workspace.groupRequested(workspace.groups[currentIndex].id)
+                channelDialog.close()
+            }
+        }
+        footer: DialogButtonBox {
+            ThemeButton { theme: workspace.theme; text: "Close"; DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
+            onRejected: channelDialog.close()
         }
     }
     Dialog {

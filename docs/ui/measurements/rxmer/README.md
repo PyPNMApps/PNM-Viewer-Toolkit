@@ -124,7 +124,9 @@ ZIP, TAR or TAR.GZ/TGZ. Compressed GZIP/Zstandard captures inside the import are
 read automatically. Nothing is unpacked onto your filesystem.
 
 1. Select a MAC address in the popup, displayed as `xx:xx:xx:xx:xx:xx`.
-2. Choose a channel/grid from the selector. Each channel and distinct frequency
+2. The first compatible channel opens automatically. Use **Change channel…**
+   to choose another channel/grid. Compact chips show MAC, channel and grid
+   metadata. Each channel and distinct frequency
    grid stays separate, even when it belongs to the same MAC.
 3. View the **Min** (blue), **Avg** (teal) and **Max** (amber) lines. Their buttons
    show or hide individual curves. Drag to zoom; double-click to reset.
