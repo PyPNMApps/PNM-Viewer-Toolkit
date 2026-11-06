@@ -148,6 +148,11 @@ product-family UpgradeCode. Each MSI has a fresh ProductCode, three-point versio
 bounded by 255.255.65535, an embedded cabinet, advertised Start menu shortcut and
 transactional major upgrade after InstallInitialize. WiX installer validation is
 enabled; no custom executable actions, PATH edits or security overrides are used.
+The advertised Start-menu shortcut uses its key executable's embedded icon.
+Desktop/Installed-apps entries use a separately named `.ico` resource. Do not
+override the advertised shortcut with an ICO: [ICE50](https://learn.microsoft.com/en-us/windows/win32/msi/ice50)
+requires its icon and key-file extensions to match. Native WiX validation must
+remain enabled rather than suppressing this error.
 The WiX 3.14.1 build pin follows OSCAR-UI's tested authoring toolchain; it produces
 an MSI only, not a Burn bootstrapper or MSP. Native CI authors a synthetic 0.0.0
 installer from current payload bytes, upgrades to the candidate, rejects downgrade,

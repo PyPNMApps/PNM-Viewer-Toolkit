@@ -79,6 +79,9 @@ executable and MSI shell integration; macOS needs CFBundleIconFile and its ICNS.
 WiX artwork uses the project navy/teal palette. Offer an unchecked desktop
 shortcut option before installation, with explicit silent opt-in/out and no
 application-launch custom action. Keep Start-menu integration independent.
+Advertised Start-menu shortcuts use the embedded key-executable icon. Give
+separate desktop/ARP ICO entries a .ico identifier; an ICO override on an
+advertised .exe key file violates ICE50. Keep native installer validation on.
 macOS uses conventional Applications/Dock icons and an optional Finder alias.
 
 The user approved nine sanitized demonstration captures in desktop installers

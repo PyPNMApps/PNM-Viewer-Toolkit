@@ -53,9 +53,9 @@ class WindowsMsiTests(unittest.TestCase):
         """Use real branding and a conditioned shortcut without launching the app."""
         source = windows_msi.author(self.payload, '0.2.2', self.root / 'branded.wxs')
         product = ET.parse(source).find('w:Product', self.names)
-        icon = product.find('w:Icon[@Id="ApplicationIcon"]', self.names)
+        icon = product.find(f'w:Icon[@Id="{windows_msi.APPLICATION_ICON_ID}"]', self.names)
         self.assertTrue(Path(icon.get('SourceFile')).is_file())
-        self.assertEqual(product.find('w:Property[@Id="ARPPRODUCTICON"]', self.names).get('Value'), 'ApplicationIcon')
+        self.assertEqual(product.find('w:Property[@Id="ARPPRODUCTICON"]', self.names).get('Value'), windows_msi.APPLICATION_ICON_ID)
         for identifier in ('WixUIDialogBmp', 'WixUIBannerBmp'):
             artwork = product.find(f'w:WixVariable[@Id="{identifier}"]', self.names)
             self.assertTrue(Path(artwork.get('Value')).is_file())
@@ -67,8 +67,22 @@ class WindowsMsiTests(unittest.TestCase):
         component = product.find('.//w:Component[@Id="DesktopShortcutComponent"]', self.names)
         self.assertEqual(component.find('w:Condition', self.names).text, 'CREATE_DESKTOP_SHORTCUT = "1"')
         self.assertEqual(component.find('w:RegistryValue', self.names).get('KeyPath'), 'yes')
-        self.assertEqual(component.find('w:Shortcut', self.names).get('Icon'), 'ApplicationIcon')
+        self.assertEqual(component.find('w:Shortcut', self.names).get('Icon'), windows_msi.APPLICATION_ICON_ID)
         self.assertIsNone(product.find('.//w:CustomAction', self.names))
+
+    def test_advertised_shortcut_uses_embedded_executable_icon(self):
+        """Avoid ICE50 while leaving the PE icon as the advertised shortcut source."""
+        source = windows_msi.author(self.payload, '0.2.3', self.root / 'icons.wxs')
+        product = ET.parse(source).find('w:Product', self.names)
+        icons = {icon.get('Id'): icon for icon in product.findall('w:Icon', self.names)}
+        for shortcut in product.findall('.//w:Shortcut', self.names):
+            if shortcut.get('Advertise') == 'yes':
+                self.assertIsNone(shortcut.get('Icon'))
+                self.assertIsNone(shortcut.get('IconIndex'))
+            else:
+                icon = icons[shortcut.get('Icon')]
+                self.assertEqual(Path(icon.get('Id')).suffix, '.ico')
+                self.assertEqual(Path(icon.get('SourceFile')).suffix, '.ico')
 
     def test_version_bounds_case_collisions_and_existing_source_rejected(self):
         """MSI must reject invalid identity before compiling or modifying installers."""

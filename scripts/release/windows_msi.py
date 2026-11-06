@@ -18,6 +18,7 @@ NAMESPACE = 'http://schemas.microsoft.com/wix/2006/wi'
 # Stable identity for this product family; never reuse OSCAR-UI's upgrade code.
 UPGRADE_CODE = '54ACD1D9-4027-47BA-9A41-B9A04109C7CE'
 COMPONENT_NAMESPACE = uuid.UUID('35d58893-a0ea-4aa7-8a56-6bd194294568')
+APPLICATION_ICON_ID = 'ApplicationIcon.ico'
 ET.register_namespace('', NAMESPACE)
 
 
@@ -101,8 +102,8 @@ def author(payload, version, destination):
     _element('WixVariable', product, Id='WixUILicenseRtf', Value=str(destination.with_suffix('.rtf')))
     for identifier, filename in (('WixUIDialogBmp', 'dialog.bmp'), ('WixUIBannerBmp', 'banner.bmp')):
         _element('WixVariable', product, Id=identifier, Value=str(ROOT / 'packaging/windows' / filename))
-    _element('Icon', product, Id='ApplicationIcon', SourceFile=str(ROOT / 'packaging/windows/pnm-viewer.ico'))
-    _element('Property', product, Id='ARPPRODUCTICON', Value='ApplicationIcon')
+    _element('Icon', product, Id=APPLICATION_ICON_ID, SourceFile=str(ROOT / 'packaging/windows/pnm-viewer.ico'))
+    _element('Property', product, Id='ARPPRODUCTICON', Value=APPLICATION_ICON_ID)
     _desktop_options(product)
     condition = _element('Condition', product, Message='64-bit Windows is required.')
     condition.text = 'Installed OR VersionNT64'
@@ -119,7 +120,7 @@ def author(payload, version, destination):
     _element('Condition', shortcut_component).text = 'CREATE_DESKTOP_SHORTCUT = "1"'
     _element('Shortcut', shortcut_component, Id='DesktopViewer', Directory='DesktopFolder',
              Name='PNM Viewer Toolkit', Target='[INSTALLFOLDER]pnm-viewer.exe',
-             WorkingDirectory='INSTALLFOLDER', Icon='ApplicationIcon', IconIndex='0')
+             WorkingDirectory='INSTALLFOLDER', Icon=APPLICATION_ICON_ID, IconIndex='0')
     _element('RegistryValue', shortcut_component, Root='HKCU', Key='Software\\PyPNMApps\\PNMViewerToolkit',
              Name='DesktopShortcut', Type='integer', Value='1', KeyPath='yes')
     _element('ComponentRef', feature, Id='DesktopShortcutComponent')
@@ -142,9 +143,10 @@ def author(payload, version, destination):
                             Guid=str(uuid.uuid5(COMPONENT_NAMESPACE, spelling.casefold())), Win64='yes')
         installed = _element('File', component, Id=_identifier('F', spelling), Source=str(path), KeyPath='yes')
         if spelling == 'pnm-viewer.exe':
+            # Use the key executable's embedded icon. An explicit ICO override
+            # on this advertised shortcut violates MSI ICE50 extension matching.
             _element('Shortcut', installed, Id='StartMenuViewer', Directory='ApplicationMenu',
-                    Name='PNM Viewer Toolkit', Advertise='yes', WorkingDirectory='INSTALLFOLDER',
-                    Icon='ApplicationIcon', IconIndex='0')
+                    Name='PNM Viewer Toolkit', Advertise='yes', WorkingDirectory='INSTALLFOLDER')
             _element('RemoveFolder', component, Id='RemoveApplicationMenu', Directory='ApplicationMenu', On='uninstall')
         _element('ComponentRef', feature, Id=component_id)
     legal = 'Desktop: GPL-3.0-only. Core libraries: Apache-2.0. See bundled notices.\n\n'
