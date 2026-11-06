@@ -94,6 +94,7 @@ pub(crate) fn viewport(
         .max(1);
     let total_hits = bars.iter().map(|bar| bar.hit_count).sum();
     Ok(ChartViewport {
+        spectrum_average: None,
         constellation: None,
         modulation_profiles: None,
         fec_summary: None,

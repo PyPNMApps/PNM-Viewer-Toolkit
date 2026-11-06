@@ -34,6 +34,7 @@ QtObject {
     readonly property color muted: dark ? "#93a8be" : "#566c7e"
     readonly property color line: dark ? "#24354b" : "#d8e2ea"
     readonly property color accent: dark ? "#51d6bf" : "#007e75"
+    readonly property color spectrumAverage: dark ? "#ff6b6b" : "#c62828"
     readonly property color accentSoft: dark ? "#163a3d" : "#e0f4ef"
     readonly property color button: dark ? "#19293e" : "#f6f9fb"
 }

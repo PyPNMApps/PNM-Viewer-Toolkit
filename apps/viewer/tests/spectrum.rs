@@ -130,3 +130,50 @@ fn zero_noise_bandwidth_is_not_reported_as_a_valid_rbw() {
     );
     assert_eq!(capture.json().err().unwrap().code, "InvalidBandwidth");
 }
+
+#[test]
+fn window_average_uses_original_bins_preserves_zoom_and_bounded_export() {
+    use viewer::capture::chart::MeasurementView;
+    let capture = Capture::from_bytes(truncated_spectrum(257), "average.bin".into()).unwrap();
+    let before = capture.json().unwrap();
+    let raw = capture.chart_range(0, 257).unwrap();
+    let view = MeasurementView::SpectrumAverage { window_points: 3 };
+    let full = capture.chart_range_for(view.clone(), 0, 257).unwrap();
+    let averaged = full.spectrum_average.unwrap();
+    assert_eq!(averaged.window_points, 3);
+    let expected = 10.0
+        * ((99..=101)
+            .map(|index| 10.0_f64.powf(raw.points[index].value.unwrap() / 10.0))
+            .sum::<f64>()
+            / 3.0)
+            .log10();
+    assert!((averaged.points[100].value.unwrap() - expected).abs() < 1e-10);
+    let zoom = capture.chart_range_for(view, 100, 1).unwrap();
+    assert!((zoom.spectrum_average.unwrap().points[0].value.unwrap() - expected).abs() < 1e-10);
+    assert_eq!(zoom.start, 100);
+    assert_eq!(zoom.count, 1);
+    assert_eq!(zoom.points[0].frequency_hz, raw.points[100].frequency_hz);
+    assert_eq!(capture.json().unwrap(), before);
+    assert!(capture
+        .chart_range_for(
+            MeasurementView::SpectrumAverage { window_points: 0 },
+            0,
+            257
+        )
+        .is_err());
+    assert!(
+        Capture::from_bytes(pnm_fixtures::RXMER.to_vec(), "rxmer.bin".into())
+            .unwrap()
+            .chart_range_for(MeasurementView::SpectrumAverage { window_points: 3 }, 0, 1)
+            .is_err()
+    );
+    let capture = Capture::from_bytes(pnm_fixtures::SPECTRUM.to_vec(), "full.bin".into()).unwrap();
+    let full = capture
+        .chart_range_for(
+            MeasurementView::SpectrumAverage { window_points: 101 },
+            0,
+            20736,
+        )
+        .unwrap();
+    assert!(full.points.len() + full.spectrum_average.unwrap().points.len() <= MAX_VIEW_SAMPLES);
+}

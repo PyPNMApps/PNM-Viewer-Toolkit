@@ -30,7 +30,7 @@ Store PNG files under `docs/images/user-guide/` using the pairs below:
 | --- | --- |
 | `home` | Close capture; show navigation |
 | `rxmer` | `rxmer.bin` |
-| `spectrum` | `spectrum_analyzer.bin` |
+| `spectrum` | `spectrum_analyzer.bin`, apply WindowAvg with N=101 and show red average |
 | `channel-magnitude` | `channel_estimation.bin`, Magnitude |
 | `channel-delay` | Same capture, Group delay |
 | `channel-iq` | Same capture, I/Q scatter |
@@ -39,7 +39,7 @@ Store PNG files under `docs/images/user-guide/` using the pairs below:
 | `modulation-profile` | `modulation_profile.bin`, All profiles, dB |
 | `modulation-bits` | Same capture, All profiles, Bit loading |
 | `profile-bandwidth` | Same capture, Profile BW grid open |
-| `constellation` | `const_display.bin`, all three layers enabled |
+| `constellation` | `const_display.bin`, all three layers and lower-right MER/EVM overlay enabled |
 
 Fixtures live in `tests/fixtures/pypnm/tests/files/`. Reload each capture before
 capturing if previous selections or zoom could persist. Do not include native
@@ -49,7 +49,9 @@ file dialogs in the gallery.
 
 - Open both images of every pair and check labels, clipping, theme and graph data.
 - Confirm Home shows the navigation button and expanded pane.
-- Confirm constellation has no numeric axes or sample-count footer.
+- Confirm constellation has no numeric axes or sample-count footer; show MER/EVM
+  at lower right and its visibility toggle.
+- Confirm Spectrum shows N=101, WindowAvg and enabled Show average with a red trace.
 - Confirm modulation images show all four profiles and the correct metric.
 - Keep README's Home picture and the gallery's `<picture>` paths consistent.
 - Update the user guide when visible controls or supported measurements change.

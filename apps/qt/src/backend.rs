@@ -51,6 +51,11 @@ mod bridge {
         #[qinvokable]
         fn show_range(self: Pin<&mut ViewerBackend>, start: u32, count: u32);
 
+        /// Applies a positive spectrum averaging window to the current zoom.
+        /// Invalid requests leave the previous trace and selection intact.
+        #[qinvokable]
+        fn apply_spectrum_average(self: Pin<&mut ViewerBackend>, window_points: u32);
+
         /// Queries a square I/Q window; invalid requests preserve the prior view.
         #[qinvokable]
         fn zoom_constellation(
@@ -149,6 +154,45 @@ impl Default for ViewerBackendRust {
     }
 }
 impl bridge::ViewerBackend {
+    /// Adds a full-resolution-derived average while preserving the current zoom.
+    /// # Arguments
+    /// * `window_points` - Positive count of source bins, not display points.
+    /// # Returns
+    /// Updates the bounded spectrum viewport on success. Busy/no-capture calls
+    /// do nothing; invalid requests report a diagnostic and retain prior state.
+    pub fn apply_spectrum_average(mut self: Pin<&mut Self>, window_points: u32) {
+        if *self.busy() {
+            return;
+        }
+        let Some(capture) = self.rust().capture.clone() else {
+            return;
+        };
+        let result = serde_json::from_str::<serde_json::Value>(&self.viewport_json().to_string())
+            .map_err(|error| Diagnostic::new("Json", error))
+            .and_then(|range| {
+                let start = serde_json::from_value::<usize>(range["start"].clone())
+                    .map_err(|error| Diagnostic::new("Json", error))?;
+                let count = serde_json::from_value::<usize>(range["count"].clone())
+                    .map_err(|error| Diagnostic::new("Json", error))?;
+                capture.chart_range_for(
+                    MeasurementView::SpectrumAverage { window_points },
+                    start,
+                    count,
+                )
+            })
+            .and_then(|viewport| {
+                serde_json::to_string(&viewport).map_err(|error| Diagnostic::new("Json", error))
+            });
+        match result {
+            Ok(json) => {
+                self.as_mut().rust_mut().view = MeasurementView::SpectrumAverage { window_points };
+                self.as_mut().set_error_message(QString::default());
+                self.set_viewport_json(QString::from(&json));
+            }
+            Err(error) => self.fail(error),
+        }
+    }
+
     /// Finds packaged examples for the initial native Open dialog location.
     ///
     /// # Returns

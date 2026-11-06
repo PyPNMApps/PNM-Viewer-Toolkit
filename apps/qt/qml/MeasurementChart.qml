@@ -11,6 +11,8 @@ ColumnLayout {
     required property Theme theme
     property var viewport: ({start: 0, total: 0, points: []})
     property bool stepPlot: false
+    property bool showSpectrumAverage: true
+    onShowSpectrumAverageChanged: plot.requestPaint()
     property string unit: "dB"
     property string axisLabel: "RxMER"
     property real minimum: 0
@@ -153,10 +155,13 @@ ColumnLayout {
             context.fillText("Frequency · MHz", width / 2, height - 3)
             const overlays = chart.viewport.modulation_profiles
             const traces = overlays ? overlays.series : [{points: chart.viewport.points}]
+            if (!overlays && chart.showSpectrumAverage && chart.viewport.spectrum_average) {
+                traces.push({points: chart.viewport.spectrum_average.points, color: chart.theme.spectrumAverage})
+            }
             for (let traceIndex = 0; traceIndex < traces.length; traceIndex++) {
                 const trace = traces[traceIndex]
                 const points = trace.points
-                const color = overlays ? chart.theme.profileColor(trace.profile_id) : chart.theme.accent
+                const color = overlays ? chart.theme.profileColor(trace.profile_id) : (trace.color || chart.theme.accent)
                 context.strokeStyle = color
                 context.lineWidth = 1.5
                 context.beginPath()
@@ -186,7 +191,7 @@ ColumnLayout {
                     const point = points[index]
                     const isolated = (index === 0 || points[index - 1].value === null)
                         && (index === points.length - 1 || points[index + 1].value === null)
-                    if (point.value !== null && (isolated || (!overlays && index === chart.selectedIndex))) {
+                    if (point.value !== null && (isolated || (!overlays && traceIndex === 0 && index === chart.selectedIndex))) {
                         const horizontal = lastHz === firstHz ? leftMargin + plotWidth / 2
                             : leftMargin + (point.frequency_hz - firstHz) / (lastHz - firstHz) * plotWidth
                         const vertical = topMargin + (chart.maximum - point.value) / (chart.maximum - chart.minimum) * plotHeight

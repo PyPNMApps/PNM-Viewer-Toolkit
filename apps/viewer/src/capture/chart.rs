@@ -7,6 +7,7 @@ use crate::{
     capture::{Capture, Diagnostic, MAX_VIEW_SAMPLES},
     measurements::spectrum_analysis::SpectrumAnalysis,
 };
+use pnm::common::signal_processing::moving_average::WindowPointCount;
 use pnm::pnm::{
     data_type::{units::HZ_PER_KHZ, CaptureTime, FrequencyHz},
     parser::pnm_file::DecodedPnm,
@@ -21,6 +22,9 @@ pub enum MeasurementView {
     GroupDelay,
     IqScatter,
     FecProfile(usize),
+    SpectrumAverage {
+        window_points: WindowPointCount,
+    },
     ModulationProfile {
         indices: Option<Vec<usize>>,
         carrier_types: Option<Vec<crate::measurements::modulation_profile::CarrierType>>,
@@ -78,6 +82,8 @@ pub struct ChartPoint {
 /// Selected source range and bounded display points for that range.
 #[derive(Serialize)]
 pub struct ChartViewport {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub spectrum_average: Option<crate::measurements::spectrum_analysis::WindowAverageView>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub constellation: Option<crate::measurements::constellation::ConstellationViewport>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -396,6 +402,7 @@ impl Capture {
                 ));
             }
             return Ok(ChartViewport {
+                spectrum_average: None,
                 constellation: None,
                 modulation_profiles: None,
                 fec_summary: None,
@@ -409,6 +416,10 @@ impl Capture {
                 ),
             });
         }
+        let average_window = match view {
+            MeasurementView::SpectrumAverage { window_points } => Some(window_points),
+            _ => None,
+        };
         let samples = self.chart_points(view)?;
         let total = samples.len();
         let end = start
@@ -417,8 +428,17 @@ impl Capture {
             .ok_or_else(|| {
                 Diagnostic::new("InvalidRange", "Zoom range is outside this capture.")
             })?;
+        if let Some(window_points) = average_window {
+            return crate::measurements::spectrum_analysis::window_average_view(
+                &samples,
+                window_points,
+                start,
+                end,
+            );
+        }
         let points = overview(&samples[start..end]);
         Ok(ChartViewport {
+            spectrum_average: None,
             constellation: None,
             modulation_profiles: None,
             fec_summary: None,
@@ -475,6 +495,10 @@ pub(crate) fn overview_with_limit(samples: &[ChartPoint], limit: usize) -> Vec<C
 
 fn validate_view(decoded: &DecodedPnm<'_>, view: &MeasurementView) -> Result<(), Diagnostic> {
     let supported = match decoded {
+        DecodedPnm::SpectrumAnalysis(_) => matches!(
+            view,
+            MeasurementView::Default | MeasurementView::SpectrumAverage { .. }
+        ),
         DecodedPnm::FecSummary(_) => matches!(
             view,
             MeasurementView::Default | MeasurementView::FecProfile(_)

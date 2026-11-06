@@ -67,6 +67,7 @@ fn main() {
                 "qml/Theme.qml",
                 "qml/ThemeButton.qml",
                 "qml/MeasurementChart.qml",
+                "qml/SpectrumControls.qml",
                 "qml/IqScatterChart.qml",
                 "qml/ConstellationChart.qml",
                 "qml/ConstellationMerOverlay.qml",

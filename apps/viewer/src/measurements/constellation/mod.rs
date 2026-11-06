@@ -236,6 +236,7 @@ pub(crate) fn viewport(
         })
         .unwrap_or_default();
     Ok(ChartViewport {
+        spectrum_average: None,
         constellation: Some(ConstellationViewport {
             mer: capture.constellation_analysis.mer,
             bounds,

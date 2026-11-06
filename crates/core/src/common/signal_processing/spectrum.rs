@@ -35,3 +35,38 @@ pub fn resolution_bandwidth_hz(
         None
     }
 }
+
+/// Averages spectrum bins in linear power and returns the same-length dBmV trace.
+/// # Arguments
+/// * `levels_dbmv` - Original bin levels; absent/non-finite values are gaps.
+/// * `window_points` - Positive centered reflected window length in source bins.
+/// # Returns
+/// `10 log10(mean(10^(level/10)))` per bin, or missing values where a window
+/// contains invalid/overflowing/underflowing input. No zero-power substitution.
+/// None indicates an invalid window size or unsupported indexing. This is
+/// averaging across frequency, not channel-power integration or an RBW change.
+pub fn window_average_dbmv(
+    levels_dbmv: &[Option<f64>],
+    window_points: super::moving_average::WindowPointCount,
+) -> Option<Vec<Option<f64>>> {
+    let powers: Vec<_> = levels_dbmv
+        .iter()
+        .map(|level| {
+            level.filter(|level| level.is_finite()).and_then(|level| {
+                let power = 10.0_f64.powf(level / 10.0);
+                (power.is_finite() && power > 0.0).then_some(power)
+            })
+        })
+        .collect();
+    Some(
+        super::moving_average::reflected_window_average(&powers, window_points)?
+            .into_iter()
+            .map(|power| {
+                power.and_then(|power| {
+                    let level = 10.0 * power.log10();
+                    (power > 0.0 && level.is_finite()).then_some(level)
+                })
+            })
+            .collect(),
+    )
+}

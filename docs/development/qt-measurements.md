@@ -234,3 +234,28 @@ computed over original samples before zoom or display sampling. The
 at the Canvas's lower-right plotting corner. The MER / EVM button hides/shows
 the overlay without changing calculations. The badge neither changes plot
 margins nor accepts mouse events. See [MER ownership and limits](qam-resources.md#decision-directed-mer-overlay).
+
+## Spectrum window average
+
+`SpectrumControls.qml` collects a positive integer N and calls the Qt adapter's
+`apply_spectrum_average`. `MeasurementView::SpectrumAverage` retains N when the
+source range changes. The spectrum adapter computes from every original bin
+before extracting the zoomed range. Its optional `spectrum_average` viewport
+section carries N and bounded points; raw and averaged traces share the existing
+1024-point display budget. Hiding the red trace is transient QML state.
+
+Core `signal_processing::spectrum::window_average_dbmv` converts dBmV into linear
+power, applies `moving_average::reflected_window_average`, then converts back
+with 10log10. This is the user-selected power average, unlike PyPNM's arithmetic
+dBmV smoothing; both use its centered reflected-window edge convention. Even N
+has N/2 source points before the current bin and N/2-1 after. A pairwise range
+sum tree avoids subtractive precision loss at large power steps; whole reflection
+cycles support large N without allocating or iterating N elements per bin.
+Missing/non-finite samples invalidate affected windows, rather than inventing
+zero power. It does not calculate channel-power integration or change RBW.
+
+The original capture export remains full resolution. The averaged trace is a
+viewer operation rather than a new binary field or CLI default. Tests cover
+independent power references, reflected boundaries, huge N, gaps, 600 dB steps,
+source-aligned zoom and actual red pixels/visibility in both themes. Native Qt
+screenshots of N=101 and the constellation MER/EVM view live in the user gallery.

@@ -20,14 +20,29 @@ Example: `rxmer.bin`.
 
 ## Spectrum Analyzer
 
-Amplitude in dBmV against frequency in MHz. The RBW chip shows resolution bandwidth calculated in Rust from the capture fields.
+Amplitude in dBmV against frequency in MHz. The RBW chip shows resolution
+bandwidth calculated in Rust from the capture fields.
+
+Enter a positive whole number in **N-point**, then press **WindowAvg** to add a
+red averaged trace. **Show average** becomes enabled after calculation; press it
+to hide or restore that line. Press WindowAvg again to apply a different N.
+The default input is 101; allowed input is 1–2,147,483,647. N=1 reproduces the
+original levels. The original trace remains teal.
+
+Rust averages linear power: `10 × log10(mean(10^(dBmV / 10)))`. The window is
+centered, with reflected samples at the capture ends. Even windows have one
+more sample on the lower-frequency side. Windows can exceed the capture length.
+Zoom uses the full-resolution source bins, so the same frequency has the same
+average before and after zoom. This is smoothing across frequency; it does not
+change acquisition RBW or calculate integrated channel power. JSON exports
+contain the full original capture.
 
 Example: `spectrum_analyzer.bin`.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/spectrum-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/spectrum-light.png">
-  <img alt="Spectrum Analyzer chart with the RBW chip" src="../images/user-guide/spectrum-dark.png" width="1000">
+  <img alt="Spectrum Analyzer with N-point WindowAvg controls, original teal trace, red power-average trace and RBW chip" src="../images/user-guide/spectrum-dark.png" width="1000">
 </picture>
 
 ## DS Channel Estimation — magnitude
@@ -238,7 +253,7 @@ shared Rust boundary descriptors, regardless of zoom or layer visibility.
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/constellation-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/constellation-light.png">
-  <img alt="Constellation soft and hard decisions with halfway symbol boundaries and no numeric axis scales" src="../images/user-guide/constellation-dark.png" width="1000">
+  <img alt="Constellation with soft and hard decisions, symbol boundaries, a MER/EVM toggle and lower-right MER/EVM overlay" src="../images/user-guide/constellation-dark.png" width="1000">
 </picture>
 
 ## Upstream Pre-EQ (current)

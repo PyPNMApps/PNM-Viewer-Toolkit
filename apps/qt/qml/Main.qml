@@ -340,6 +340,16 @@ ApplicationWindow {
                             onCarrierRequested: index => backend.toggle_modulation_carrier(index)
                             onAllCarriersRequested: backend.select_all_modulation_carriers()
                         }
+                        SpectrumControls {
+                            id: spectrumControls
+                            visible: window.metadata.spectrum_analysis !== undefined
+                            enabled: !window.blocked
+                            theme: appTheme
+                            sampleCount: window.metadata.sample_count || 0
+                            averageWindow: window.viewport.spectrum_average ? window.viewport.spectrum_average.window_points : 0
+                            Layout.fillWidth: true
+                            onAverageRequested: windowPoints => backend.apply_spectrum_average(windowPoints)
+                        }
                         ConstellationChart {
                             visible: window.viewport.constellation !== undefined
                             theme: appTheme
@@ -376,6 +386,7 @@ ApplicationWindow {
                             onRangeRequested: (start, count) => backend.show_range(start, count)
                         }
                         MeasurementChart {
+                            showSpectrumAverage: spectrumControls.showAverage
                             visible: window.viewport.constellation === undefined && window.metadata.view_index !== 2 && window.metadata.histogram !== true && window.metadata.fec_summary === undefined
                             stepPlot: window.metadata.modulation_profile !== undefined
                             unit: window.metadata.unit || "dB"
