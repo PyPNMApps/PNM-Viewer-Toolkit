@@ -58,7 +58,10 @@ TestCase {
     function test_context_menu_and_power_drag_preserve_zoom(data) {
         appearance.preference = data.preference
         const plot = findChild(chart, "measurementPlot")
-        waitForPolish(chart)
+        verify(waitForPolish(chart))
+        // Explicitly schedule the frame this wait observes, including when
+        // the first data row keeps the already-rendered default dark theme.
+        plot.requestPaint()
         verify(waitForRendering(plot))
         mouseClick(plot, plot.leftMargin + 100, plot.topMargin + 30, Qt.RightButton)
         const menu = findChild(chart, "spectrumContextMenu")

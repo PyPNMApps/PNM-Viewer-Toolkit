@@ -137,7 +137,11 @@ TestCase {
         // real geometry before Cocoa maps the click into window coordinates.
         verify(waitForPolish(modulationControls))
         verify(waitForPolish(button.parent))
-        verify(waitForRendering(button))
+        // A static button can already be rendered; Cocoa need not schedule
+        // another frame. Polished hit geometry and the resulting signal are
+        // the readiness and behavior contracts for this mouse interaction.
+        verify(button.visible && button.enabled)
+        verify(button.width > 0 && button.height > 0)
         modulationControls.profileRequest = -1
         mouseClick(button)
         tryCompare(modulationControls, "profileRequest", expectedIndex)

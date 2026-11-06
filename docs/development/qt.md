@@ -301,3 +301,12 @@ and `StartupWMClass=pnm-viewer-toolkit`. Keep these identifiers aligned so GNOME
 can group running windows and pin the installed launcher. The display title and
 CLI command are separate from this identity. Installed lifecycle checks verify
 the launcher fields. Interactive GNOME pin/unpin behavior needs VM confirmation.
+
+### Waiting for UI readiness in tests
+
+Wait for layout polish before clicking controls, then assert the resulting
+signal/state change. A static control may already have rendered; waiting for
+another frame without scheduling one can time out on macOS. For Canvas tests
+that require a new rendered frame, call `requestPaint()` before
+`waitForRendering()`. Keep real mouse interaction and outcome assertions;
+do not replace them with direct signal invocation or skip platform tests.
