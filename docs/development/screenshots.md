@@ -33,7 +33,7 @@ README table links with any move. Use the filename pairs below:
 | Filename stem (append `-dark.png` and `-light.png`) | Fixture and view |
 | --- | --- |
 | `home` | Close capture; show navigation |
-| `rxmer-bit-loading` | `rxmer.bin`: zoom, right-click → Bit loading… |
+| `rxmer-bit-loading` | `rxmer.bin`: full range, right-click → Modulation & Capacity… (OSSI defaults) |
 | `rxmer-uniform-rates` | Same popup → Estimated gross throughput chip |
 | `rxmer` | `rxmer.bin` |
 | `spectrum` | `spectrum_analyzer.bin`, 300–350 MHz range tab, WindowAvg N=101 and a selected power band |

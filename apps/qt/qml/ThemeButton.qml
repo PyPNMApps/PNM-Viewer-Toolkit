@@ -8,6 +8,8 @@ import QtQuick.Controls.Basic as Basic
 Basic.Button {
     id: control
     required property var theme
+    // Marks a pending action without changing the button fill or text contrast.
+    property bool borderHighlighted: false
     readonly property color foreground: !enabled ? theme.muted
         : highlighted ? (theme.dark ? theme.background : theme.panel) : theme.text
     leftPadding: 12
@@ -30,7 +32,7 @@ Basic.Button {
         color: !control.enabled ? control.theme.button
             : control.highlighted ? control.theme.accent
             : control.down || control.hovered ? control.theme.accentSoft : control.theme.button
-        border.color: control.visualFocus ? control.theme.accent : control.theme.line
-        border.width: control.visualFocus ? 2 : 1
+        border.color: control.visualFocus || control.borderHighlighted ? control.theme.accent : control.theme.line
+        border.width: control.visualFocus || control.borderHighlighted ? 2 : 1
     }
 }

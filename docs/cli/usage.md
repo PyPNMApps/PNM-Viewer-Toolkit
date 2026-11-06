@@ -221,7 +221,7 @@ and cannot be combined with `--header-only`.
 The [complete analysis example](examples/rxmer-bit-loading.json) uses the bundled
 fixture's 650–675 MHz range: 1,001 measured carriers, minimum 39.25 dB, uniform
 1024-QAM and **250,250,000 gross bit/s** under the default WebUI model.
-The [RxMER guide](../ui/measurements/rxmer/README.md#bit-loading-and-estimated-gross-throughput)
+The [RxMER guide](../ui/measurements/rxmer/README.md#modulation--capacity)
 explains the graph, policies, missing-carrier handling and throughput assumptions.
 
 Gross rate is measured carrier count × uniform bits/symbol × spacing. It assumes
@@ -229,3 +229,7 @@ those positions carry data and excludes LDPC/FEC, cyclic-prefix, pilot/PLC and
 MAC overhead. Carrier roles and device modulation capability are not inferred
 from RxMER. A policy estimate is not an error-free guarantee. Scenario rates are
 hypothetical even when their status is `below_target` or `not_covered_by_model`.
+
+The viewer’s **Modulation & Capacity** popup starts with OSSI candidate
+defaults. Use `--model ossi_candidate_defaults` to reproduce that initial
+selection in the CLI; the CLI’s existing WebUI heuristic default is unchanged.

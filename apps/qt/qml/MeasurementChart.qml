@@ -139,7 +139,7 @@ ColumnLayout {
         Basic.MenuItem {
             id: bitLoadingItem
             objectName: "analyzeRxmerBitLoading"
-            text: "Bit loading…"
+            text: "Modulation & Capacity…"
             visible: chart.rxmerEnabled
             height: visible ? implicitHeight : 0
             contentItem: Label { text: bitLoadingItem.text; color: chart.theme.text }

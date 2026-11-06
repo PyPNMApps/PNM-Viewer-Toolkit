@@ -14,12 +14,16 @@ Example: `rxmer.bin`.
 </picture>
 
 
-## Bit loading and estimated gross throughput
+## Modulation & Capacity
 
 Zoom the RxMER chart to the frequency range you want, then right-click inside
-it and select **Bit loading…**. With no zoom, the popup uses the whole capture.
+it and select **Modulation & Capacity…**. With no zoom, the popup uses the whole capture.
 It analyzes the original subcarriers, even when the main graph shows a sampled
 overview. Closing it leaves your capture and zoom unchanged.
+
+The popup uses the whole capture when opened before zooming; zooming is
+optional. If the selected model cannot support one uniform order, the popup
+still shows the per-carrier analysis and explains the limiting result.
 
 The teal stepped line estimates each measured carrier's supported bits per
 symbol. The red horizontal line shows the highest **single modulation** that
@@ -28,15 +32,17 @@ carrier limits that line; averaging the good carriers cannot hide a bad one.
 Toggle **Shannon** to show the separate ideal upper bound in blue.
 
 Choose a model, add a nonnegative margin in dB if needed, select a maximum QAM,
-and press **Recalculate**. The initial cap is 8192-QAM (13 bits/symbol), an
+and press **Recalculate**. Its border turns teal when a setting differs from
+the displayed result, and clears after the updated result arrives. Reverting
+to the displayed settings also clears the highlight. The initial cap is 8192-QAM (13 bits/symbol), an
 analysis choice rather than proof of modem capability. Results are estimates
 from one capture, not a promise of error-free operation or a configured CMTS
 profile. Missing readings remain gaps and the popup reports incomplete coverage.
 
 | Model | What it means |
 | --- | --- |
-| WebUI heuristic (default) | Same 256–4096-QAM MER targets as PyPNM-CMTS-WebUI selection insights |
-| OSSI candidate defaults | DOCSIS 3.1 CM-OSSI I27 D.2.11 candidate-profile default MER targets; actual configured targets may differ |
+| WebUI heuristic | Same 256–4096-QAM MER targets as PyPNM-CMTS-WebUI selection insights |
+| OSSI candidate defaults (default in viewer) | DOCSIS 3.1 CM-OSSI I27 D.2.11 candidate-profile default MER targets; actual configured targets may differ |
 | Ideal Shannon | Ideal AWGN bound using MER as an SNR proxy; not a practical receiver threshold |
 
 The large **Estimated gross throughput** chip assumes the measured carriers
@@ -63,17 +69,49 @@ coverage, per-carrier values and rate scenarios to a new file. This is separate
 from the main capture's raw JSON export. The CLI can reproduce the same analysis;
 see [CLI options](../../../cli/usage.md#rxmer-bit-loading-analysis).
 
-The native screenshots below use a dragged 649.925–674.900 MHz window with
-1,000 measured carriers. Its default-model estimate is 250.00 Mb/s.
+The native screenshots below show the full 640–826.975 MHz capture using
+OSSI candidate defaults: 7,480 measured carriers and a gross estimate of
+1,496.00 Mb/s at 256-QAM.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/rxmer-bit-loading-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="images/rxmer-bit-loading-light.png">
-  <img alt="RxMER visible-range bit-loading popup with per-carrier and uniform traces, model controls and gross throughput" src="images/rxmer-bit-loading-dark.png" width="1000">
+  <img alt="RxMER Modulation & Capacity popup with per-carrier and uniform traces, model controls and gross throughput" src="images/rxmer-bit-loading-dark.png" width="1000">
 </picture>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/rxmer-uniform-rates-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="images/rxmer-uniform-rates-light.png">
   <img alt="Uniform rates by modulation grid, distinguishing modeled support from hypothetical gross rates" src="images/rxmer-uniform-rates-dark.png" width="1000">
+</picture>
+
+### Why the whole capture can have no uniform result
+
+The example capture has a weakest reading of 28.25 dB (shown as 28.3 dB) at
+750 MHz. The optional WebUI heuristic only defines targets for 256–4096-QAM, starting
+at 33 dB. For the complete capture it therefore reports **Below model minimum**
+and an unavailable uniform throughput. That is a completed analysis, not a
+file-loading failure. Zooming can exclude the weak carrier and change the result.
+
+The viewer starts with **OSSI candidate defaults**. Choose that model and
+**Recalculate** after switching models to evaluate the same
+capture using its lower-QAM targets. This example then supports a uniform
+256-QAM at the model's default 27 dB target: 7,480 measured carriers × 8 bits ×
+25,000 Hz = **1,496 Mb/s** gross useful-symbol rate, before the stated overheads.
+Do not interpret this as a configured modem profile or achievable payload speed.
+
+The CLI retains its existing WebUI default. To reproduce the viewer’s initial
+result, use `--rxmer-bit-loading --model ossi_candidate_defaults`. All
+calculations and JSON fields still use the same shared Rust analysis.
+
+### Changed settings
+
+A teal **Recalculate** border means the controls differ from the graph's result.
+For example, the margin below is now 1.0 dB while the result still records 0 dB.
+Press **Recalculate** to update it. A failed calculation keeps the reminder.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/rxmer-recalculate-pending-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="images/rxmer-recalculate-pending-light.png">
+  <img alt="Changed margin highlights the Recalculate button border while preserving the prior result" src="images/rxmer-recalculate-pending-dark.png" width="1000">
 </picture>

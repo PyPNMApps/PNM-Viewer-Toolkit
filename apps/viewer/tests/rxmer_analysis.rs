@@ -62,3 +62,46 @@ fn bounded_plot_preserves_a_narrow_notch_and_breaks_over_omitted_missing_data() 
     assert_eq!(plot.analysis.summary.uniform_bit_loading, Some(8));
     assert_eq!(plot.analysis.coverage.measured_count, 4999);
 }
+
+#[test]
+fn full_capture_analysis_keeps_the_weakest_carrier_and_can_use_lower_qam_targets() {
+    use viewer::measurements::rxmer::BitLoadingModel;
+    let capture = Capture::from_bytes(pnm_fixtures::RXMER.to_vec(), "rxmer.bin".into()).unwrap();
+    let viewport = capture.chart_range(0, 7480).unwrap();
+    assert_eq!(viewport.count, 7480);
+    assert!(viewport.points.len() <= MAX_VIEW_SAMPLES);
+    let webui = capture
+        .rxmer_bit_loading(
+            viewport.start,
+            viewport.count,
+            RxMerAnalysisRequest {
+                model: BitLoadingModel::WebuiMerHeuristic,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    assert_eq!(webui.summary.minimum_rxmer_db, Some(28.25));
+    assert_eq!(webui.summary.limiting_frequency_hz, Some(750_000_000));
+    assert_eq!(webui.summary.status, "below_model_minimum");
+    assert_eq!(webui.rate.estimated_gross_rate_bps, None);
+    let plot = bounded(webui);
+    assert!(plot.analysis.subcarriers.len() <= MAX_VIEW_SAMPLES);
+    assert_eq!(plot.analysis.selection.sample_count, 7480);
+    assert!(plot
+        .analysis
+        .subcarriers
+        .iter()
+        .any(|point| point.frequency_hz == 750_000_000 && point.rxmer_db == Some(28.25)));
+    let ossi = capture
+        .rxmer_bit_loading(
+            viewport.start,
+            viewport.count,
+            RxMerAnalysisRequest {
+                model: BitLoadingModel::OssiCandidateDefaults,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    assert_eq!(ossi.summary.uniform_modulation, Some("qam_256"));
+    assert_eq!(ossi.rate.estimated_gross_rate_bps, Some(1_496_000_000));
+}

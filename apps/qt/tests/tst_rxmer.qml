@@ -48,27 +48,107 @@ TestCase {
         original.spectrumEnabled = false
         insights.working = false
         insights.selectedCap = 13
+        findChild(insights.contentItem,"rxmerBitLoadingModel").currentIndex = 1
     }
     function cleanup() { insights.close() }
+    function test_full_capture_below_model_target_is_a_completed_result_data() {
+        return [{tag: "dark", preference: 1}, {tag: "light", preference: 2}]
+    }
+    function test_full_capture_below_model_target_is_a_completed_result(data) {
+        const zoomAnalysis = insights.analysis
+        try {
+            appearance.preference = data.preference
+            insights.analysis = Object.assign({}, zoomAnalysis, {
+                selection: {start_frequency_hz:640000000,stop_frequency_hz:826975000},
+                coverage: {measured_count:7480,unavailable_count:0},
+                summary: {minimum_rxmer_db:28.25,uniform_bit_loading:null,uniform_modulation:null,
+                    limiting_frequency_hz:750000000,status:"below_model_minimum"},
+                rate: {estimated_gross_rate_bps:null}
+            })
+            insights.openRange(0,7480)
+            tryCompare(insights,"opened",true)
+            compare(insights.title,"RxMER · Modulation & Capacity")
+            compare(requests[0].start,0)
+            compare(requests[0].count,7480)
+            const status = findChild(insights.contentItem,"rxmerModulationStatus")
+            verify(status.visible)
+            verify(status.text.indexOf("Analysis complete") >= 0)
+            verify(status.text.indexOf("weakest carrier") >= 0)
+            compare(findChild(insights.contentItem,"rxmerGrossRateValue").text,"Unavailable")
+            verify(findChild(insights.contentItem,"rxmerGrossRateChip").enabled)
+        } finally {
+            insights.close()
+            insights.analysis = zoomAnalysis
+        }
+    }
+    function test_changed_controls_emphasize_recalculate_until_result_arrives_data() {
+        return [{tag: "dark", preference: 1}, {tag: "light", preference: 2}]
+    }
+    function test_changed_controls_emphasize_recalculate_until_result_arrives(data) {
+        const savedAnalysis = insights.analysis
+        const margin = findChild(insights.contentItem,"rxmerBitLoadingMargin")
+        const model = findChild(insights.contentItem,"rxmerBitLoadingModel")
+        const recalculate = findChild(insights.contentItem,"recalculateRxmerBitLoading")
+        try {
+            appearance.preference = data.preference
+            margin.text = "0.0"
+            insights.analysis = Object.assign({}, savedAnalysis, {
+                model: {id:"ossi_candidate_defaults",extra_margin_db:0,maximum_bit_loading:13}
+            })
+            insights.openRange(0,7480)
+            tryCompare(insights,"opened",true)
+            compare(recalculate.borderHighlighted,false)
+            margin.text = "1.0"
+            compare(recalculate.borderHighlighted,true)
+            compare(recalculate.background.border.color,appearance.accent)
+            compare(recalculate.background.border.width,2)
+            margin.text = "0.0"
+            compare(recalculate.borderHighlighted,false)
+            model.currentIndex = 0
+            compare(recalculate.borderHighlighted,true)
+            model.currentIndex = 1
+            compare(recalculate.borderHighlighted,false)
+            insights.selectedCap = 10
+            compare(recalculate.borderHighlighted,true)
+            mouseClick(recalculate)
+            compare(requests[requests.length-1].cap,10)
+            // A submitted request is not yet a successful result.
+            compare(recalculate.borderHighlighted,true)
+            insights.working = true
+            compare(recalculate.borderHighlighted,true)
+            insights.working = false
+            insights.analysis = Object.assign({}, savedAnalysis, {
+                model: {id:"ossi_candidate_defaults",extra_margin_db:0,maximum_bit_loading:10}
+            })
+            compare(recalculate.borderHighlighted,false)
+            insights.selectedCap = 13
+            compare(recalculate.borderHighlighted,true)
+        } finally {
+            insights.close()
+            insights.analysis = savedAnalysis
+            insights.selectedCap = 13
+            margin.text = "0.0"
+        }
+    }
     function test_popup_uses_original_zoom_model_margin_and_uniform_rate() {
         insights.openRange(400,1001)
         tryCompare(insights,"opened",true)
         compare(requests.length,1)
         compare(requests[0].start,400)
         compare(requests[0].count,1001)
-        compare(requests[0].model,"webui_mer_heuristic")
+        compare(requests[0].model,"ossi_candidate_defaults")
         compare(requests[0].cap,13)
         compare(findChild(insights.contentItem,"rxmerGrossRateValue").text,"250.25 Mb/s")
         const margin = findChild(insights.contentItem,"rxmerBitLoadingMargin")
         const model = findChild(insights.contentItem,"rxmerBitLoadingModel")
         const recalculate = findChild(insights.contentItem,"recalculateRxmerBitLoading")
         margin.text = "1.5"
-        model.currentIndex = 1
+        model.currentIndex = 0
         verify(waitForRendering(recalculate))
         mouseClick(recalculate)
         compare(requests.length,2)
         compare(requests[1].margin,1.5)
-        compare(requests[1].model,"ossi_candidate_defaults")
+        compare(requests[1].model,"webui_mer_heuristic")
         margin.text = "-1"
         compare(recalculate.enabled,false)
         margin.text = "0.0"

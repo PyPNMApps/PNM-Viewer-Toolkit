@@ -77,8 +77,8 @@ keeps the current capture. Unsupported measurements can still be decoded with
   decision boundaries, with independent toggles and drag/wheel zoom. See the
   [measurement guide](measurements/constellation/README.md).
 - The I/Q dots and density views show the full capture and do not use range zoom.
-- In RxMER, right-click → **Bit loading…** analyzes the visible range. See the
-  [RxMER guide](measurements/rxmer/README.md#bit-loading-and-estimated-gross-throughput).
+- In RxMER, right-click → **Modulation & Capacity…** analyzes the visible range. See the
+  [RxMER guide](measurements/rxmer/README.md#modulation--capacity).
 - For channel estimation and current/last-update upstream pre-EQ, choose **Magnitude**,
   **Group delay**, or **I/Q scatter**. The upstream plot describes correction
   coefficients, not a measured plant response. See [current pre-EQ](measurements/upstream-pre-eq/README.md)
