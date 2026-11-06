@@ -12,7 +12,8 @@ A `v*` tag starts [Native releases](../../.github/workflows/release.yml):
    reuses dependency outputs instead of starting a second cold packaging matrix.
 3. Exercise Windows MSI baseline/major-upgrade/downgrade/uninstall and both Mac
    DMG copied-app lifecycles on those native hosts.
-4. Install the identical Ubuntu 22.04-built DEBs on 22.04, 24.04 and 26.04.
+4. As soon as the Ubuntu 22.04 native job finishes, install its identical DEBs
+   on 22.04, 24.04 and 26.04 while the other native platforms continue.
 5. Verify the complete asset set, hashes and 50 MB budgets, then upload to a draft,
    verify remote metadata and downloaded bytes, and publish automatically.
 
@@ -96,6 +97,14 @@ three separate six-platform matrices, reducing hosted runner allocations from
 18 to six while retaining every check on every platform. In full mode, a failed,
 canceled or skipped stage makes **Required checks** fail. Lean master/PR
 mode accepts only the deliberately skipped native job; CodeQL/quality must pass.
+
+For tag packaging, CI calls the same native workflow twice: a one-runner
+`native-baseline` call for Ubuntu 22.04, and a five-runner `native` call for the
+remaining platforms. The baseline call owns the three `DEB lifecycle` jobs,
+which depend only on its completed native job. They do not wait for the Mac or
+Windows builds. No native host is duplicated. Manual full checks without
+packaging still use one six-runner call. Required checks covers both release
+calls, including all lifecycle outcomes, before stable publication.
 
 In GitHub repository settings, protect `master` with the **Required checks**
 status and require the branch to be current before merging. Workflow files
@@ -231,9 +240,11 @@ an existing release tag to apply these optimizations.
 ### Partial releases after a platform failure
 
 Successful native jobs finish and retain their packages even when another OS
-fails. The package-discovery job runs after the matrix regardless of its result;
-Ubuntu's three installer lifecycle jobs run if the baseline DEBs passed native
-checks. This avoids skipping Ubuntu installation merely because a Mac failed.
+fails. Ubuntu's three installer lifecycle jobs run directly after its baseline
+native job succeeds, independently of other platforms. The package-discovery job
+runs after validation regardless of its result. Publication reads each same-run
+Ubuntu native and lifecycle job result; it never treats the presence of a DEB
+artifact as proof of successful installation.
 
 Publication selects only same-run packages whose native jobs passed. Linux also
 requires native checks and installed lifecycle checks on all three Ubuntu
@@ -387,3 +398,33 @@ Verify the selected source, successful restoration, dependency build durations,
 all repeated checks, installed-package tests and total time before claiming a
 cache benefit. Runner-image/compiler/Qt changes may correctly require a cold
 build. Keep all existing validation gates and CodeQL-before-native ordering.
+
+### Mac compiler caching and overlapping installer tests
+
+Both Mac runners now use `ccache` for the C/C++ compilation invoked by CXX-Qt,
+as Linux already does. CI uses an available ccache executable or installs it
+through Homebrew with automatic formula updates disabled for that invocation.
+`CC` and `CXX` wrap the native compilers; content-based compiler validation and
+normal flag/source checking remain enabled. No sloppiness settings are used.
+The repository-local cache is capped at 512 MB and travels in the existing
+bounded, architecture/compiler/image/Qt-matched native dependency artifact.
+Restore happens before statistics are reset; the final report measures only
+the current run. A first compatible cache must be seeded before cross-tag reuse.
+This is a hosted build prerequisite, not a new runtime or local development
+requirement, and it does not require installing anything on this VM.
+
+The separate Ubuntu baseline dependency path removes the wait for the slowest
+Mac/Windows build before starting DEB lifecycle checks. All checks still execute;
+release hashes, budgets, complete/partial rules and publication verification are
+unchanged. These revisions apply to future tags. Record native-cache restoration,
+ccache hits/misses, Qt checks, release packaging and total elapsed time on the
+next compatible run before claiming a speedup. Debug and optimized compilations
+remain distinct and cannot be assumed to share every cached object.
+
+The v0.2.7 logs also showed Ubuntu jobs contending for the same Rust cache key.
+The rust-cache action uses `shared-key` instead of `key` when both are supplied;
+the former fixed value `native` discarded our runner-specific `key`. The shared
+key now contains the matrix runner and Qt helper fingerprint, so Ubuntu versions
+do not compete for one cache or restore another distribution's compiled targets.
+This intentionally starts new action-cache namespaces; compatible cross-tag
+native artifacts remain available through their separate provenance checks.

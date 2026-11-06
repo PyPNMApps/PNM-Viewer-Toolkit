@@ -16,7 +16,7 @@ ApplicationWindow {
     minimumWidth: 860
     minimumHeight: 680
     visible: true
-    title: "PNM Viewer Toolkit — Qt prototype"
+    title: "PNM Viewer Toolkit"
     color: appTheme.background
     font.family: "Sans Serif"
     font.pixelSize: 13
@@ -246,7 +246,9 @@ ApplicationWindow {
                         spacing: 20
                         Label { text: "YOUR CAPTURE, ON YOUR DESKTOP"; color: appTheme.accent; font.pixelSize: 10; font.letterSpacing: 1.6; Layout.alignment: Qt.AlignHCenter }
                         Label { text: "Explore a PNM capture"; color: appTheme.text; font.pixelSize: 26; font.bold: true; Layout.alignment: Qt.AlignHCenter }
-                        Button {
+                        ThemeButton {
+                            theme: appTheme
+                            objectName: "openCaptureButton"
                             text: "Open capture"
                             enabled: !window.blocked
                             highlighted: true

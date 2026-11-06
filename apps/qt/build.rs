@@ -65,6 +65,7 @@ fn main() {
                 "qml/AboutDialog.qml",
                 "qml/UpdateChip.qml",
                 "qml/Theme.qml",
+                "qml/ThemeButton.qml",
                 "qml/MeasurementChart.qml",
                 "qml/IqScatterChart.qml",
                 "qml/ConstellationChart.qml",

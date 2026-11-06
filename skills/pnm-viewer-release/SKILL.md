@@ -87,6 +87,18 @@ architecture fingerprints, bounded extraction and exclusion of workspace/test
 outputs. The first revised Mac tag seeds its cache; measure restoration on a
 later compatible tag. Never skip tests or change public assets to warm a cache.
 
+For tag packaging, keep Ubuntu 22.04 in its own call to the shared native
+workflow so its three installed lifecycle jobs can overlap the other five
+native runners. Manual non-packaging checks retain the six-runner call. Required
+checks must include both calls; publication must inspect successful individual
+Ubuntu native and lifecycle results, rejecting missing/duplicate evidence.
+Linux and both Mac hosts wrap C/C++ with ccache; preserve its content/flag/source
+validation, bounded local cache and final per-run statistics. Reuse only the
+existing trusted native artifact path. Measure a compatible hosted tag before
+claiming a speedup; never trade away tests or compiler validation for cache hits.
+Put the runner and Qt identifier inside rust-cache's shared-key itself: supplying
+both shared-key and key discards key, allowing the Ubuntu jobs to collide.
+
 ## Native icons, shortcuts and examples
 
 Use packaging/ assets derived from the existing desktop PNG; regenerate into a

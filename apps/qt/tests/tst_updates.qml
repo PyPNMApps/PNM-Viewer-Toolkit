@@ -137,10 +137,8 @@ TestCase {
             appearance.preference = preference
             about.open()
             tryCompare(about, "opened", true)
-            for (const name of ["checkUpdatesButton", "releaseDownloadsButton"]) {
+            for (const name of ["projectButton", "checkUpdatesButton", "releaseDownloadsButton"]) {
                 const button = findChild(about, name)
-                compare(button.palette.button, appearance.button)
-                compare(button.palette.buttonText, appearance.text)
                 compare(button.contentItem.color, appearance.text)
                 verify(waitForRendering(button))
                 const image = grabImage(button)
@@ -151,7 +149,6 @@ TestCase {
                 verify(preference === 1 ? brightness < 0.4 : brightness > 0.6,
                     "Theme " + preference + " button background " + background)
             }
-            verify(findChild(about, "updateInstructionsLabel").text.indexOf("does not install") >= 0)
             about.close()
             tryCompare(about, "opened", false)
         }

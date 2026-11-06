@@ -12,13 +12,14 @@ RUNNERS = {'native-ubuntu-22.04': 'ubuntu-22.04', 'native-windows-2022': 'window
            'native-macos-15': 'macos-15', 'native-macos-15-intel': 'macos-15-intel'}
 
 
-def eligible(jobs, artifacts, ubuntu_result=None):
+def eligible(jobs, artifacts, require_ubuntu_lifecycle=False):
     """Return allowed artifact names from this run's completed successful jobs.
 
     jobs/artifacts are GitHub API records, not arbitrary paths. Require global
-    CodeQL/code checks. Without ubuntu_result, identify baseline DEBs to test;
-    with it, require all Ubuntu native and lifecycle checks before publishing
-    Linux. Failed, canceled, duplicate or absent jobs never qualify.
+    CodeQL/code checks. With require_ubuntu_lifecycle, require successful native
+    and installed lifecycle jobs on all three Ubuntu versions before publishing
+    Linux. Match individual jobs rather than trusting a reusable workflow's
+    aggregate result. Failed, canceled, duplicate or absent jobs never qualify.
     """
     def passed(suffix):
         matches = [job for job in jobs if job['name'].endswith(' / ' + suffix)]
@@ -30,9 +31,10 @@ def eligible(jobs, artifacts, ubuntu_result=None):
     for name, runner in RUNNERS.items():
         if name not in available or not passed('Native / ' + runner):
             continue
-        if runner == 'ubuntu-22.04' and ubuntu_result is not None:
-            if ubuntu_result != 'success' or not all(passed('Native / ' + ubuntu)
-                    for ubuntu in ('ubuntu-24.04', 'ubuntu-26.04')):
+        if runner == 'ubuntu-22.04' and require_ubuntu_lifecycle:
+            if not all(passed(kind + ' / ' + ubuntu)
+                       for ubuntu in ('ubuntu-22.04', 'ubuntu-24.04', 'ubuntu-26.04')
+                       for kind in ('Native', 'DEB lifecycle')):
                 continue
         selected.append(name)
     return selected
@@ -48,11 +50,11 @@ def main():
     parser.add_argument('--jobs', type=Path, required=True)
     parser.add_argument('--artifacts', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--ubuntu-result')
+    parser.add_argument('--require-ubuntu-lifecycle', action='store_true')
     args = parser.parse_args()
     jobs = [job for page in json.loads(args.jobs.read_text()) for job in page['jobs']]
     artifacts = [item for page in json.loads(args.artifacts.read_text()) for item in page['artifacts']]
-    names = eligible(jobs, artifacts, args.ubuntu_result)
+    names = eligible(jobs, artifacts, args.require_ubuntu_lifecycle)
     with args.output.open('a') as output:
         output.write('ubuntu=' + str('native-ubuntu-22.04' in names).lower() + '\n')
         output.write('names=' + json.dumps(names) + '\n')

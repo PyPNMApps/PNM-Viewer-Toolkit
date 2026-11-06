@@ -70,28 +70,44 @@ jobs:
           bash -n install.sh
           for script in scripts/*.sh tools/git/*.sh tools/bump-version.sh; do bash -n "$script"; done
           shellcheck install.sh scripts/*.sh tools/git/*.sh tools/bump-version.sh
+  native-baseline:
+    # Let DEB lifecycle checks follow the baseline, without waiting for Mac/Win.
+    if: inputs.run_native_checks == true && inputs.package_release == true
+    needs: [codeql, quality]
+    uses: ./.github/workflows/native-checks.yml
+    with:
+      runners: '["ubuntu-22.04"]'
+      package_release: true
   native:
     # Tags request the full native matrix; branch/PR checks remain lean.
     if: inputs.run_native_checks == true
     needs: [codeql, quality]
     uses: ./.github/workflows/native-checks.yml
     with:
+      runners: ${{ inputs.package_release && '["ubuntu-24.04", "ubuntu-26.04", "windows-2022", "macos-15", "macos-15-intel"]' || '["ubuntu-22.04", "ubuntu-24.04", "ubuntu-26.04", "windows-2022", "macos-15", "macos-15-intel"]' }}
       package_release: ${{ inputs.package_release == true }}
   required:
     name: Required checks
     if: always()
-    needs: [codeql, quality, native]
+    needs: [codeql, quality, native-baseline, native]
     runs-on: ubuntu-24.04
     steps:
       - name: Require every stage to succeed
         env:
           CODEQL_RESULT: ${{ needs.codeql.result }}
           QUALITY_RESULT: ${{ needs.quality.result }}
+          BASELINE_RESULT: ${{ needs.native-baseline.result }}
+          PACKAGE_RELEASE: ${{ inputs.package_release == true }}
           NATIVE_RESULT: ${{ needs.native.result }}
           RUN_NATIVE: ${{ inputs.run_native_checks == true }}
         run: |
           test "$CODEQL_RESULT" = success
           test "$QUALITY_RESULT" = success
+          if [[ "$RUN_NATIVE" == true && "$PACKAGE_RELEASE" == true ]]; then
+            test "$BASELINE_RESULT" = success
+          else
+            test "$BASELINE_RESULT" = skipped
+          fi
           if [[ "$RUN_NATIVE" == true ]]; then
             test "$NATIVE_RESULT" = success
           else

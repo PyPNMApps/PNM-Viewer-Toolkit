@@ -10,7 +10,7 @@ validation record. Current user behavior and screenshots live in the user guide.
 
 The top row is Open, Settings and About, left-aligned, with the navigation toggle
 at the far right. Open launches the native file chooser; Settings → System
-contains appearance. About shows version, licenses and the project link.
+contains appearance. About shows version, update status and the project link.
 Navigation starts hidden. There is no right panel or bottom status bar; the
 main content fills the available space with minimal margins. Capture metadata,
 Export JSON and Close capture are in the chart header. Busy work is indicated

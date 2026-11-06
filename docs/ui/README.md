@@ -94,8 +94,8 @@ System follows the desktop appearance. This preference lasts for the current
 session. Screenshots follow your documentation viewer's theme.
 
 The panel button at the top right shows or hides the left navigation pane.
-**About** shows the installed version, development status, licenses, project
-link and software-update status. A background check runs once per normal launch;
+**About** shows the installed version, development status, project link and
+software-update status. A background check runs once per normal launch;
 it does not delay opening captures. Offline or failed checks leave the viewer
 usable. **Check for updates** retries manually and reports the outcome.
 

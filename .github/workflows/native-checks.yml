@@ -4,6 +4,10 @@ name: Native checks
 on:
   workflow_call:
     inputs:
+      runners:
+        description: JSON native runner list; release baseline runs separately
+        type: string
+        default: '["ubuntu-22.04", "ubuntu-24.04", "ubuntu-26.04", "windows-2022", "macos-15", "macos-15-intel"]'
       package_release:
         description: Build installer assets and exercise native installation
         type: boolean
@@ -17,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04, ubuntu-26.04, windows-2022, macos-15, macos-15-intel]
+        os: ${{ fromJSON(inputs.runners) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     defaults:
@@ -47,8 +51,16 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y lld build-essential cmake python3-venv libgl1-mesa-dev libegl1 libopengl0 libdbus-1-3 libfontconfig1 libfreetype6 libx11-xcb1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-randr0 libxcb-xfixes0 libxcb-sync1 libxcb-render0 libsm6 libice6 libgtk-3-0 libb2-1 ccache patchelf shellcheck
-      - name: Configure Linux compiler cache
-        if: runner.os == 'Linux'
+      - name: Ensure macOS compiler cache is available
+        if: runner.os == 'macOS'
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+        run: |
+          if ! command -v ccache >/dev/null; then
+            brew install ccache
+          fi
+      - name: Configure native compiler cache
+        if: runner.os == 'Linux' || runner.os == 'macOS'
         run: |
           {
             echo 'CC=ccache cc'
@@ -83,8 +95,8 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: native
-          key: ${{ matrix.os }}-qt-${{ hashFiles('scripts/qt-sdk.py') }}
+          # shared-key replaces key in rust-cache; isolate each Ubuntu ABI.
+          shared-key: native-${{ matrix.os }}-qt-${{ hashFiles('scripts/qt-sdk.py') }}
           workspaces: |
             . -> target
             apps/qt -> target
@@ -108,7 +120,7 @@ jobs:
         if: steps.native-cache-source.outputs.run_id != ''
         run: python3 scripts/ci/native_cache.py restore --directory local/previous-native-cache
       - name: Initialize compiler cache statistics
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' || runner.os == 'macOS'
         run: ccache --zero-stats
       - name: Test workspace and CLI
         run: |
@@ -201,6 +213,41 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - name: Report Linux compiler cache statistics
-        if: always() && runner.os == 'Linux'
+      - name: Report native compiler cache statistics
+        if: always() && (runner.os == 'Linux' || runner.os == 'macOS')
         run: ccache --show-stats
+
+  ubuntu-install:
+    name: DEB lifecycle / ${{ matrix.os }}
+    needs: native
+    if: ${{ !cancelled() && inputs.package_release && contains(fromJSON(inputs.runners), 'ubuntu-22.04') && needs.native.result == 'success' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04, ubuntu-26.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v7
+        with:
+          name: native-ubuntu-22.04
+          path: release
+      - name: Verify unchanged baseline package bytes
+        run: python3 scripts/release/verify.py --packages release
+      - name: Install test display prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb xauth
+      - name: Install, open, render, export and remove packages
+        run: |
+          set -o pipefail
+          xvfb-run -a python3 scripts/release/test-installed.py --packages release --ci-disposable-host 2>&1 | tee lifecycle.log
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: lifecycle-${{ matrix.os }}
+          path: lifecycle.log
+          if-no-files-found: warn

@@ -11,8 +11,14 @@ browser, WebView or HTTP backend. This is development software.
 The executable selects Fusion controls before Qt startup, matching development
 and CI. Native Windows/macOS control backgrounds may ignore custom palette roles,
 causing pale text on white buttons in dark mode. Fusion uses the application
-palette for both themes; this does not select a fallback file chooser. About
-tests check rendered button backgrounds as well as text and palette bindings.
+palette for both themes; this does not select a fallback file chooser.
+`ThemeButton.qml` explicitly paints text and backgrounds using the Basic control
+implementation for About actions and the highlighted Open capture action. This
+avoids Windows' pale button backgrounds even when palette inheritance differs.
+Tests check rendered contrast for ordinary, highlighted and disabled buttons in
+Dark, Light and both System appearances. About keeps its version, project link,
+update status and actions; descriptive/license text and update instructions have
+been removed from this dialog. Distribution license/NOTICE files remain intact.
 Installed smoke tests clear development control-style overrides so the executable
 must select its own style, as it does when opened from a desktop shortcut.
 See [Qt control styles](https://doc.qt.io/qt-6/qtquickcontrols-styles.html).

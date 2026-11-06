@@ -59,12 +59,9 @@ Dialog {
         }
         Label { text: "PNM Viewer Toolkit"; color: dialog.theme.text; font.pixelSize: 20; font.bold: true }
         Label { text: "Version " + dialog.appVersion + " · In development"; color: dialog.theme.muted }
-        Label { text: "Offline inspection of DOCSIS PNM captures."; color: dialog.theme.text }
-        Label {
-            text: "Desktop: GPL-3.0-only\nCore libraries: Apache-2.0\nAcknowledgment: PyPNM Toolkit"
-            color: dialog.theme.muted
-        }
-        Button {
+        ThemeButton {
+            theme: dialog.theme
+            objectName: "projectButton"
             text: "GitHub project"
             onClicked: Qt.openUrlExternally("https://github.com/PyPNMApps/PNM-Viewer-Toolkit")
         }
@@ -86,33 +83,38 @@ Dialog {
             Accessible.name: text
         }
         RowLayout {
-            Button {
+            ThemeButton {
+                theme: dialog.theme
                 objectName: "checkUpdatesButton"
                 text: dialog.updates.update_state === "checking" ? "Checking…" : "Check for updates"
                 enabled: dialog.updates.update_state !== "checking" && !dialog.installBusy && dialog.updates.install_state !== "installed"
                 onClicked: dialog.updates.check_updates()
             }
-            Button {
+            ThemeButton {
+                theme: dialog.theme
                 objectName: "releaseDownloadsButton"
                 text: dialog.updates.update_state === "available" ? "Release notes and downloads" : "View releases"
                 onClicked: dialog.openReleaseRequested(dialog.updates.release_url)
             }
         }
         RowLayout {
-            Button {
+            ThemeButton {
+                theme: dialog.theme
                 objectName: "installUpdateButton"
                 text: "Install update and restart"
                 visible: dialog.updates.install_available
                 enabled: !dialog.installBusy && !dialog.captureBusy
                 onClicked: dialog.updates.install_update()
             }
-            Button {
+            ThemeButton {
+                theme: dialog.theme
                 objectName: "cancelUpdateButton"
                 text: "Cancel download"
                 visible: dialog.updates.install_state === "downloading"
                 onClicked: dialog.updates.cancel_install()
             }
-            Button {
+            ThemeButton {
+                theme: dialog.theme
                 objectName: "restartUpdateButton"
                 text: "Restart viewer"
                 visible: dialog.updates.install_state === "installed"
@@ -139,15 +141,6 @@ Dialog {
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
             color: dialog.theme.text
-        }
-        Label {
-            objectName: "updateInstructionsLabel"
-            text: dialog.updates.install_available || dialog.installBusy
-                ? "The viewer restarts after installation. Export your work before starting. Administrator approval is required."
-                : "Check for updates finds new versions; it does not install them. Open release downloads, quit the viewer, and run the new installer. Automatic installation is available only for installed Ubuntu x64 builds with matching packages."
-            color: dialog.theme.muted
-            wrapMode: Text.WordWrap
-            Layout.fillWidth: true
         }
     }
 }

@@ -196,6 +196,10 @@ replace native Qt integration validation.
 Keep the installed executable's Fusion control style aligned with development
 and CI; a launcher-only style setting does not cover desktop shortcuts. Check
 rendered button contrast in both themes. Preserve native Open/Save dialogs.
+Use the shared ThemeButton for themed action buttons, including highlighted
+actions. It paints foreground and background explicitly on the Basic control
+implementation; platform palette inheritance alone left Windows buttons pale.
+Keep disabled and System-theme states readable and test actual rendered contrast.
 For QML tests that click dynamically positioned controls, wait for layout polish
 and rendering before sending mouse events. Fixed sleeps do not establish stable
 geometry. Retain exact action/index assertions and cover model replacement.
