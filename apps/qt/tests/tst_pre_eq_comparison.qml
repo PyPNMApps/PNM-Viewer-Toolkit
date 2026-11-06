@@ -24,6 +24,8 @@ TestCase {
         id: sidebar
         width:244
         theme: appearance
+        onShowComparison: comparisonSelected=true
+        onShowOriginal: comparisonSelected=false
         onCalculate: mode=>testCase.calculated=mode
         onRemoveAttachment: testCase.removed++
     }
@@ -49,6 +51,7 @@ TestCase {
     function init() {
         fileError.close()
         calculated="";removed=0;attached=0;opened=0;resets=0;selectedStart=-1;selectedCount=-1
+        sidebar.comparisonSelected=true
         sidebar.attachment=({});sidebar.resultMode="";sidebar.working=false
         appearance.preference=1
         drop.enabled=false
@@ -82,6 +85,15 @@ TestCase {
         verify(!action.enabled)
         mouseClick(findChild(sidebar,"removePreEqUpdate"))
         compare(removed,1)
+    }
+    function test_compare_navigation_keeps_controls_with_the_tool() {
+        const controls=findChild(sidebar,"preEqCompareControls")
+        mouseClick(findChild(sidebar,"showOriginalPreEq"))
+        verify(!sidebar.comparisonSelected)
+        verify(!controls.visible)
+        mouseClick(findChild(sidebar,"showPreEqCompare"))
+        verify(sidebar.comparisonSelected)
+        verify(controls.visible)
     }
     function test_file_error_popup_data() {return [{tag:"dark",theme:1},{tag:"light",theme:2}]}
     function test_file_error_popup(data) {

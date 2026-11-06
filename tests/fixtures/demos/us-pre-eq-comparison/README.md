@@ -5,7 +5,7 @@ network connection or archive extraction is needed. Both CM and CMTS addresses
 are `aa:bb:cc:dd:ee:ff`. Each file contains 1776 coefficients.
 
 1. Open **original.bin** in the Qt viewer.
-2. Show the left gutter and select **Correction & Delta**.
+2. Show the left gutter and select **Compare**.
 3. Drop **last-update.bin** into **Drop Last Update here**, or use
    **Choose Last Update…**. Wait for the mode selector to become available.
 4. Select **Adjust (multiply)** and **Compare**.

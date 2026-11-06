@@ -83,8 +83,11 @@ For a ready-to-open pair and walkthrough, use the
 It contains the two files used for the screenshots below.
 
 Open a **current US Pre-EQ** capture, show the left navigation with the panel
-button, and select **Correction & Delta**. This section is available for current
+button, and select **Compare**. This section is available for current
 PNN6 captures; opening a Last Update file by itself keeps its existing view.
+The **Compare** tool opens its attachment and calculation controls. Choose
+**Original capture** to return to the measurement and hide those controls; the
+attached pair and completed comparison are retained.
 
 1. Drop one Last Update file onto **Drop Last Update here**, or choose it with
    **Choose Last Update…** using the OS file picker. Dropping there attaches it;

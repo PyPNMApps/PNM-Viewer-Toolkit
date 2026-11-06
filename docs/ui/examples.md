@@ -26,7 +26,7 @@ modified demonstration fixtures, not live customer measurements. The source
 
 The [comparison demo](../../tests/fixtures/demos/us-pre-eq-comparison/README.md)
 sets aside `original.bin` and `last-update.bin` with a step-by-step walkthrough.
-Open the original, then attach the update from **Correction & Delta** in the
+Open the original, then attach the update from **Compare** in the
 left gutter. This is the sanitized pair used for the comparison screenshots;
 the update timestamp is explicitly synthetic and eight seconds later. Normal
 prechecks remain enabled. This additional pair is available in the repository;

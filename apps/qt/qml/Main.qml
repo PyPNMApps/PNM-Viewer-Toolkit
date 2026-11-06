@@ -83,7 +83,7 @@ ApplicationWindow {
         z: 1
         theme: appTheme
         blocked: window.blocked || settingsMenu.visible || spectrumTools.popupVisible
-        attachmentTarget: backend.pre_eq_current && window.navigationVisible ? preEqSidebar.dropTarget : null
+        attachmentTarget: backend.pre_eq_current && window.navigationVisible && window.comparisonSelected ? preEqSidebar.dropTarget : null
         onAttachmentDropped: captureUrl => { window.comparisonSelected=true; backend.attach_pre_eq_update(captureUrl) }
         onFileDropped: captureUrl => backend.open_file(captureUrl)
     }
@@ -288,6 +288,7 @@ ApplicationWindow {
                     visible: backend.pre_eq_current
                     Layout.fillWidth: true
                     theme: appTheme
+                    comparisonSelected: window.comparisonSelected
                     attachment: window.preEqAttachment
                     resultMode: window.preEqResult.mode || ""
                     working: backend.pre_eq_busy
