@@ -129,3 +129,6 @@ sends only a release lookup to this project's GitHub API, not capture contents
 or device metadata. Native automated smoke tests skip the startup request.
 
 Developer details belong in the [Qt guide](../development/qt.md).
+
+Current US Pre-EQ captures also offer [Correction & Delta](measurements/upstream-pre-eq/README.md#correction--delta-from-the-left-gutter)
+from the left gutter, with a mandatory pair precheck and explicit Adjust/Set mode.

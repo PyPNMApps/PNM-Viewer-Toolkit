@@ -9,6 +9,14 @@ DropArea {
     id: target
     required property Theme theme
     property bool blocked: false
+    property Item attachmentTarget: null
+    property bool routingAttachment: false
+    signal attachmentDropped(url captureUrl)
+    function isAttachmentDrop(event) {
+        if (!attachmentTarget || !attachmentTarget.visible || !attachmentTarget.enabled) return false
+        const point=target.mapToItem(attachmentTarget,event.x,event.y)
+        return point.x>=0 && point.y>=0 && point.x<attachmentTarget.width && point.y<attachmentTarget.height
+    }
     enabled: !blocked
     signal fileDropped(url captureUrl)
 
@@ -26,10 +34,12 @@ DropArea {
         const captureUrl = event.urls[0]
         // Never accept a proposed move: file managers may remove the source.
         event.accept(Qt.CopyAction)
-        fileDropped(captureUrl)
+        if (isAttachmentDrop(event)) attachmentDropped(captureUrl)
+        else fileDropped(captureUrl)
     }
-    onEntered: drag => { drag.accepted = accepts(drag) }
-    onPositionChanged: drag => { drag.accepted = accepts(drag) }
+    onEntered: drag => { drag.accepted = accepts(drag); routingAttachment=isAttachmentDrop(drag) }
+    onPositionChanged: drag => { drag.accepted = accepts(drag); routingAttachment=isAttachmentDrop(drag) }
+    onExited: routingAttachment=false
     onDropped: drop => handleDrop(drop)
 
     Rectangle {
@@ -50,7 +60,7 @@ DropArea {
             Label {
                 id: hint
                 anchors.centerIn: parent
-                text: "Drop to open PNM capture"
+                text: target.routingAttachment ? "Drop to attach Last Update" : "Drop to open PNM capture"
                 color: target.theme.text
                 font.pixelSize: 18
             }

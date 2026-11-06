@@ -369,3 +369,25 @@ CM-OSSIv3.1 I27 D.2.11 Table 72 (PDF pp.182–183, versioned text) configurable
 candidate-profile defaults; ideal Shannon inverse SNR thresholds. These do not
 guarantee receiver BER/FEC performance. Values clipped at 63.5 dB remain measured
 lower bounds, and 0xFF remains unavailable. Original capture exports are unchanged.
+
+## Pre-EQ correction comparison
+
+The standalone current/last-update parser schema is unchanged. Optional two-input
+analysis exports `analysis_type: upstream_pre_eq_comparison`, `pair`, `mode`,
+`predicted: true`, `assumptions`, `alignment_basis`, `summary` and full `points`.
+`pair` contains both typed PNM headers, CM and CMTS MAC strings, shared grid
+and count, positive `file_time_difference_s`, `precheck_passed: true`,
+`update_mode_encoded: false` and `application_status_known: false`.
+
+Each point retains source index/frequency, original/correction/predicted/delta
+I/Q, raw original/predicted/delta dB, separately labeled aligned dB, and
+original/predicted/delta delay in seconds. Delta I/Q is predicted minus original;
+delta dB is the difference of coefficient magnitudes in dB, not the magnitude of
+the complex delta. Undefined logs and delay stay null. Full-channel magnitude
+spans include tilt; alignment references use mean coefficient power over all
+matched captured positions. Neither is a claim of measured RF power.
+
+Validation rejects wrong roles, unsupported/mismatched headers and counts,
+nonmatching device/channel/grid, empty data, and equal/older correction times.
+Precheck can be exported without a prediction mode. Apply-then-delta and all
+summaries are shared Rust code; UI sampling never changes full exports.

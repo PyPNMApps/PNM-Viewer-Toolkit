@@ -81,3 +81,6 @@ pub type CarrierCount = u64;
 pub type BitCount = u64;
 /// Ideal gross transmission rate in bits per second, before overhead.
 pub type BitRateBps = u64;
+
+mod mac;
+pub(crate) use mac::{mac_text, serialize_mac};

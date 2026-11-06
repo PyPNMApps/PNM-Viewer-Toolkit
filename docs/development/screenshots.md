@@ -73,3 +73,11 @@ file dialogs in the gallery.
 
 These images show a local Ubuntu native build. They do not demonstrate Windows,
 macOS or packaged installation support. Keep hosted CI evidence separate.
+
+For Correction & Delta, use the current sanitized Pre-EQ fixture and an ignored
+copy of the last-update fixture with its encoded capture timestamp increased by
+8 seconds (label the copy synthetic). Attach through the left gutter, pass the
+precheck and explicitly select Adjust. Keep the CM and CMTS MACs sanitized.
+Store `pre-eq-comparison-{dark,light}.png`, `pre-eq-comparison-delay-{dark,light}.png`
+and `pre-eq-comparison-iq-{dark,light}.png` beside the current Pre-EQ guide. Never
+publish screenshots of private lab identities without separate sanitization.

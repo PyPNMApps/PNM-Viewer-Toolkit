@@ -343,3 +343,23 @@ rate and bandwidth arithmetic lives in `common/signal_processing/ofdm.rs`.
 Exports include per-profile `analysis` through the core capture serializer, so
 `pnm-decode INPUT --stdout` and desktop JSON agree without UI post-processing.
 See [the capacity contract](../reference/formats.md#per-profile-ideal-capacity-analysis).
+
+## Pre-EQ pair precheck and prediction
+
+Use `pnm::pnm::analysis::upstream_pre_equalization::comparison::precheck` with
+current and last-update parsed captures to get `PairMetadata` or a field-specific
+`ComparisonError`. It checks both CM and CMTS MAC addresses and strictly newer
+encoded capture time, in addition to exact grid/version/count matching.
+
+`PreEqComparison::calculate(original, correction, CorrectionMode::Adjust)`
+(or explicit `Set`) rechecks the pair and produces full raw prediction/delta,
+level-aligned magnitude, delay and summary data. Use `to_json(max_bytes)` for
+bounded output. The common DSP helper owns complex multiply/replace and the
+coefficient-power reference. Shared MAC formatting has one owner in data_type.
+
+The desktop adapter’s `Capture::pre_eq_precheck` / `pre_eq_compare` use the same
+core implementation. `bounded_range` prepares joint graph points for an exact
+source range while retaining full summaries and full-channel I/Q maps. Only
+`write_json_new` exports the full snapshot; existing destinations are rejected.
+See the [user flow](../ui/measurements/upstream-pre-eq/README.md#correction--delta-from-the-left-gutter)
+and [CLI options](../cli/usage.md#pre-eq-precheck-and-correction-comparison).

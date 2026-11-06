@@ -13,3 +13,5 @@ pub mod spectrum;
 pub mod spectrum_power;
 
 pub mod bit_loading;
+
+pub mod pre_equalization;

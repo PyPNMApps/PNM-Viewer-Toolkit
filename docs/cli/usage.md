@@ -233,3 +233,41 @@ hypothetical even when their status is `below_target` or `not_covered_by_model`.
 The viewer’s **Modulation & Capacity** popup starts with OSSI candidate
 defaults. Use `--model ossi_candidate_defaults` to reproduce that initial
 selection in the CLI; the CLI’s existing WebUI heuristic default is unchanged.
+
+## Pre-EQ precheck and correction comparison
+
+Use a current PNN6 baseline and a last-update PNN7 correction. Validate the
+pair without predicting a result:
+
+```bash
+pnm-decode original.bin --pre-eq-update update.bin --precheck-only --stdout
+```
+
+The precheck requires matching supported versions, channel, CM MAC, CMTS MAC,
+frequency grid, payload length and coefficient count. The correction timestamp
+must be strictly newer; filenames and filesystem times do not override it.
+Invalid pairs exit4 without writing output. Precheck JSON includes the two
+headers, matching grid/device fields and positive encoded file-time gap.
+
+Calculate with an explicit mode; there is no automatic mode selection:
+
+```bash
+pnm-decode original.bin --pre-eq-update update.bin --update-mode adjust --output comparison.json
+pnm-decode original.bin --pre-eq-update update.bin --update-mode set --stdout
+```
+
+Adjust multiplies decoded complex coefficients; Set replaces them. The output
+contains predicted coefficients and their difference from the original, raw and
+level-aligned dB changes, full-channel spans, group-delay changes in seconds,
+precheck metadata and limitations. This is the same Rust analysis as the viewer.
+The separate Q formats (current s2.13, last update s1.14) are decoded before math.
+There is no simulated clipping, rounding, rejection or modem normalization.
+
+Without `--output` or `--stdout`, default outputs are `original.precheck.json`
+or `original.pre-eq-comparison.json`. Existing destinations are never replaced.
+Pairing options cannot be combined with RxMER analysis or `--header-only`.
+`--precheck-only` excludes `--update-mode`; missing/unknown modes are usage errors.
+A later file time does not prove update adjacency or actual application status.
+
+See the [current Pre-EQ guide](../ui/measurements/upstream-pre-eq/README.md#correction--delta-from-the-left-gutter)
+and [full synthetic comparison example](examples/pre-eq-comparison-synthetic.json).

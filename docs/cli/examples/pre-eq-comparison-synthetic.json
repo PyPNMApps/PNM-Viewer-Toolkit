@@ -1,0 +1,137 @@
+{
+  "analysis_type": "upstream_pre_eq_comparison",
+  "pair": {
+    "original_header": {
+      "file_type": "PNN",
+      "file_type_version": 6,
+      "major_version": 1,
+      "minor_version": 0,
+      "capture_time": 100
+    },
+    "correction_header": {
+      "file_type": "PNN",
+      "file_type_version": 7,
+      "major_version": 1,
+      "minor_version": 0,
+      "capture_time": 108
+    },
+    "channel_id": 41,
+    "mac_address": "aa:bb:cc:dd:ee:ff",
+    "cmts_mac_address": "aa:bb:cc:dd:ee:ff",
+    "first_frequency_hz": 39900000,
+    "last_frequency_hz": 39950000,
+    "subcarrier_spacing_hz": 25000,
+    "sample_count": 3,
+    "file_time_difference_s": 8,
+    "precheck_passed": true,
+    "update_mode_encoded": false,
+    "application_status_known": false
+  },
+  "mode": "adjust",
+  "predicted": true,
+  "assumptions": [
+    "User-selected Adjust/Set; mode not encoded in PNM",
+    "File-time order does not prove adjacent updates",
+    "No modem clipping, rounding, rejection or normalization simulated",
+    "Coefficient response, not measured TX power or plant response"
+  ],
+  "alignment_basis": "Each magnitude curve referenced to its own mean coefficient power over all matched carriers; presentation only",
+  "summary": {
+    "original_magnitude_span_db": 0.9691001300805645,
+    "predicted_magnitude_span_db": 1.0122928745922377,
+    "original_reference_db": 0.6694678963061322,
+    "predicted_reference_db": 0.38096524806401466,
+    "raw_reference_shift_db": -0.2885026482421176,
+    "aligned_delta_min_db": -0.6264115463310242,
+    "aligned_delta_max_db": 0.3316953927537908
+  },
+  "points": [
+    {
+      "sample_index": 0,
+      "frequency_hz": 39900000,
+      "original_iq": [
+        1.0,
+        0.0
+      ],
+      "correction_iq": [
+        1.0,
+        0.0
+      ],
+      "predicted_iq": [
+        1.0,
+        0.0
+      ],
+      "delta_iq": [
+        0.0,
+        0.0
+      ],
+      "original_db": 0.0,
+      "predicted_db": 0.0,
+      "delta_db": 0.0,
+      "original_aligned_db": -0.6694678963061322,
+      "predicted_aligned_db": -0.38096524806401466,
+      "aligned_delta_db": 0.2885026482421176,
+      "original_delay_s": -7.379180882521665e-6,
+      "predicted_delay_s": -7.062002651347209e-6,
+      "delta_delay_s": 3.171782311744562e-7
+    },
+    {
+      "sample_index": 1,
+      "frequency_hz": 39925000,
+      "original_iq": [
+        1.0,
+        0.5
+      ],
+      "correction_iq": [
+        0.9000244140625,
+        0.0
+      ],
+      "predicted_iq": [
+        0.9000244140625,
+        0.45001220703125
+      ],
+      "delta_iq": [
+        -0.0999755859375,
+        -0.04998779296875
+      ],
+      "original_db": 0.9691001300805645,
+      "predicted_db": 0.05418593550742269,
+      "delta_db": -0.9149141945731418,
+      "original_aligned_db": 0.29963223377443227,
+      "predicted_aligned_db": -0.326779312556592,
+      "aligned_delta_db": -0.6264115463310242,
+      "original_delay_s": 1.475836176504333e-6,
+      "predicted_delay_s": 1.158657945329877e-6,
+      "delta_delay_s": -3.17178231174456e-7
+    },
+    {
+      "sample_index": 2,
+      "frequency_hz": 39950000,
+      "original_iq": [
+        1.0,
+        -0.5
+      ],
+      "correction_iq": [
+        1.0,
+        0.0999755859375
+      ],
+      "predicted_iq": [
+        1.04998779296875,
+        -0.4000244140625
+      ],
+      "delta_iq": [
+        0.04998779296875,
+        0.0999755859375
+      ],
+      "original_db": 0.9691001300805645,
+      "predicted_db": 1.0122928745922377,
+      "delta_db": 0.04319274451167321,
+      "original_aligned_db": 0.29963223377443227,
+      "predicted_aligned_db": 0.631327626528223,
+      "aligned_delta_db": 0.3316953927537908,
+      "original_delay_s": 0.000010330853235530331,
+      "predicted_delay_s": 9.379318542006963e-6,
+      "delta_delay_s": -9.515346935233678e-7
+    }
+  ]
+}

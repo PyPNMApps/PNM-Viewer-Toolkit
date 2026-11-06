@@ -66,3 +66,7 @@ and [complete last-update example](../../../cli/examples/upstream-pre-eq-last.js
   <source media="(prefers-color-scheme: light)" srcset="images/upstream-pre-eq-last-iq-light.png">
   <img alt="Last upstream pre-equalization update I/Q density" src="images/upstream-pre-eq-last-iq-dark.png" width="1000">
 </picture>
+
+To attach this file as a correction to an older compatible current capture,
+use [Correction & Delta in the left gutter](../upstream-pre-eq/README.md#correction--delta-from-the-left-gutter).
+The two file timestamps must meet the viewer’s strict newer-only policy.

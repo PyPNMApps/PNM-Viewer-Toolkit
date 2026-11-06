@@ -42,7 +42,7 @@ The current viewer supports:
 | [RxMER](docs/ui/measurements/rxmer/README.md) | MER by frequency; [Modulation & Capacity](docs/ui/measurements/rxmer/README.md#modulation--capacity) |
 | [Spectrum Analyzer](docs/ui/measurements/spectrum-analyzer/README.md) | Amplitude by frequency and calculated RBW |
 | [DS Channel Estimation](docs/ui/measurements/channel-estimation/README.md) | Magnitude, group delay and I/Q dots and density |
-| [US Pre-EQ (current)](docs/ui/measurements/upstream-pre-eq/README.md) | Coefficient magnitude, group delay and I/Q dots and density |
+| [US Pre-EQ (current)](docs/ui/measurements/upstream-pre-eq/README.md) | Coefficient magnitude, group delay, I/Q, and [Correction & Delta](docs/ui/measurements/upstream-pre-eq/README.md#correction--delta-from-the-left-gutter) |
 | [US Pre-EQ (last update)](docs/ui/measurements/upstream-pre-eq-last/README.md) | RNG-RSP update magnitude, group delay and I/Q dots and density |
 | [Histogram](docs/ui/measurements/histogram/README.md) | Hit counts by bin index |
 | [FEC Summary](docs/ui/measurements/fec-summary/README.md) | Per-profile interval codewords over UTC time |

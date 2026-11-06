@@ -348,3 +348,120 @@ fn rxmer_analysis_mode_matches_core_and_rejects_bad_controls() {
         Some(3)
     );
 }
+
+#[test]
+fn pre_eq_cli_requires_precheck_mode_and_matches_full_core_result() {
+    use pnm::pnm::{
+        analysis::upstream_pre_equalization::comparison::{CorrectionMode, PreEqComparison},
+        parser::cm_us_ofdma_pre_eq::CmUsOfdmaPreEq,
+    };
+    let workspace = Workspace::new();
+    fs::write(
+        workspace.0.join("original.bin"),
+        pnm_fixtures::UPSTREAM_PRE_EQ,
+    )
+    .unwrap();
+    fs::write(
+        workspace.0.join("equal.bin"),
+        pnm_fixtures::UPSTREAM_PRE_EQ_LAST,
+    )
+    .unwrap();
+    assert_eq!(
+        workspace
+            .run(&[
+                "original.bin",
+                "--pre-eq-update",
+                "equal.bin",
+                "--precheck-only",
+                "--stdout"
+            ])
+            .status
+            .code(),
+        Some(4)
+    );
+    let mut update = pnm_fixtures::UPSTREAM_PRE_EQ_LAST.to_vec();
+    let time = u32::from_be_bytes(update[6..10].try_into().unwrap());
+    update[6..10].copy_from_slice(&(time + 1).to_be_bytes());
+    fs::write(workspace.0.join("update.bin"), &update).unwrap();
+    for args in [
+        vec!["original.bin", "--pre-eq-update", "update.bin"],
+        vec!["original.bin", "--update-mode", "adjust"],
+        vec![
+            "original.bin",
+            "--pre-eq-update",
+            "update.bin",
+            "--update-mode",
+            "auto",
+        ],
+        vec![
+            "original.bin",
+            "--pre-eq-update",
+            "update.bin",
+            "--precheck-only",
+            "--header-only",
+        ],
+        vec![
+            "original.bin",
+            "--pre-eq-update",
+            "update.bin",
+            "--update-mode",
+            "adjust",
+            "--rxmer-bit-loading",
+        ],
+    ] {
+        assert_eq!(workspace.run(&args).status.code(), Some(2));
+    }
+    let output = workspace.run(&[
+        "original.bin",
+        "--pre-eq-update",
+        "update.bin",
+        "--precheck-only",
+        "--stdout",
+    ]);
+    assert!(output.status.success());
+    let pair: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(pair["file_time_difference_s"], 1);
+    let output = workspace.run(&[
+        "original.bin",
+        "--pre-eq-update",
+        "update.bin",
+        "--update-mode",
+        "adjust",
+        "--stdout",
+    ]);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let actual: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let original =
+        CmUsOfdmaPreEq::parse(pnm_fixtures::UPSTREAM_PRE_EQ, Default::default()).unwrap();
+    let update = CmUsOfdmaPreEq::parse(&update, Default::default()).unwrap();
+    let expected = PreEqComparison::calculate(&original, &update, CorrectionMode::Adjust).unwrap();
+    assert_eq!(
+        actual,
+        serde_json::from_str::<serde_json::Value>(&expected.to_json(16 * 1024 * 1024).unwrap())
+            .unwrap()
+    );
+    fs::write(workspace.0.join("keep.json"), "keep").unwrap();
+    assert_eq!(
+        workspace
+            .run(&[
+                "original.bin",
+                "--pre-eq-update",
+                "update.bin",
+                "--update-mode",
+                "set",
+                "--output",
+                "keep.json"
+            ])
+            .status
+            .code(),
+        Some(1)
+    );
+    assert_eq!(
+        fs::read_to_string(workspace.0.join("keep.json")).unwrap(),
+        "keep"
+    );
+}

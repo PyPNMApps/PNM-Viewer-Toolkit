@@ -21,3 +21,13 @@ All example CM/CMTS MAC addresses are `aa:bb:cc:dd:ee:ff`. The examples folder
 includes upstream LICENSE/NOTICE, provenance hashes and a file list. These are
 modified demonstration fixtures, not live customer measurements. The source
 [fixture provenance](../../tests/fixtures/pypnm/README.md) explains their origin.
+
+## US Pre-EQ comparison demo (source checkout)
+
+The [comparison demo](../../tests/fixtures/demos/us-pre-eq-comparison/README.md)
+sets aside `original.bin` and `last-update.bin` with a step-by-step walkthrough.
+Open the original, then attach the update from **Correction & Delta** in the
+left gutter. This is the sanitized pair used for the comparison screenshots;
+the update timestamp is explicitly synthetic and eight seconds later. Normal
+prechecks remain enabled. This additional pair is available in the repository;
+it is not yet included in desktop installers.

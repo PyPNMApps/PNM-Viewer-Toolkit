@@ -4,6 +4,7 @@
  */
 //! Native Qt adapter for the Rust capture and presentation layer.
 //! Unsafe extern declarations are confined to CXX-Qt's typed interop boundary.
+mod pre_equalization;
 mod rxmer;
 mod spectrum;
 
@@ -28,6 +29,11 @@ mod bridge {
         #[qproperty(QString, rxmer_analysis_error)]
         #[qproperty(bool, rxmer_analysis_busy)]
         #[qproperty(QString, spectrum_workspace_json)]
+        #[qproperty(bool, pre_eq_current)]
+        #[qproperty(bool, pre_eq_busy)]
+        #[qproperty(QString, pre_eq_attachment_json)]
+        #[qproperty(QString, pre_eq_json)]
+        #[qproperty(QString, pre_eq_error)]
         #[qproperty(QString, viewport_json)]
         #[qproperty(QString, status)]
         #[qproperty(QString, error_message)]
@@ -158,6 +164,22 @@ mod bridge {
         /// Busy calls do nothing; native dialog cancellation never calls this.
         #[qinvokable]
         fn close_capture(self: Pin<&mut ViewerBackend>);
+        /// Prechecks a last-update attachment against the current baseline.
+        #[qinvokable]
+        fn attach_pre_eq_update(self: Pin<&mut ViewerBackend>, url: &QUrl);
+        /// Predicts a validated attachment using an explicit Adjust/Set mode.
+        #[qinvokable]
+        fn compare_pre_eq(self: Pin<&mut ViewerBackend>, mode: &QString);
+        /// Detaches and invalidates outstanding comparison work.
+        #[qinvokable]
+        fn remove_pre_eq_update(self: Pin<&mut ViewerBackend>);
+        /// Exports full comparison JSON to a new local file.
+        #[qinvokable]
+        fn export_pre_eq(self: Pin<&mut ViewerBackend>, url: &QUrl);
+        /// Shows an exact source-carrier range of the retained comparison.
+        #[qinvokable]
+        fn show_pre_eq_range(self: Pin<&mut ViewerBackend>, start: u32, count: u32);
+
     }
     impl cxx_qt::Threading for ViewerBackend {}
 }
@@ -176,6 +198,12 @@ pub struct ViewerBackendRust {
     spectrum_workspace_json: QString,
     spectrum_workspace: spectrum::Workspace,
     rxmer: rxmer::State,
+    pre_eq: pre_equalization::State,
+    pre_eq_current: bool,
+    pre_eq_busy: bool,
+    pre_eq_attachment_json: QString,
+    pre_eq_json: QString,
+    pre_eq_error: QString,
     rxmer_analysis_json: QString,
     rxmer_analysis_error: QString,
     rxmer_analysis_busy: bool,
@@ -206,6 +234,12 @@ impl Default for ViewerBackendRust {
             spectrum_workspace_json: QString::from("{}"),
             spectrum_workspace: spectrum::Workspace::default(),
             rxmer: rxmer::State::default(),
+            pre_eq: pre_equalization::State::default(),
+            pre_eq_current: false,
+            pre_eq_busy: false,
+            pre_eq_attachment_json: QString::from("{}"),
+            pre_eq_json: QString::from("{}"),
+            pre_eq_error: QString::default(),
             rxmer_analysis_json: QString::from("{}"),
             rxmer_analysis_error: QString::default(),
             rxmer_analysis_busy: false,
@@ -333,6 +367,10 @@ impl bridge::ViewerBackend {
                     match result {
                         Ok(loaded) => {
                             backend.as_mut().cancel_rxmer_analysis();
+                            backend.as_mut().remove_pre_eq_update();
+                            backend
+                                .as_mut()
+                                .set_pre_eq_current(loaded.capture.supports_pre_eq_comparison());
                             backend.as_mut().rust_mut().capture = Some(loaded.capture);
                             backend.as_mut().rust_mut().view = MeasurementView::Default;
                             backend
@@ -747,6 +785,8 @@ impl bridge::ViewerBackend {
             return;
         }
         self.as_mut().cancel_rxmer_analysis();
+        self.as_mut().remove_pre_eq_update();
+        self.as_mut().set_pre_eq_current(false);
         self.as_mut().rust_mut().spectrum_workspace = spectrum::Workspace::default();
         self.as_mut()
             .set_spectrum_workspace_json(QString::from("{}"));

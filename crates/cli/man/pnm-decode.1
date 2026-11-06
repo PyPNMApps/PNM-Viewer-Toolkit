@@ -106,3 +106,20 @@ pnm-decode rxmer.bin --rxmer-bit-loading --stdout
 .fi
 .SH LICENSE
 Apache-2.0. Distributed notices identify third-party material.
+
+.SH PRE-EQ COMPARISON
+Use a current PNN6 baseline and a last-update PNN7 correction.
+.B --pre-eq-update PATH
+attaches the correction input.
+.B --precheck-only
+validates matching versions, channel, CM and CMTS MAC addresses, frequency grid,
+payload length and coefficient count, with a strictly newer correction timestamp.
+For prediction, use
+.B --update-mode adjust
+(complex multiplication) or
+.B --update-mode set
+(replacement). The mode is not encoded in PNM files.
+Precheck-only excludes update-mode. These options exclude header-only and RxMER analysis.
+Default outputs use .precheck.json or .pre-eq-comparison.json.
+Results are hypothetical; file-time order does not establish update adjacency
+or application status. No clipping, rejection or modem normalization is simulated.

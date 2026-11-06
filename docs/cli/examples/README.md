@@ -81,3 +81,22 @@ for power sums, null/perfect-reference handling and interpretation limits.
 650–675 MHz inclusive carrier-center window from `rxmer.bin`. It includes
 1,001 readings, the WebUI heuristic, uniform loading and gross-rate scenarios.
 Reproduce it with the [analysis CLI options](../usage.md#rxmer-bit-loading-analysis).
+
+## Synthetic Pre-EQ comparison
+
+[pre-eq-comparison-synthetic.json](pre-eq-comparison-synthetic.json) contains
+all three carriers from [original hex](pre-eq-original-synthetic.hex) and
+[correction hex](pre-eq-update-synthetic.hex), using explicit Adjust mode.
+Both files are project-owned synthetic inputs with sanitized header identities,
+Unix timestamps100 and108, and known Q-format pairs. They are not a lab pair
+or evidence that a modem applied an update.
+
+From the repository root, convert the hex files into ignored local binaries:
+
+```bash
+python3 -c 'from pathlib import Path; Path("local/pre-eq-original-synthetic.bin").write_bytes(bytes.fromhex(Path("docs/cli/examples/pre-eq-original-synthetic.hex").read_text()))'
+python3 -c 'from pathlib import Path; Path("local/pre-eq-update-synthetic.bin").write_bytes(bytes.fromhex(Path("docs/cli/examples/pre-eq-update-synthetic.hex").read_text()))'
+pnm-decode local/pre-eq-original-synthetic.bin --pre-eq-update local/pre-eq-update-synthetic.bin --update-mode adjust --stdout
+```
+
+See [pair precheck and prediction options](../usage.md#pre-eq-precheck-and-correction-comparison).

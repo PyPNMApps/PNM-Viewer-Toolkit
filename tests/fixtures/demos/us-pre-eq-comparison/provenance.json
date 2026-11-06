@@ -1,0 +1,24 @@
+{
+  "purpose": "Sanitized screenshot demo; correction timestamp is synthetic.",
+  "mode": "adjust_assumed_for_demonstration",
+  "files": [
+    {
+      "name": "original.bin",
+      "sha256": "32215c6467bf05e1251abdac509bd34c001cab2b5b5396308e1cfbd48a939619",
+      "source": "../../pypnm/tests/files/us_pre_equalizer_coef.bin",
+      "source_sha256": "32215c6467bf05e1251abdac509bd34c001cab2b5b5396308e1cfbd48a939619",
+      "capture_time": 1764785273,
+      "changes": []
+    },
+    {
+      "name": "last-update.bin",
+      "sha256": "34503e0aac37789524b3146ed56b268aa937b6ecb5a5a5f346039e39023437e0",
+      "source": "../../pypnm/tests/files/us_pre_equalizer_coef_last.bin",
+      "source_sha256": "8e6593ba4ecad1baae56dd1334104fb74ac82447d6af41fbda72825cc1262ad2",
+      "capture_time": 1764785281,
+      "changes": [
+        "Increase encoded capture_time by 8 seconds; all other bytes unchanged."
+      ]
+    }
+  ]
+}

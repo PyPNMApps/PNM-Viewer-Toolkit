@@ -295,3 +295,25 @@ The RxMER right-click menu is independent of the existing Spectrum actions.
 
 User guides and real dark/light screenshots are colocated under
 `docs/ui/measurements/<file-type>/`; `measurements.md` is now an index.
+
+## Pre-EQ comparison ownership
+
+The current-only left gutter uses typed `pre_eq_current` availability, native
+attachment/export dialogs and the existing global drop area’s explicit attachment
+target routing. One drop is consumed once; it never also replaces the baseline.
+The core `upstream_pre_equalization/comparison` precheck validates CM/CMTS MACs,
+versions, grid/count and strict file-time order before attachment. Explicit
+Adjust/Set uses common DSP `pre_equalization`; parser JSON remains unchanged.
+
+The viewer adapter retains full immutable results and jointly samples both
+traces, preserving shared source positions, extrema and separate magnitude/delay
+gaps. QML only renders, formats units and keeps transient interaction state.
+Qt `backend/pre_equalization` retains Arc original/correction/result snapshots
+and rejects obsolete completions using capture identity and generation tokens.
+Changing capture or removing attachment invalidates pending publication; failed
+prechecks/replacements retain the previous valid pair. Export is full-resolution
+and no-clobber; dirty-mode border follows the last successful result.
+
+Track native checks separately from offscreen QML tests. Public screenshots
+must use sanitized fixtures with clearly synthetic later timestamps; private lab
+captures remain under ignored development/files and are not bundled or published.

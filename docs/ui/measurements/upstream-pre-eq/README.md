@@ -75,3 +75,83 @@ and [complete CLI example](../../../cli/examples/upstream-pre-eq.json).
   <img alt="Current upstream coefficient I/Q density" src="images/upstream-pre-eq-iq-dark.png" width="1000">
 </picture>
 
+
+## Correction & Delta from the left gutter
+
+For a ready-to-open pair and walkthrough, use the
+[sanitized comparison demo](../../../../tests/fixtures/demos/us-pre-eq-comparison/README.md).
+It contains the two files used for the screenshots below.
+
+Open a **current US Pre-EQ** capture, show the left navigation with the panel
+button, and select **Correction & Delta**. This section is available for current
+PNN6 captures; opening a Last Update file by itself keeps its existing view.
+
+1. Drop one Last Update file onto **Drop Last Update here**, or choose it with
+   **Choose Last Update…** using the OS file picker. Dropping there attaches it;
+   dropping elsewhere keeps the usual behavior of opening a new capture.
+2. Wait for **Precheck passed**. Rust requires a PNN7 correction and checks the
+   format version, channel, **CM MAC and CMTS MAC**, zero frequency, first-active
+   index, spacing, data length, and coefficient count. Grids must match exactly.
+3. The correction's encoded capture timestamp must be strictly newer. Equal or
+   earlier timestamps fail, even if filenames suggest otherwise. The UI shows
+   UTC timestamps and the file-time gap; this is not update latency.
+4. Select **Adjust (multiply)** or **Set (replace)**, then **Compare**. The PNM
+   file does not encode that mode; select it from known capture context.
+5. The main workspace shows original (teal) and predicted (amber) curves, with
+   shading between them and a separate delta plot. Toggle either trace, choose
+   Magnitude or Group delay, and drag to zoom; double-click to reset. I/Q scatter
+   offers Original, Predicted or complex Delta, each with Dots/Density.
+
+For Adjust, the predicted coefficient is `original × correction` using complex
+I/Q multiplication. Set replaces it with the correction. Complex delta is
+`predicted − original`. Delta magnitude is the difference between the original
+and predicted dB magnitudes, **not** the logarithm of the complex delta.
+
+**Level-aligned flatness** references each curve to its own mean coefficient
+power across all matched carriers, making small shape changes visible separately
+from common gain. **Raw coefficient magnitude** preserves the original gain
+references. Alignment is a labeled display operation, not simulated modem
+normalization or measured TX power. The full-span chips include tilt and refer
+to the full paired capture, even while the graphs are zoomed.
+
+A changed update mode highlights the **Recalculate** border until the matching
+result succeeds. **Original capture** returns to the untouched capture/zoom.
+**Remove** discards the attachment/results. Failed replacements preserve the
+previous valid pair; a field-specific error explains the rejected candidate.
+
+**Export JSON** saves the full result, including both headers and MAC addresses,
+explicit mode, raw predicted/delta I/Q, raw/aligned dB, group delay in seconds,
+precheck metadata and assumptions. Zoom does not reduce the export. Existing
+outputs are never overwritten. See [CLI pairing options](../../../cli/usage.md#pre-eq-precheck-and-correction-comparison)
+and the [synthetic JSON example](../../../cli/examples/pre-eq-comparison-synthetic.json).
+
+These are **predicted coefficient changes**. A newer file timestamp cannot prove
+that the correction is the next update after the baseline. Clipping, rejection,
+rounding, reset history and actual application status are unavailable in these
+files. Shaded dB separation is not absolute RF power or measured plant flatness.
+
+Specification references: CM-SP-CM-OSSIv3.1-I27-250219 D.2.13, Tables77/78;
+CM-SP-CM-OSSIv4.0-I13-260429 D.2.13, Tables110/111; and
+CM-SP-PHYv3.1-I20-230419 §7.4.17 for Adjust versus Set behavior.
+
+These screenshots use sanitized repository fixtures and a **synthetic correction
+timestamp eight seconds later** to demonstrate the UI. They do not establish
+a real update sequence or known modem application mode.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/pre-eq-comparison-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="images/pre-eq-comparison-light.png">
+  <img alt="Original and predicted level-aligned magnitudes, shaded separation and delta, navigated from the left gutter" src="images/pre-eq-comparison-dark.png" width="1000">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/pre-eq-comparison-delay-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="images/pre-eq-comparison-delay-light.png">
+  <img alt="Original and predicted coefficient group delay and delay difference" src="images/pre-eq-comparison-delay-dark.png" width="1000">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/pre-eq-comparison-iq-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="images/pre-eq-comparison-iq-light.png">
+  <img alt="Complex predicted-minus-original delta I/Q scatter with Dots and Density modes" src="images/pre-eq-comparison-iq-dark.png" width="1000">
+</picture>

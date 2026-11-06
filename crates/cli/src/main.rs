@@ -6,6 +6,7 @@
 #![forbid(unsafe_code)]
 mod analysis;
 mod output;
+mod pre_eq;
 use pnm::{
     common::json::DEFAULT_MAX_JSON_BYTES,
     diagnostic::{ErrorCode, ParseError},
@@ -39,6 +40,9 @@ Options:
       --stop-hz HZ    Last inclusive carrier-center bound
       --margin-db DB  Additional nonnegative MER margin (default: 0)
       --max-bit-loading BITS  Data bit cap (default: 13, 8192-QAM)
+      --pre-eq-update PATH  Attach a newer compatible last-update PNM7
+      --update-mode MODE   Explicit adjust or set interpretation
+      --precheck-only      Validate the Pre-EQ pair without prediction
   -h, --help          Show this help
   -V, --version       Show version
       --              End options (for filenames beginning with a dash)
@@ -51,6 +55,7 @@ struct Arguments {
     stdout: bool,
     header_only: bool,
     analysis: analysis::Options,
+    pre_eq: pre_eq::Options,
 }
 struct Failure(u8, String);
 impl From<std::io::Error> for Failure {
@@ -105,6 +110,9 @@ fn parse_arguments(
                 )?;
                 return Ok(None);
             }
+            if parsed.pre_eq.parse(&argument, &mut arguments)? {
+                continue;
+            }
             if parsed.analysis.parse(&argument, &mut arguments)? {
                 continue;
             }
@@ -152,16 +160,15 @@ fn parse_arguments(
         ));
     }
     parsed.analysis.validate(parsed.header_only)?;
+    parsed
+        .pre_eq
+        .validate(parsed.header_only, parsed.analysis.enabled)?;
     Ok(Some(parsed))
 }
 
-fn run() -> Result<(), Failure> {
-    let Some(arguments) = parse_arguments(std::env::args_os().skip(1))? else {
-        return Ok(());
-    };
-    let input = arguments.input.expect("argument parser requires input");
+fn read_input(input: &std::path::Path) -> Result<Vec<u8>, Failure> {
     let mut bytes = Vec::new();
-    let source = File::open(&input)?;
+    let source = File::open(input)?;
     if !source.metadata()?.is_file() {
         return Err(Failure(IO_ERROR, "input must be a regular file".into()));
     }
@@ -169,8 +176,21 @@ fn run() -> Result<(), Failure> {
     if bytes.len() as u64 > MAX_INPUT_BYTES {
         return Err(Failure(DECODE_ERROR, "input exceeds 16 MiB limit".into()));
     }
+    Ok(bytes)
+}
+
+fn run() -> Result<(), Failure> {
+    let Some(arguments) = parse_arguments(std::env::args_os().skip(1))? else {
+        return Ok(());
+    };
+    let input = arguments.input.expect("argument parser requires input");
+    let bytes = read_input(&input)?;
     let file = PnmFile::from_bytes(&bytes);
-    let json = if arguments.analysis.enabled {
+    let json = if arguments.pre_eq.correction.is_some() {
+        Ok(arguments
+            .pre_eq
+            .json(file.decode(ParseLimits::default())?)?)
+    } else if arguments.analysis.enabled {
         Ok(arguments
             .analysis
             .json(file.decode(ParseLimits::default())?)?)
@@ -190,7 +210,11 @@ fn run() -> Result<(), Failure> {
         stdout.flush()?;
     } else {
         let destination = arguments.output.unwrap_or_else(|| {
-            input.with_extension(if arguments.analysis.enabled {
+            input.with_extension(if arguments.pre_eq.precheck_only {
+                "precheck.json"
+            } else if arguments.pre_eq.correction.is_some() {
+                "pre-eq-comparison.json"
+            } else if arguments.analysis.enabled {
                 "bit-loading.json"
             } else {
                 "json"

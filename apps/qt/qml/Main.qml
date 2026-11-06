@@ -61,14 +61,19 @@ ApplicationWindow {
     }
     Connections {
         target: backend
+        function onPre_eq_currentChanged() { if (!backend.pre_eq_current) window.comparisonSelected=false }
+        function onPre_eq_jsonChanged() { if (!JSON.parse(backend.pre_eq_json).pair) window.comparisonSelected=false }
         function onMetadata_jsonChanged() {
             window.spectrumPresentations = ({})
             spectrumControls.restorePresentation(null)
             bitLoadingDialog.close()
         }
     }
+    property bool comparisonSelected: false
+    readonly property var preEqAttachment: JSON.parse(backend.pre_eq_attachment_json)
+    readonly property var preEqResult: JSON.parse(backend.pre_eq_json)
     property bool navigationVisible: false
-    readonly property bool blocked: backend.busy || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
+    readonly property bool blocked: backend.busy || backend.pre_eq_busy || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
 
     CaptureDropArea {
         parent: Overlay.overlay
@@ -76,6 +81,8 @@ ApplicationWindow {
         z: 1
         theme: appTheme
         blocked: window.blocked || settingsMenu.visible || spectrumTools.popupVisible
+        attachmentTarget: backend.pre_eq_current && window.navigationVisible ? preEqSidebar.dropTarget : null
+        onAttachmentDropped: captureUrl => { window.comparisonSelected=true; backend.attach_pre_eq_update(captureUrl) }
         onFileDropped: captureUrl => backend.open_file(captureUrl)
     }
 
@@ -88,6 +95,22 @@ ApplicationWindow {
         onAnalysisRequested: (start, count, model, margin, cap) => backend.analyze_rxmer(start, count, model, margin, cap)
         onCancelRequested: backend.cancel_rxmer_analysis()
         onExportRequested: analysisSaveDialog.open()
+    }
+    FileDialog {
+        id: preEqOpenDialog
+        title: "Attach Pre-EQ Last Update"
+        fileMode: FileDialog.OpenFile
+        nameFilters: ["PNM captures (*)"]
+        currentFolder: openDialog.currentFolder
+        onAccepted: { window.comparisonSelected=true; backend.attach_pre_eq_update(selectedFile) }
+    }
+    FileDialog {
+        id: preEqSaveDialog
+        title: "Export full-resolution Pre-EQ comparison (new file)"
+        fileMode: FileDialog.SaveFile
+        nameFilters: ["JSON files (*.json)"]
+        defaultSuffix: "json"
+        onAccepted: backend.export_pre_eq(selectedFile)
     }
     FileDialog {
         id: analysisSaveDialog
@@ -192,12 +215,17 @@ ApplicationWindow {
         spacing: 0
         Rectangle {
             visible: window.navigationVisible
-            Layout.preferredWidth: 180
+            Layout.preferredWidth: backend.pre_eq_current ? 244 : 180
             Layout.fillHeight: true
             color: appTheme.sidebar
-            ColumnLayout {
+            ScrollView {
+                id: navigationScroll
                 anchors.fill: parent
-                anchors.margins: 16
+                anchors.margins: 12
+                contentWidth: availableWidth
+                clip: true
+                ColumnLayout {
+                width: navigationScroll.availableWidth
                 spacing: 16
                 Image {
                     id: brandLogo
@@ -251,7 +279,24 @@ ApplicationWindow {
 
                 Label { text: "WORKSPACE"; color: appTheme.muted; font.pixelSize: 10 }
                 Label { text: backend.loaded ? (window.metadata.title || "Measurement") : "Home"; color: appTheme.accent; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                PreEqComparisonSidebar {
+                    id: preEqSidebar
+                    visible: backend.pre_eq_current
+                    Layout.fillWidth: true
+                    theme: appTheme
+                    attachment: window.preEqAttachment
+                    resultMode: window.preEqResult.mode || ""
+                    working: backend.pre_eq_busy
+                    errorMessage: backend.pre_eq_error
+                    onChooseFile: preEqOpenDialog.open()
+                    onCalculate: mode => { window.comparisonSelected=true; backend.compare_pre_eq(mode) }
+                    onRemoveAttachment: backend.remove_pre_eq_update()
+                    onShowComparison: window.comparisonSelected=true
+                    onShowOriginal: window.comparisonSelected=false
+                    onExportResult: preEqSaveDialog.open()
+                }
                 Item { Layout.fillHeight: true }
+                }
             }
         }
         ColumnLayout {
@@ -290,8 +335,17 @@ ApplicationWindow {
                         }
                     }
                 }
+                PreEqComparisonView {
+                    visible: backend.loaded && window.comparisonSelected && backend.pre_eq_current
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    theme: appTheme
+                    result: window.preEqResult
+                    onRangeRequested: (start,count)=>backend.show_pre_eq_range(start,count)
+                    onResetRequested: backend.show_pre_eq_range(0,window.preEqResult.pair ? window.preEqResult.pair.sample_count : 0)
+                }
                 Rectangle {
-                    visible: backend.loaded
+                    visible: backend.loaded && !window.comparisonSelected
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 300
