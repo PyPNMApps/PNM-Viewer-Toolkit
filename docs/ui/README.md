@@ -116,6 +116,8 @@ finishes first. If launching fails, the old window stays open and **Restart view
 allows a retry. Older versions that wait for this button still need that one click.
 A failed apt operation can leave a partially updated package state; check both
 package versions before retrying. Other OSes and source builds use release downloads.
+On Windows, download the new MSI, quit the viewer, run the installer and relaunch;
+**Check for updates** only checks versions. An older MSI is upgraded in place.
 Older 0.1.6/0.1.7 builds require one manual upgrade to gain this installer.
 **View releases** remains available when checks fail. The check
 sends only a release lookup to this project's GitHub API, not capture contents

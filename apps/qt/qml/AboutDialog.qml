@@ -37,6 +37,14 @@ Dialog {
     }
     objectName: "aboutDialog"
     title: "About PNM Viewer Toolkit"
+    palette.window: theme.background
+    palette.windowText: theme.text
+    palette.base: theme.panel
+    palette.text: theme.text
+    palette.button: theme.button
+    palette.buttonText: theme.text
+    palette.highlight: theme.accent
+    palette.highlightedText: theme.background
     width: 500
     modal: true
     readonly property bool installBusy: updates.install_state === "downloading" || updates.install_state === "installing" || updates.install_state === "restarting"
@@ -133,9 +141,10 @@ Dialog {
             color: dialog.theme.text
         }
         Label {
+            objectName: "updateInstructionsLabel"
             text: dialog.updates.install_available || dialog.installBusy
                 ? "The viewer restarts after installation. Export your work before starting. Administrator approval is required."
-                : "In-app installation requires an installed Ubuntu x64 build and matching release packages. Other builds use release downloads."
+                : "Check for updates finds new versions; it does not install them. Open release downloads, quit the viewer, and run the new installer. Automatic installation is available only for installed Ubuntu x64 builds with matching packages."
             color: dialog.theme.muted
             wrapMode: Text.WordWrap
             Layout.fillWidth: true

@@ -35,6 +35,9 @@ fn main() {
     if std::env::var_os("QT_QPA_PLATFORMTHEME").is_none_or(|theme| theme.is_empty()) {
         std::env::set_var("QT_QPA_PLATFORMTHEME", "gtk3");
     }
+    // Native Windows/macOS control styles do not consistently honor our palette.
+    // Match the development/test style before Qt starts; OS file dialogs remain native.
+    std::env::set_var("QT_QUICK_CONTROLS_STYLE", "Fusion");
     let mut application = QGuiApplication::new();
     #[cfg(target_os = "linux")]
     {

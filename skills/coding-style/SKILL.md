@@ -193,6 +193,10 @@ captures. Preserve cancellation, session cleanup, stale-result rejection and
 accessible controls when moving responsibilities. Offscreen QML tests do not
 replace native Qt integration validation.
 
+Keep the installed executable's Fusion control style aligned with development
+and CI; a launcher-only style setting does not cover desktop shortcuts. Check
+rendered button contrast in both themes. Preserve native Open/Save dialogs.
+
 ## SPDX headers
 
 Add the full copyright/SPDX file banner below to new project-owned source and

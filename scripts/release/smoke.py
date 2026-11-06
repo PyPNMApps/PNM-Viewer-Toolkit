@@ -25,15 +25,17 @@ def clean_environment():
     environment = os.environ.copy()
     for name in ('QT_SDK_DIR', 'QMAKE', 'QT_PLUGIN_PATH', 'QML_IMPORT_PATH',
                  'QML2_IMPORT_PATH', 'LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH',
-                 'DYLD_FRAMEWORK_PATH', 'QT_QPA_PLATFORM_PLUGIN_PATH'):
+                 'DYLD_FRAMEWORK_PATH', 'QT_QPA_PLATFORM_PLUGIN_PATH',
+                 'QT_QUICK_CONTROLS_STYLE', 'QT_QUICK_CONTROLS_FALLBACK_STYLE',
+                 'QT_QUICK_CONTROLS_CONF'):
         environment.pop(name, None)
     environment['PATH'] = os.pathsep.join(
         entry for entry in environment['PATH'].split(os.pathsep)
         if 'local/qt' not in entry.replace('\\', '/').lower())
     # GUI-subsystem Windows applications otherwise send Qt messages to the
     # debugger instead of the subprocess stderr pipe used for smoke evidence.
-    environment.update(QT_QUICK_BACKEND='software', QT_QUICK_CONTROLS_STYLE='Fusion',
-                       QT_FORCE_STDERR_LOGGING='1')
+    # Exercise the executable's control-style setup, as a desktop shortcut does.
+    environment.update(QT_QUICK_BACKEND='software', QT_FORCE_STDERR_LOGGING='1')
     return environment
 
 

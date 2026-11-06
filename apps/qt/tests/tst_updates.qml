@@ -132,6 +132,30 @@ TestCase {
         wait(100)
         compare(service.restarts, 1)
     }
+    function test_about_buttons_follow_dark_and_light_palette() {
+        for (const preference of [1, 2]) {
+            appearance.preference = preference
+            about.open()
+            tryCompare(about, "opened", true)
+            for (const name of ["checkUpdatesButton", "releaseDownloadsButton"]) {
+                const button = findChild(about, name)
+                compare(button.palette.button, appearance.button)
+                compare(button.palette.buttonText, appearance.text)
+                compare(button.contentItem.color, appearance.text)
+                verify(waitForRendering(button))
+                const image = grabImage(button)
+                const background = image.pixel(Math.floor(button.width / 2), 3)
+                // Check rendered background, not only palette metadata: pale
+                // native backgrounds with custom pale text caused this defect.
+                const brightness = (background.r + background.g + background.b) / 3
+                verify(preference === 1 ? brightness < 0.4 : brightness > 0.6,
+                    "Theme " + preference + " button background " + background)
+            }
+            verify(findChild(about, "updateInstructionsLabel").text.indexOf("does not install") >= 0)
+            about.close()
+            tryCompare(about, "opened", false)
+        }
+    }
     function test_restart_failure_keeps_old_window_and_allows_retry() {
         about.open()
         tryCompare(about, "opened", true)

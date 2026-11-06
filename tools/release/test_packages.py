@@ -31,6 +31,9 @@ class PackageContractTests(unittest.TestCase):
         original = {'PATH': os.pathsep.join(('/tools', '/checkout/local/qt/bin')),
                     'QT_SDK_DIR': '/checkout/local/qt', 'QT_PLUGIN_PATH': '/sdk/plugins',
                     'QMAKE': '/sdk/qmake', 'QT_FORCE_STDERR_LOGGING': '0',
+                    'QT_QUICK_CONTROLS_STYLE': 'Windows',
+                    'QT_QUICK_CONTROLS_FALLBACK_STYLE': 'Basic',
+                    'QT_QUICK_CONTROLS_CONF': '/sdk/development.conf',
                     'DISPLAY': ':42'}
         with patch.dict(os.environ, original, clear=True):
             environment = smoke.clean_environment()
@@ -38,6 +41,9 @@ class PackageContractTests(unittest.TestCase):
         self.assertEqual(environment['QT_FORCE_STDERR_LOGGING'], '1')
         self.assertEqual(environment['DISPLAY'], ':42')
         self.assertEqual(environment['PATH'], '/tools')
+        for name in ('QT_QUICK_CONTROLS_STYLE', 'QT_QUICK_CONTROLS_FALLBACK_STYLE',
+                     'QT_QUICK_CONTROLS_CONF'):
+            self.assertNotIn(name, environment)
         for name in ('QT_SDK_DIR', 'QT_PLUGIN_PATH', 'QMAKE'):
             self.assertNotIn(name, environment)
 

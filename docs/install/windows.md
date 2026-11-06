@@ -66,6 +66,12 @@ MSI from this product family and refuse downgrades. Windows in-app installation
 and MSP patches are deferred; About links to release downloads. A legacy EXE/NSIS
 installation must be uninstalled through Installed apps before the first MSI.
 
+The **Update** button opens About; **Check for updates** checks the available
+version. Neither installs a Windows update. Choose **Release notes and downloads**,
+download the Windows MSI, close every running viewer window, then run the MSI
+and relaunch. Uninstalling a previous MSI first is normally unnecessary. About
+shows the version of the running process, which stays unchanged until relaunch.
+
 ## CLI only
 
 Extract the Windows CLI ZIP and run `pnm-decode.exe --help` from its versioned
