@@ -10,3 +10,5 @@ pub mod histogram;
 pub mod modulation_profile;
 pub mod spectrum_analysis;
 pub mod upstream_pre_equalization;
+
+pub mod rxmer;

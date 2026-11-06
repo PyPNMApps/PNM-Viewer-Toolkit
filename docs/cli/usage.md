@@ -192,3 +192,40 @@ See the [man page](../../crates/cli/man/pnm-decode.1), installed as
 `pnm-decode(1)`. Windows users can use `pnm-decode.exe --help` and this guide.
 Local validation has been performed on Ubuntu 22.04 x86_64; consult the native
 CI results for Windows/macOS validation.
+
+## RxMER bit-loading analysis
+
+Use the same Rust calculation as the desktop popup without launching Qt:
+
+```bash
+pnm-decode rxmer.bin --rxmer-bit-loading \
+  --start-hz 650000000 --stop-hz 675000000 \
+  --model webui_mer_heuristic --margin-db 0 --max-bit-loading 13 \
+  --output rxmer-analysis.json
+```
+
+Without both Hz bounds, the analysis covers the full capture. Bounds are inclusive
+carrier-center limits and must lie inside it. Omit both or provide both. Use
+`--stdout` instead of a file; default analysis output is `INPUT.bit-loading.json`.
+Existing destinations are never overwritten. Analysis requires an RxMER file
+and cannot be combined with `--header-only`.
+
+| Option | Accepted values |
+| --- | --- |
+| `--rxmer-bit-loading` | Enable analysis output instead of raw decoded fields |
+| `--model` | `webui_mer_heuristic` (default), `ossi_candidate_defaults`, `ideal_shannon` |
+| `--margin-db` | Finite nonnegative additional MER margin; default 0 |
+| `--max-bit-loading` | Known data assignment: 2, 4, 6–14 bits; default 13 (8192-QAM cap) |
+| `--start-hz`, `--stop-hz` | Ordered inclusive integer Hz bounds inside the capture |
+
+The [complete analysis example](examples/rxmer-bit-loading.json) uses the bundled
+fixture's 650–675 MHz range: 1,001 measured carriers, minimum 39.25 dB, uniform
+1024-QAM and **250,250,000 gross bit/s** under the default WebUI model.
+The [RxMER guide](../ui/measurements/rxmer/README.md#bit-loading-and-estimated-gross-throughput)
+explains the graph, policies, missing-carrier handling and throughput assumptions.
+
+Gross rate is measured carrier count × uniform bits/symbol × spacing. It assumes
+those positions carry data and excludes LDPC/FEC, cyclic-prefix, pilot/PLC and
+MAC overhead. Carrier roles and device modulation capability are not inferred
+from RxMER. A policy estimate is not an error-free guarantee. Scenario rates are
+hypothetical even when their status is `below_target` or `not_covered_by_model`.

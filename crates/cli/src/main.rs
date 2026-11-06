@@ -4,6 +4,7 @@
  */
 //! Standalone offline PNM conversion; core owns format detection and decoding.
 #![forbid(unsafe_code)]
+mod analysis;
 mod output;
 use pnm::{
     common::json::DEFAULT_MAX_JSON_BYTES,
@@ -31,6 +32,13 @@ Options:
   -o, --output PATH   Write JSON to PATH (default: INPUT with .json extension)
       --stdout        Write JSON to stdout instead of a file
       --header-only   Export common header metadata only
+      --rxmer-bit-loading  Analyze uniform RxMER modulation and gross rate
+      --model NAME    webui_mer_heuristic (default), ossi_candidate_defaults,
+                      or ideal_shannon
+      --start-hz HZ   First inclusive carrier-center bound (with --stop-hz)
+      --stop-hz HZ    Last inclusive carrier-center bound
+      --margin-db DB  Additional nonnegative MER margin (default: 0)
+      --max-bit-loading BITS  Data bit cap (default: 13, 8192-QAM)
   -h, --help          Show this help
   -V, --version       Show version
       --              End options (for filenames beginning with a dash)
@@ -42,6 +50,7 @@ struct Arguments {
     output: Option<PathBuf>,
     stdout: bool,
     header_only: bool,
+    analysis: analysis::Options,
 }
 struct Failure(u8, String);
 impl From<std::io::Error> for Failure {
@@ -96,6 +105,9 @@ fn parse_arguments(
                 )?;
                 return Ok(None);
             }
+            if parsed.analysis.parse(&argument, &mut arguments)? {
+                continue;
+            }
             if argument == "--output" || argument == "-o" {
                 if parsed.output.is_some() {
                     return Err(Failure(
@@ -139,6 +151,7 @@ fn parse_arguments(
             "provide INPUT and choose either --output or --stdout; see --help".into(),
         ));
     }
+    parsed.analysis.validate(parsed.header_only)?;
     Ok(Some(parsed))
 }
 
@@ -157,7 +170,11 @@ fn run() -> Result<(), Failure> {
         return Err(Failure(DECODE_ERROR, "input exceeds 16 MiB limit".into()));
     }
     let file = PnmFile::from_bytes(&bytes);
-    let json = if arguments.header_only {
+    let json = if arguments.analysis.enabled {
+        Ok(arguments
+            .analysis
+            .json(file.decode(ParseLimits::default())?)?)
+    } else if arguments.header_only {
         file.header()
             .map_err(Clone::clone)?
             .to_json(false, DEFAULT_MAX_JSON_BYTES)
@@ -172,9 +189,13 @@ fn run() -> Result<(), Failure> {
         stdout.write_all(b"\n")?;
         stdout.flush()?;
     } else {
-        let destination = arguments
-            .output
-            .unwrap_or_else(|| input.with_extension("json"));
+        let destination = arguments.output.unwrap_or_else(|| {
+            input.with_extension(if arguments.analysis.enabled {
+                "bit-loading.json"
+            } else {
+                "json"
+            })
+        });
         output::save(&destination, json.as_bytes())?;
         eprintln!("Wrote {}", destination.display());
     }

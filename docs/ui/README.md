@@ -33,9 +33,9 @@ and packaged installation remain unverified.
 ## Starting screen
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/home-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/home-light.png">
-  <img alt="Starting screen with left navigation pane open and the Open, Settings and About toolbar" src="../images/user-guide/home-dark.png" width="1000">
+  <source media="(prefers-color-scheme: dark)" srcset="images/home/home-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="images/home/home-light.png">
+  <img alt="Starting screen with left navigation pane open and the Open, Settings and About toolbar" src="images/home/home-dark.png" width="1000">
 </picture>
 
 1. Drop one local capture file anywhere on the window, or choose **Open capture**,
@@ -75,12 +75,14 @@ keeps the current capture. Unsupported measurements can still be decoded with
   grid. JSON includes per-profile `bandwidth_bps` and ideal capacity.
 - Constellation Display overlays Soft decisions, Hard decisions and symbol
   decision boundaries, with independent toggles and drag/wheel zoom. See the
-  [measurement guide](measurements.md#constellation-display).
-- The I/Q density view always shows the full capture and does not use range zoom.
+  [measurement guide](measurements/constellation/README.md).
+- The I/Q dots and density views show the full capture and do not use range zoom.
+- In RxMER, right-click → **Bit loading…** analyzes the visible range. See the
+  [RxMER guide](measurements/rxmer/README.md#bit-loading-and-estimated-gross-throughput).
 - For channel estimation and current/last-update upstream pre-EQ, choose **Magnitude**,
   **Group delay**, or **I/Q scatter**. The upstream plot describes correction
-  coefficients, not a measured plant response. See [current pre-EQ](measurements.md#upstream-pre-eq-current)
-  and [last update](measurements.md#upstream-pre-eq-last-update).
+  coefficients, not a measured plant response. See [current pre-EQ](measurements/upstream-pre-eq/README.md)
+  and [last update](measurements/upstream-pre-eq-last/README.md).
   Switching tabs resets the range.
 
 Large datasets use bounded overviews calculated in Rust. Frequency plots preserve

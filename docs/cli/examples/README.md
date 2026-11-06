@@ -74,3 +74,10 @@ Constellation JSON also includes `constellation_analysis.mer`: the full-capture,
 Rust-calculated decision-directed MER result and availability status. The desktop
 uses the same result. See the [MER contract](../../reference/formats.md#estimated-constellation-mer)
 for power sums, null/perfect-reference handling and interpretation limits.
+
+## RxMER analysis example
+
+[rxmer-bit-loading.json](rxmer-bit-loading.json) is a full analysis of the
+650–675 MHz inclusive carrier-center window from `rxmer.bin`. It includes
+1,001 readings, the WebUI heuristic, uniform loading and gross-rate scenarios.
+Reproduce it with the [analysis CLI options](../usage.md#rxmer-bit-loading-analysis).

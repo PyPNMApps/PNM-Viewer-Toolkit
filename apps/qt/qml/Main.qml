@@ -64,10 +64,11 @@ ApplicationWindow {
         function onMetadata_jsonChanged() {
             window.spectrumPresentations = ({})
             spectrumControls.restorePresentation(null)
+            bitLoadingDialog.close()
         }
     }
     property bool navigationVisible: false
-    readonly property bool blocked: backend.busy || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible || profileBandwidth.popupVisible
+    readonly property bool blocked: backend.busy || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
 
     CaptureDropArea {
         parent: Overlay.overlay
@@ -78,6 +79,24 @@ ApplicationWindow {
         onFileDropped: captureUrl => backend.open_file(captureUrl)
     }
 
+    RxMerBitLoadingDialog {
+        id: bitLoadingDialog
+        theme: appTheme
+        analysis: JSON.parse(backend.rxmer_analysis_json)
+        working: backend.rxmer_analysis_busy
+        errorMessage: backend.rxmer_analysis_error
+        onAnalysisRequested: (start, count, model, margin, cap) => backend.analyze_rxmer(start, count, model, margin, cap)
+        onCancelRequested: backend.cancel_rxmer_analysis()
+        onExportRequested: analysisSaveDialog.open()
+    }
+    FileDialog {
+        id: analysisSaveDialog
+        title: "Export full-resolution RxMER analysis (new file)"
+        fileMode: FileDialog.SaveFile
+        nameFilters: ["JSON files (*.json)"]
+        defaultSuffix: "json"
+        onAccepted: backend.export_rxmer_analysis(selectedFile)
+    }
     FileDialog {
         id: openDialog
         title: "Open PNM capture"
@@ -444,6 +463,8 @@ ApplicationWindow {
                             onPowerRequested: (first, last) => backend.calculate_spectrum_power(first, last)
                             showSpectrumAverage: spectrumControls.showAverage
                             visible: window.viewport.constellation === undefined && window.metadata.view_index !== 2 && window.metadata.histogram !== true && window.metadata.fec_summary === undefined
+                            rxmerEnabled: window.metadata.title === "Downstream RxMER"
+                            onBitLoadingRequested: bitLoadingDialog.openRange(window.viewport.start || 0, window.viewport.count || 0)
                             stepPlot: window.metadata.modulation_profile !== undefined
                             unit: window.metadata.unit || "dB"
                             axisLabel: window.metadata.axis_label || "Amplitude"

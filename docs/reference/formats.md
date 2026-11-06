@@ -339,4 +339,33 @@ extracts, without rendered-PDF verification.
 
 [Current output](../cli/examples/upstream-pre-eq.json) ·
 [Last-update output](../cli/examples/upstream-pre-eq-last.json) ·
-[Viewer controls](../ui/measurements.md#upstream-pre-eq-current)
+[Viewer controls](../ui/measurements/upstream-pre-eq/README.md)
+
+## RxMER bit-loading analysis
+
+`--rxmer-bit-loading` emits the shared Rust analysis object instead of changing
+the raw RxMER parser fields. Qt popup exports use the same serializer. The
+[full example](../cli/examples/rxmer-bit-loading.json) retains every selected
+original carrier; Qt plotting alone is bounded.
+
+- `model`: policy identifier/revision/source, additional margin and maximum bits.
+- `selection`: actual inclusive carrier-center frequencies, original first index,
+  count and spacing in Hz. User bounds between carriers select the centers inside.
+- `coverage`: measured/unavailable counts, coverage status, and false
+  `carrier_roles_verified` (this analysis does not import a profile capture).
+- `summary`: minimum RxMER, limiting carrier frequency, uniform bits/modulation,
+  model threshold, remaining margin and result status. No measurements or a
+  measured carrier below the model minimum produces null uniform order/rate.
+- `rate`: `estimated_gross_rate_bps`, `ideal_gross_useful_symbol` basis, explicit
+  assumed-data-carrier basis and excluded overheads. Count × bits × spacing uses
+  checked arithmetic; it is independent of the center-to-center span.
+- `uniform_scenarios`: hypothetical fixed-loading rates for each registry data
+  order up to the cap, with meets/below/not-covered/no-measurements statuses.
+- `subcarriers`: source index, Hz, nullable measured RxMER, estimated bit loading
+  and the separately computed ideal Shannon bit loading.
+
+Policy sources: pinned PyPNM-CMTS-WebUI `25f40bda` selection-insights heuristic;
+CM-OSSIv3.1 I27 D.2.11 Table 72 (PDF pp.182–183, versioned text) configurable
+candidate-profile defaults; ideal Shannon inverse SNR thresholds. These do not
+guarantee receiver BER/FEC performance. Values clipped at 63.5 dB remain measured
+lower bounds, and 0xFF remains unavailable. Original capture exports are unchanged.

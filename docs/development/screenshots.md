@@ -23,13 +23,18 @@ Do not change the graph data to improve its appearance.
 For each theme, choose Settings → System… → Appearance → Dark or Light. Show
 the left navigation pane on Home with the top-right panel button. Hide it for
 measurement captures to give the charts room. Keep the full reset viewport,
-except Spectrum's documented range-tab and power-selection example.
+except Spectrum's documented range-tab/power example and the RxMER analysis
+popup, which demonstrates the current zoomed range.
 
-Store PNG files under `docs/images/user-guide/` using the pairs below:
+Store each measurement’s PNG pairs in `docs/ui/measurements/<file-type>/images/`.
+Home images live in `docs/ui/images/home/`. Update the colocated guide and root
+README table links with any move. Use the filename pairs below:
 
 | Filename stem (append `-dark.png` and `-light.png`) | Fixture and view |
 | --- | --- |
 | `home` | Close capture; show navigation |
+| `rxmer-bit-loading` | `rxmer.bin`: zoom, right-click → Bit loading… |
+| `rxmer-uniform-rates` | Same popup → Estimated gross throughput chip |
 | `rxmer` | `rxmer.bin` |
 | `spectrum` | `spectrum_analyzer.bin`, 300–350 MHz range tab, WindowAvg N=101 and a selected power band |
 | `spectrum-frequency` | Same capture, Frequency dialog with 300000000–350000000 Hz inputs |

@@ -192,7 +192,7 @@ The full longest-profile frequency window stays independent of selection;
 shorter traces are clipped to their own data. JSON export includes all original
 profiles regardless of display selection.
 
-See the [measurement guide](../ui/measurements.md#modulation-profile) for theoretical
+See the [measurement guide](../ui/measurements/modulation-profile/README.md) for theoretical
 metric limits, special assignments and the explicit PyPNM frequency convention.
 Independent Shannon tests live in `test_shannon.rs`; dedicated viewer tests cover
 fixtures, skip parity, special codes, expansion limits, ranges and overflow.
@@ -272,3 +272,26 @@ screenshots of N=101 and the constellation MER/EVM view live in the user gallery
 See [Spectrum power mathematics and ownership](spectrum-power.md) for the
 ENBW-corrected dBmV equation, 10-log versus 20-log explanation, fractional
 boundary treatment, range validation and shared-capture tab lifecycle.
+
+## RxMER range analysis
+
+`common::signal_processing::bit_loading` owns versioned target policies and
+uses the shared modulation registry. `pnm::analysis::rxmer` analyzes original
+samples and serializes full-resolution results for the CLI and desktop exports.
+`ofdm::useful_symbol_rate` remains the single gross-rate calculation owner.
+
+`apps/viewer/src/measurements/rxmer/` maps exact source zoom indices to checked Hz
+bounds and retains bucket extrema, source endpoints and explicit gaps in bounded
+plot DTOs. Summaries/scenarios are calculated before display sampling.
+`apps/qt/src/backend/rxmer.rs` uses a Rust worker and queued Qt completion.
+Generation and Arc capture identity reject results after closure, replacement or
+a newer request. The full snapshot is held for a separate no-clobber export; Qt
+receives only bounded plot data. The popup does not change the main viewport.
+
+`RxMerBitLoadingDialog.qml` owns transient policy controls, the large gross-rate
+chip, scenario grid and export action; `RxMerBitLoadingChart.qml` draws the
+per-carrier, uniform and optional Shannon traces. Calculations never run in QML.
+The RxMER right-click menu is independent of the existing Spectrum actions.
+
+User guides and real dark/light screenshots are colocated under
+`docs/ui/measurements/<file-type>/`; `measurements.md` is now an index.

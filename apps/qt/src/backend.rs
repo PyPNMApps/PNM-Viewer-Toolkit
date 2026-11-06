@@ -4,6 +4,7 @@
  */
 //! Native Qt adapter for the Rust capture and presentation layer.
 //! Unsafe extern declarations are confined to CXX-Qt's typed interop boundary.
+mod rxmer;
 mod spectrum;
 
 #[cxx_qt::bridge]
@@ -23,6 +24,9 @@ mod bridge {
         #[qproperty(bool, busy)]
         #[qproperty(bool, loaded)]
         #[qproperty(QString, metadata_json)]
+        #[qproperty(QString, rxmer_analysis_json)]
+        #[qproperty(QString, rxmer_analysis_error)]
+        #[qproperty(bool, rxmer_analysis_busy)]
         #[qproperty(QString, spectrum_workspace_json)]
         #[qproperty(QString, viewport_json)]
         #[qproperty(QString, status)]
@@ -53,6 +57,23 @@ mod bridge {
         /// Out-of-range requests leave the previous viewport intact.
         #[qinvokable]
         fn show_range(self: Pin<&mut ViewerBackend>, start: u32, count: u32);
+
+        /// Analyzes original RxMER source indices using a shared Rust model and cap.
+        #[qinvokable]
+        fn analyze_rxmer(
+            self: Pin<&mut ViewerBackend>,
+            start: u32,
+            count: u32,
+            model: &QString,
+            margin_db: f64,
+            cap: u32,
+        );
+        /// Invalidates in-flight analysis and releases the immutable snapshot.
+        #[qinvokable]
+        fn cancel_rxmer_analysis(self: Pin<&mut ViewerBackend>);
+        /// Exports full-resolution shared analysis to a new local destination.
+        #[qinvokable]
+        fn export_rxmer_analysis(self: Pin<&mut ViewerBackend>, url: &QUrl);
 
         /// Applies a positive spectrum averaging window to the current zoom.
         /// Invalid requests leave the previous trace and selection intact.
@@ -154,6 +175,10 @@ pub struct ViewerBackendRust {
     viewport_json: QString,
     spectrum_workspace_json: QString,
     spectrum_workspace: spectrum::Workspace,
+    rxmer: rxmer::State,
+    rxmer_analysis_json: QString,
+    rxmer_analysis_error: QString,
+    rxmer_analysis_busy: bool,
     status: QString,
     error_message: QString,
     capture: Option<Arc<Capture>>,
@@ -180,6 +205,10 @@ impl Default for ViewerBackendRust {
             error_message: QString::default(),
             spectrum_workspace_json: QString::from("{}"),
             spectrum_workspace: spectrum::Workspace::default(),
+            rxmer: rxmer::State::default(),
+            rxmer_analysis_json: QString::from("{}"),
+            rxmer_analysis_error: QString::default(),
+            rxmer_analysis_busy: false,
             capture: None,
             view: MeasurementView::Default,
         }
@@ -303,6 +332,7 @@ impl bridge::ViewerBackend {
                     backend.as_mut().set_busy(false);
                     match result {
                         Ok(loaded) => {
+                            backend.as_mut().cancel_rxmer_analysis();
                             backend.as_mut().rust_mut().capture = Some(loaded.capture);
                             backend.as_mut().rust_mut().view = MeasurementView::Default;
                             backend
@@ -716,6 +746,7 @@ impl bridge::ViewerBackend {
         if *self.busy() {
             return;
         }
+        self.as_mut().cancel_rxmer_analysis();
         self.as_mut().rust_mut().spectrum_workspace = spectrum::Workspace::default();
         self.as_mut()
             .set_spectrum_workspace_json(QString::from("{}"));

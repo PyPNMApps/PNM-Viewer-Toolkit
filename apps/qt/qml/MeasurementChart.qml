@@ -12,6 +12,8 @@ ColumnLayout {
     required property Theme theme
     property var viewport: ({start: 0, total: 0, points: []})
     property bool spectrumEnabled: false
+    property bool rxmerEnabled: false
+    signal bitLoadingRequested()
     property bool selectingPower: false
     property bool powerSelected: false
     signal frequencyRequested()
@@ -115,6 +117,8 @@ ColumnLayout {
             id: calculatePowerItem
             objectName: "calculateSpectrumPower"
             text: "Calculate power…"
+            visible: chart.spectrumEnabled
+            height: visible ? implicitHeight : 0
             contentItem: Label { text: calculatePowerItem.text; color: chart.theme.text }
             background: Rectangle { color: parent.highlighted ? chart.theme.accentSoft : "transparent" }
             onTriggered: {
@@ -126,9 +130,21 @@ ColumnLayout {
             id: frequencyItem
             objectName: "selectSpectrumFrequency"
             text: "Frequency…"
+            visible: chart.spectrumEnabled
+            height: visible ? implicitHeight : 0
             contentItem: Label { text: frequencyItem.text; color: chart.theme.text }
             background: Rectangle { color: parent.highlighted ? chart.theme.accentSoft : "transparent" }
             onTriggered: chart.frequencyRequested()
+        }
+        Basic.MenuItem {
+            id: bitLoadingItem
+            objectName: "analyzeRxmerBitLoading"
+            text: "Bit loading…"
+            visible: chart.rxmerEnabled
+            height: visible ? implicitHeight : 0
+            contentItem: Label { text: bitLoadingItem.text; color: chart.theme.text }
+            background: Rectangle { color: parent.highlighted ? chart.theme.accentSoft : "transparent" }
+            onTriggered: chart.bitLoadingRequested()
         }
     }
     Label {
@@ -280,7 +296,7 @@ ColumnLayout {
         MouseArea {
             id: selection
             anchors.fill: parent
-            acceptedButtons: chart.spectrumEnabled ? Qt.LeftButton | Qt.RightButton : Qt.LeftButton
+            acceptedButtons: chart.spectrumEnabled || chart.rxmerEnabled ? Qt.LeftButton | Qt.RightButton : Qt.LeftButton
             property bool dragging: false
             property real startFraction: 0
             property real endFraction: 0

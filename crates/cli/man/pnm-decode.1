@@ -22,6 +22,23 @@ Write JSON to standard output instead of a file. Conflicts with --output.
 .B \-\-header-only
 Export common header metadata without measurement decoding or payload bytes.
 .TP
+.B \-\-rxmer-bit-loading
+Export RxMER uniform-bit-loading analysis instead of raw capture JSON.
+Default output is INPUT with .bit-loading.json extension. Conflicts with --header-only.
+.TP
+.B \-\-model NAME
+Choose webui_mer_heuristic (default), ossi_candidate_defaults, or ideal_shannon.
+.TP
+.B \-\-start-hz HZ / \-\-stop-hz HZ
+Provide both inclusive carrier-center bounds inside the capture, or omit both.
+.TP
+.B \-\-margin-db DB
+Additional finite nonnegative MER margin; default 0.
+.TP
+.B \-\-max-bit-loading BITS
+Known positive data-assignment cap: 2, 4, 6 through 14. Default 13 (8192-QAM).
+This cap is an analysis choice, not inferred device capability.
+.TP
 .BR \-h ", " \-\-help
 Show command help.
 .TP
@@ -56,6 +73,13 @@ File output is published using a hard link from a complete temporary sibling.
 Filesystems without hard-link support fail safely; use --stdout or another
 filesystem. Normal failures clean up temporary files; forced termination may
 leave a .pnm-decode-*.tmp file. No overwrite option is provided.
+RxMER analysis uses original samples before display decimation. The weakest
+measured carrier limits the uniform order. Missing readings retain nulls and
+incomplete coverage. Gross rate assumes measured carriers are data and multiplies
+their count by the uniform bits per symbol and subcarrier spacing. No LDPC/FEC,
+cyclic-prefix, pilot/PLC or MAC overhead is subtracted. It is not measured payload
+throughput or an error-free receiver guarantee. Model/margin/cap and scenario
+statuses are included in the full-resolution analysis JSON.
 .SH EXIT STATUS
 .TP
 .B 0
@@ -78,6 +102,7 @@ pnm-decode capture.bin
 pnm-decode capture.bin --output results.json
 pnm-decode capture.bin --stdout
 pnm-decode capture.bin --header-only
+pnm-decode rxmer.bin --rxmer-bit-loading --stdout
 .fi
 .SH LICENSE
 Apache-2.0. Distributed notices identify third-party material.

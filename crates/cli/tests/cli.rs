@@ -272,3 +272,79 @@ fn upstream_last_update_cli_includes_analysis_with_s1_14_samples() {
     assert_eq!(analysis["magnitude_db"].as_array().unwrap().len(), 1776);
     assert_eq!(analysis["group_delay"].as_array().unwrap().len(), 1776);
 }
+
+#[test]
+fn rxmer_analysis_mode_matches_core_and_rejects_bad_controls() {
+    use pnm::pnm::{
+        analysis::rxmer::{RxMerAnalysisRequest, RxMerBitLoadingAnalysis},
+        parser::cm_ds_ofdm_rx_mer::CmDsOfdmRxMer,
+    };
+    let workspace = Workspace::new();
+    fs::write(workspace.0.join("rxmer.bin"), pnm_fixtures::RXMER).unwrap();
+    let result = workspace.run(&[
+        "rxmer.bin",
+        "--rxmer-bit-loading",
+        "--start-hz",
+        "650000000",
+        "--stop-hz",
+        "675000000",
+        "--stdout",
+    ]);
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let capture = CmDsOfdmRxMer::parse(pnm_fixtures::RXMER, Default::default()).unwrap();
+    let expected = RxMerBitLoadingAnalysis::calculate(
+        &capture,
+        RxMerAnalysisRequest {
+            start_frequency_hz: Some(650000000),
+            stop_frequency_hz: Some(675000000),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        serde_json::from_slice::<serde_json::Value>(&result.stdout).unwrap(),
+        serde_json::to_value(expected).unwrap()
+    );
+    for flags in [
+        vec!["--model", "invalid"],
+        vec!["--margin-db", "NaN"],
+        vec!["--max-bit-loading", "5"],
+        vec!["--start-hz", "650000000"],
+        vec!["--header-only"],
+    ] {
+        let mut args = vec!["rxmer.bin", "--rxmer-bit-loading", "--stdout"];
+        args.extend(flags);
+        assert_eq!(workspace.run(&args).status.code(), Some(2));
+    }
+    assert_eq!(
+        workspace
+            .run(&["rxmer.bin", "--margin-db", "1"])
+            .status
+            .code(),
+        Some(2)
+    );
+    assert!(workspace
+        .run(&["rxmer.bin", "--rxmer-bit-loading"])
+        .status
+        .success());
+    assert!(workspace.0.join("rxmer.bit-loading.json").is_file());
+    assert_eq!(
+        workspace
+            .run(&["rxmer.bin", "--rxmer-bit-loading"])
+            .status
+            .code(),
+        Some(1)
+    );
+    fs::write(workspace.0.join("spectrum.bin"), pnm_fixtures::SPECTRUM).unwrap();
+    assert_eq!(
+        workspace
+            .run(&["spectrum.bin", "--rxmer-bit-loading", "--stdout"])
+            .status
+            .code(),
+        Some(3)
+    );
+}

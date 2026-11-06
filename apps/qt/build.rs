@@ -71,6 +71,8 @@ fn main() {
                 "qml/SpectrumTools.qml",
                 "qml/SpectrumPowerChip.qml",
                 "qml/IqScatterChart.qml",
+                "qml/RxMerBitLoadingDialog.qml",
+                "qml/RxMerBitLoadingChart.qml",
                 "qml/ConstellationChart.qml",
                 "qml/ConstellationMerOverlay.qml",
                 "qml/HistogramChart.qml",

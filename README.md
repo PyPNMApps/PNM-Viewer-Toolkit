@@ -22,9 +22,9 @@ An offline desktop viewer for DOCSIS PNM capture files. Open a capture, explore
 its graph, and export decoded JSON. The native Qt interface uses a Rust backend.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/user-guide/home-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/images/user-guide/home-light.png">
-  <img alt="PNM Viewer Toolkit starting screen with the left navigation pane open" src="docs/images/user-guide/home-dark.png" width="1000">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/ui/images/home/home-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/ui/images/home/home-light.png">
+  <img alt="PNM Viewer Toolkit starting screen with the left navigation pane open" src="docs/ui/images/home/home-dark.png" width="1000">
 </picture>
 
 ## Start here
@@ -39,18 +39,18 @@ The current viewer supports:
 
 | Capture | Views |
 | --- | --- |
-| RxMER | MER by frequency |
-| Spectrum Analyzer | Amplitude by frequency and calculated RBW |
-| DS Channel Estimation | Magnitude, group delay and I/Q density |
-| US Pre-EQ (current) | Coefficient magnitude, group delay and I/Q density |
-| US Pre-EQ (last update) | RNG-RSP update magnitude, group delay and I/Q density |
-| Histogram | Hit counts by bin index |
-| FEC Summary | Per-profile interval codewords over UTC time |
-| Constellation Display | Soft/hard decisions and symbol boundaries |
-| Modulation Profile | Ideal Shannon minimum MER and bit loading by frequency |
+| [RxMER](docs/ui/measurements/rxmer/README.md) | MER by frequency; [bit loading and gross-rate analysis](docs/ui/measurements/rxmer/README.md#bit-loading-and-estimated-gross-throughput) |
+| [Spectrum Analyzer](docs/ui/measurements/spectrum-analyzer/README.md) | Amplitude by frequency and calculated RBW |
+| [DS Channel Estimation](docs/ui/measurements/channel-estimation/README.md) | Magnitude, group delay and I/Q dots and density |
+| [US Pre-EQ (current)](docs/ui/measurements/upstream-pre-eq/README.md) | Coefficient magnitude, group delay and I/Q dots and density |
+| [US Pre-EQ (last update)](docs/ui/measurements/upstream-pre-eq-last/README.md) | RNG-RSP update magnitude, group delay and I/Q dots and density |
+| [Histogram](docs/ui/measurements/histogram/README.md) | Hit counts by bin index |
+| [FEC Summary](docs/ui/measurements/fec-summary/README.md) | Per-profile interval codewords over UTC time |
+| [Constellation Display](docs/ui/measurements/constellation/README.md) | Soft/hard decisions and symbol boundaries |
+| [Modulation Profile](docs/ui/measurements/modulation-profile/README.md) | Ideal Shannon minimum MER and bit loading by frequency |
 
 Choose System, Dark or Light appearance. Drag across a graph to zoom and
-double-click to reset; the I/Q density view shows the full capture.
+double-click to reset; the I/Q dots and density view shows the full capture.
 
 Tag builds automatically publish [native packages](docs/release/packaging.md)
 after all required checks and uploaded-byte verification pass. Automatic tag

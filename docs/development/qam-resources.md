@@ -1,6 +1,6 @@
 # QAM resources, scaling and decision geometry
 
-[Documentation index](../README.md) · [Constellation user guide](../ui/measurements.md#constellation-display)
+[Documentation index](../README.md) · [Constellation user guide](../ui/measurements/constellation/README.md)
 
 ## Source resources
 
