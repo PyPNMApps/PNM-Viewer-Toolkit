@@ -49,6 +49,5 @@ ColumnLayout {
         theme: view.theme
         density: iqSet.currentIndex===0 ? view.result.original_iq || ({}) : iqSet.currentIndex===1 ? view.result.predicted_iq || ({}) : view.result.delta_iq || ({})
     }
-    Label { visible: !!view.result.pair; text: "Predicted only · mode supplied by user · modem clipping, rounding and application status unknown. Level alignment is display-only; raw results are retained. Spans include tilt; not measured TX power."; color: view.theme.muted; font.pixelSize: 11; Layout.fillWidth: true; wrapMode: Text.Wrap }
     Item { visible: !view.result.pair; Layout.fillHeight: true }
 }

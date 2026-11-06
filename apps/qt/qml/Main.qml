@@ -61,6 +61,8 @@ ApplicationWindow {
     }
     Connections {
         target: backend
+        function onError_messageChanged() { fileError.showError(backend.error_message) }
+        function onPre_eq_errorChanged() { fileError.showError(backend.pre_eq_error) }
         function onPre_eq_currentChanged() { if (!backend.pre_eq_current) window.comparisonSelected=false }
         function onPre_eq_jsonChanged() { if (!JSON.parse(backend.pre_eq_json).pair) window.comparisonSelected=false }
         function onMetadata_jsonChanged() {
@@ -73,7 +75,7 @@ ApplicationWindow {
     readonly property var preEqAttachment: JSON.parse(backend.pre_eq_attachment_json)
     readonly property var preEqResult: JSON.parse(backend.pre_eq_json)
     property bool navigationVisible: false
-    readonly property bool blocked: backend.busy || backend.pre_eq_busy || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
+    readonly property bool blocked: backend.busy || backend.pre_eq_busy || fileError.visible || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
 
     CaptureDropArea {
         parent: Overlay.overlay
@@ -85,6 +87,8 @@ ApplicationWindow {
         onAttachmentDropped: captureUrl => { window.comparisonSelected=true; backend.attach_pre_eq_update(captureUrl) }
         onFileDropped: captureUrl => backend.open_file(captureUrl)
     }
+
+    FileErrorDialog { id: fileError; theme: appTheme }
 
     RxMerBitLoadingDialog {
         id: bitLoadingDialog
@@ -287,7 +291,6 @@ ApplicationWindow {
                     attachment: window.preEqAttachment
                     resultMode: window.preEqResult.mode || ""
                     working: backend.pre_eq_busy
-                    errorMessage: backend.pre_eq_error
                     onChooseFile: preEqOpenDialog.open()
                     onCalculate: mode => { window.comparisonSelected=true; backend.compare_pre_eq(mode) }
                     onRemoveAttachment: backend.remove_pre_eq_update()

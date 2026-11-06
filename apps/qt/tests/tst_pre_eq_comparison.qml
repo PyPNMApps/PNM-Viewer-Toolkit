@@ -19,6 +19,7 @@ TestCase {
     property int selectedCount: -1
     property int resets: 0
     property var pair: ({original_header:{capture_time:100},correction_header:{capture_time:108},file_time_difference_s:8,sample_count:3,mac_address:"aa:bb:cc:dd:ee:ff",cmts_mac_address:"00:01:02:03:04:05"})
+    FileErrorDialog { id: fileError; theme: appearance }
     PreEqComparisonSidebar {
         id: sidebar
         width:244
@@ -46,8 +47,9 @@ TestCase {
         onFileDropped: testCase.opened++
     }
     function init() {
+        fileError.close()
         calculated="";removed=0;attached=0;opened=0;resets=0;selectedStart=-1;selectedCount=-1
-        sidebar.attachment=({});sidebar.resultMode="";sidebar.working=false;sidebar.errorMessage=""
+        sidebar.attachment=({});sidebar.resultMode="";sidebar.working=false
         appearance.preference=1
         drop.enabled=false
     }
@@ -58,9 +60,9 @@ TestCase {
         const mode=findChild(sidebar,"preEqUpdateMode")
         verify(!action.enabled)
         sidebar.attachment=({pair:testCase.pair})
-        verify(findChild(sidebar,"preEqPrecheckStatus").text.indexOf("Precheck passed")>=0)
+        compare(findChild(sidebar,"preEqPrecheckStatus"),null)
         verify(!action.enabled)
-        verify(sidebar.children.some(child=>typeof child.text==="string" && child.text.indexOf("CMTS  00:01:02:03:04:05")>=0))
+        verify(!sidebar.children.some(child=>typeof child.text==="string" && child.text.indexOf("CMTS  ")>=0))
         mode.currentIndex=1
         verify(action.enabled)
         verify(waitForPolish(sidebar))
@@ -75,13 +77,29 @@ TestCase {
         sidebar.working=true
         verify(!action.enabled)
         sidebar.working=false
-        sidebar.errorMessage="cmts_mac_address: Expected matching CMTS MAC."
-        verify(findChild(sidebar,"preEqComparisonError").visible)
         sidebar.attachment=({pair:testCase.pair})
         compare(mode.currentIndex,0)
         verify(!action.enabled)
         mouseClick(findChild(sidebar,"removePreEqUpdate"))
         compare(removed,1)
+    }
+    function test_file_error_popup_data() {return [{tag:"dark",theme:1},{tag:"light",theme:2}]}
+    function test_file_error_popup(data) {
+        appearance.preference=data.theme
+        fileError.showError("")
+        verify(!fileError.visible)
+        const message="cmts_mac_address: Expected matching CMTS MAC."
+        fileError.showError(message)
+        tryCompare(fileError,"visible",true)
+        compare(findChild(fileError,"fileErrorMessage").text,message)
+        verify(fileError.modal)
+        const dismiss=findChild(fileError,"dismissFileError")
+        verify(waitForPolish(fileError.contentItem))
+        mouseClick(dismiss)
+        tryCompare(fileError,"visible",false)
+        fileError.showError(message)
+        tryCompare(fileError,"visible",true)
+        fileError.close()
     }
     function test_attachment_drop_is_consumed_without_opening_a_new_capture() {
         drop.enabled=true

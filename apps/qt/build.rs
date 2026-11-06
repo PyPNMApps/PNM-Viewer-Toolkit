@@ -67,6 +67,7 @@ fn main() {
                 "qml/Theme.qml",
                 "qml/ThemeButton.qml",
                 "qml/PreEqComparisonSidebar.qml",
+                "qml/FileErrorDialog.qml",
                 "qml/PreEqComparisonChart.qml",
                 "qml/PreEqComparisonView.qml",
                 "qml/MeasurementChart.qml",

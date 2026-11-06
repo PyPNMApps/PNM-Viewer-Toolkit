@@ -7,7 +7,7 @@ are `aa:bb:cc:dd:ee:ff`. Each file contains 1776 coefficients.
 1. Open **original.bin** in the Qt viewer.
 2. Show the left gutter and select **Correction & Delta**.
 3. Drop **last-update.bin** into **Drop Last Update here**, or use
-   **Choose Last Update…**. Wait for **Precheck passed**.
+   **Choose Last Update…**. Wait for the mode selector to become available.
 4. Select **Adjust (multiply)** and **Compare**.
 5. Select **Level-aligned flatness** to see the small shape change. Try
    Magnitude, Group delay and I/Q; drag on the line graph to zoom.

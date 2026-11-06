@@ -89,12 +89,12 @@ PNN6 captures; opening a Last Update file by itself keeps its existing view.
 1. Drop one Last Update file onto **Drop Last Update here**, or choose it with
    **Choose Last Update…** using the OS file picker. Dropping there attaches it;
    dropping elsewhere keeps the usual behavior of opening a new capture.
-2. Wait for **Precheck passed**. Rust requires a PNN7 correction and checks the
+2. Wait for the mode selector to become available. Rust requires a PNN7 correction and checks the
    format version, channel, **CM MAC and CMTS MAC**, zero frequency, first-active
    index, spacing, data length, and coefficient count. Grids must match exactly.
 3. The correction's encoded capture timestamp must be strictly newer. Equal or
-   earlier timestamps fail, even if filenames suggest otherwise. The UI shows
-   UTC timestamps and the file-time gap; this is not update latency.
+   earlier timestamps fail, even if filenames suggest otherwise. Header details
+   remain in exported JSON rather than occupying the gutter.
 4. Select **Adjust (multiply)** or **Set (replace)**, then **Compare**. The PNM
    file does not encode that mode; select it from known capture context.
 5. The main workspace shows original (teal) and predicted (amber) curves, with
@@ -117,7 +117,8 @@ to the full paired capture, even while the graphs are zoomed.
 A changed update mode highlights the **Recalculate** border until the matching
 result succeeds. **Original capture** returns to the untouched capture/zoom.
 **Remove** discards the attachment/results. Failed replacements preserve the
-previous valid pair; a field-specific error explains the rejected candidate.
+previous valid pair. A **File error** popup explains the rejected candidate;
+choose **OK** to dismiss it. Open and export failures also show this popup.
 
 **Export JSON** saves the full result, including both headers and MAC addresses,
 explicit mode, raw predicted/delta I/Q, raw/aligned dB, group delay in seconds,
