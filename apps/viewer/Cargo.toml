@@ -16,5 +16,10 @@ sha2 = "=0.10.9"
 url = "2"
 tempfile = "=3.23.0"
 
+tar = "=0.4.44"
+flate2 = "=1.1.5"
+zip = { version = "=2.4.2", default-features = false, features = ["deflate-flate2", "flate2"] }
+zstd = { version = "=0.13.3", default-features = false }
+
 [dev-dependencies]
 pnm-fixtures = { path = "../../tests/fixtures" }

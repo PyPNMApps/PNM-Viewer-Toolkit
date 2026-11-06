@@ -6,6 +6,7 @@
 //! Unsafe extern declarations are confined to CXX-Qt's typed interop boundary.
 mod pre_equalization;
 mod rxmer;
+mod rxmer_collection;
 mod spectrum;
 
 #[cxx_qt::bridge]
@@ -21,6 +22,10 @@ mod bridge {
     extern "RustQt" {
         #[qobject]
         #[qml_element]
+        #[qproperty(QString, rxmer_collection_catalog)]
+        #[qproperty(QString, rxmer_collection_view)]
+        #[qproperty(QString, rxmer_collection_error)]
+        #[qproperty(bool, rxmer_collection_busy)]
         #[qproperty(QString, app_version)]
         #[qproperty(bool, busy)]
         #[qproperty(bool, loaded)]
@@ -39,6 +44,31 @@ mod bridge {
         #[qproperty(QString, error_message)]
         type ViewerBackend = super::ViewerBackendRust;
 
+        /// Imports a local batch archive or directory asynchronously.
+        #[qinvokable]
+        fn import_rxmer_collection(self: Pin<&mut ViewerBackend>, url: &QUrl);
+        /// Cancels pending import/group work and retains the previous result.
+        #[qinvokable]
+        fn cancel_rxmer_collection(self: Pin<&mut ViewerBackend>);
+        /// Selects one compatible catalog group for full-resolution aggregation.
+        #[qinvokable]
+        fn select_rxmer_group(self: Pin<&mut ViewerBackend>, id: u32);
+        /// Retrieves exact source indices for a temporal-statistics viewport.
+        #[qinvokable]
+        fn show_rxmer_collection_range(self: Pin<&mut ViewerBackend>, start: u32, count: u32);
+        /// Applies Modulation & Capacity to the average line without quantization.
+        #[qinvokable]
+        fn analyze_rxmer_average(
+            self: Pin<&mut ViewerBackend>,
+            start: u32,
+            count: u32,
+            model: &QString,
+            margin_db: f64,
+            cap: u32,
+        );
+        /// Saves complete temporal statistics to a new JSON file.
+        #[qinvokable]
+        fn export_rxmer_collection(self: Pin<&mut ViewerBackend>, url: &QUrl);
         /// Returns the installed example captures folder, or an empty local URL.
         /// Resolves the executable location without opening captures or writing files.
         #[qinvokable]
@@ -198,6 +228,11 @@ pub struct ViewerBackendRust {
     spectrum_workspace_json: QString,
     spectrum_workspace: spectrum::Workspace,
     rxmer: rxmer::State,
+    rxmer_collection: rxmer_collection::State,
+    rxmer_collection_catalog: QString,
+    rxmer_collection_view: QString,
+    rxmer_collection_error: QString,
+    rxmer_collection_busy: bool,
     pre_eq: pre_equalization::State,
     pre_eq_current: bool,
     pre_eq_busy: bool,
@@ -234,6 +269,11 @@ impl Default for ViewerBackendRust {
             spectrum_workspace_json: QString::from("{}"),
             spectrum_workspace: spectrum::Workspace::default(),
             rxmer: rxmer::State::default(),
+            rxmer_collection: rxmer_collection::State::default(),
+            rxmer_collection_catalog: QString::from("{}"),
+            rxmer_collection_view: QString::from("{}"),
+            rxmer_collection_error: QString::default(),
+            rxmer_collection_busy: false,
             pre_eq: pre_equalization::State::default(),
             pre_eq_current: false,
             pre_eq_busy: false,

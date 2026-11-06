@@ -8,8 +8,8 @@ use viewer::measurements::rxmer::{BitLoadingModel, RxMerAnalysisRequest, RxMerBi
 
 #[derive(Default)]
 pub(super) struct State {
-    generation: u64,
-    analysis: Option<Arc<RxMerBitLoadingAnalysis>>,
+    pub(super) generation: u64,
+    pub(super) analysis: Option<Arc<RxMerBitLoadingAnalysis>>,
 }
 impl State {
     fn invalidate(&mut self) {

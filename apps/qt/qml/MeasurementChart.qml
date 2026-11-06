@@ -13,6 +13,12 @@ ColumnLayout {
     property var viewport: ({start: 0, total: 0, points: []})
     property bool spectrumEnabled: false
     property bool rxmerEnabled: false
+    property bool showRxmerMinimum: true
+    property bool showRxmerAverage: true
+    property bool showRxmerMaximum: true
+    onShowRxmerMinimumChanged: plot.requestPaint()
+    onShowRxmerAverageChanged: plot.requestPaint()
+    onShowRxmerMaximumChanged: plot.requestPaint()
     signal bitLoadingRequested()
     property bool selectingPower: false
     property bool powerSelected: false
@@ -171,7 +177,7 @@ ColumnLayout {
         // Leave room for negative dB labels with three decimal places.
         property real leftMargin: Math.max(64, Math.ceil(axisLabelMetrics.width) + 16)
         onLeftMarginChanged: requestPaint()
-        property real rightMargin: 18
+        property real rightMargin: Math.max(18, Math.ceil(axisLabelMetrics.width) / 2 + 8)
         property real topMargin: 22
         property real bottomMargin: 42
         readonly property real laneHeight: 16
@@ -214,7 +220,12 @@ ColumnLayout {
             context.textAlign = "center"
             context.fillText("Frequency · MHz", width / 2, height - 3)
             const overlays = chart.viewport.modulation_profiles
-            const traces = overlays ? overlays.series : [{points: chart.viewport.points}]
+            const statistics = chart.viewport.rxmer_statistics
+            const traces = overlays ? overlays.series : (statistics && !chart.showRxmerAverage ? [] : [{points: chart.viewport.points}])
+            if (statistics) {
+                if (chart.showRxmerMinimum) traces.push({points: statistics.minimum, color: chart.theme.dark ? "#69aaff" : "#2563a6"})
+                if (chart.showRxmerMaximum) traces.push({points: statistics.maximum, color: chart.theme.dark ? "#f6bc63" : "#9a5700"})
+            }
             if (!overlays && chart.showSpectrumAverage && chart.viewport.spectrum_average) {
                 traces.push({points: chart.viewport.spectrum_average.points, color: chart.theme.spectrumAverage})
             }

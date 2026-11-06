@@ -164,3 +164,5 @@ pub fn write_json_new(analysis: &RxMerBitLoadingAnalysis, path: &Path) -> Result
     }
     Ok(())
 }
+
+pub mod collection;

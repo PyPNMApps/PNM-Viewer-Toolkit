@@ -125,6 +125,8 @@ pub struct GrossRate {
 #[derive(Debug, Clone, Serialize)]
 pub struct RxMerBitLoadingAnalysis {
     pub analysis_type: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub temporal_average: Option<aggregate::AverageInfo>,
     pub channel_id: ChannelId,
     pub model: ModelInfo,
     pub selection: Selection,
@@ -149,6 +151,30 @@ impl RxMerBitLoadingAnalysis {
         capture: &CmDsOfdmRxMer<'_>,
         request: RxMerAnalysisRequest,
     ) -> Result<Self, RxMerAnalysisError> {
+        let spacing = u32::from(capture.subcarrier_spacing_khz) * HZ_PER_KHZ;
+        let readings: Vec<_> = capture
+            .frequencies_hz()
+            .map_err(|_| RxMerAnalysisError("RxMER frequency grid overflows."))?
+            .zip(capture.values_db())
+            .collect();
+        Self::calculate_series(capture.channel_id, spacing, &readings, request)
+    }
+    /// Analyzes decoded or aggregated RxMER without requantizing into wire bytes.
+    /// # Arguments
+    /// * `channel_id` - Decoded source channel.
+    /// * `spacing` - Positive carrier spacing in Hz.
+    /// * `readings` - Ordered, uniformly spaced carrier centers and optional dB values.
+    /// * `request` - Model controls and inclusive frequency bounds.
+    /// # Returns
+    /// The same full-resolution model result used for individual captures.
+    /// # Errors
+    /// Rejects invalid controls, nonfinite readings, inconsistent grids or bounds.
+    pub fn calculate_series(
+        channel_id: ChannelId,
+        spacing: FrequencyHz,
+        readings: &[(FrequencyHz, Option<f64>)],
+        request: RxMerAnalysisRequest,
+    ) -> Result<Self, RxMerAnalysisError> {
         if !request.extra_margin_db.is_finite()
             || request.extra_margin_db < 0.0
             || !is_data_bit_loading(request.maximum_bit_loading)
@@ -157,16 +183,19 @@ impl RxMerBitLoadingAnalysis {
                 "Use a finite nonnegative margin and a supported data-modulation cap.",
             ));
         }
-        let spacing = u32::from(capture.subcarrier_spacing_khz) * HZ_PER_KHZ;
-        if spacing == 0 {
+        if spacing == 0
+            || readings
+                .iter()
+                .any(|(_, value)| value.is_some_and(|value| !value.is_finite()))
+            || readings
+                .windows(2)
+                .any(|pair| pair[1].0.checked_sub(pair[0].0) != Some(spacing))
+        {
             return Err(RxMerAnalysisError(
-                "RxMER analysis requires nonzero subcarrier spacing.",
+                "RxMER analysis requires a finite uniform frequency grid.",
             ));
         }
-        let frequencies: Vec<_> = capture
-            .frequencies_hz()
-            .map_err(|_| RxMerAnalysisError("RxMER frequency grid overflows."))?
-            .collect();
+        let frequencies: Vec<_> = readings.iter().map(|point| point.0).collect();
         let bounds = match (request.start_frequency_hz, request.stop_frequency_hz) {
             (None, None) => None,
             (Some(start), Some(stop))
@@ -184,7 +213,7 @@ impl RxMerBitLoadingAnalysis {
         };
         let subcarriers: Vec<_> = frequencies
             .into_iter()
-            .zip(capture.values_db())
+            .zip(readings.iter().map(|point| point.1))
             .enumerate()
             .filter(|(_, (frequency, _))| {
                 bounds.is_none_or(|(start, stop)| (start..=stop).contains(frequency))
@@ -267,7 +296,8 @@ impl RxMerBitLoadingAnalysis {
             .collect::<Result<Vec<_>, RxMerAnalysisError>>()?;
         Ok(Self {
             analysis_type: "rxmer_bit_loading",
-            channel_id: capture.channel_id,
+            temporal_average: None,
+            channel_id,
             model: ModelInfo {
                 id: request.model,
                 revision: 1,
@@ -350,3 +380,5 @@ impl RxMerBitLoadingAnalysis {
 fn modulation_name(bits: BitsPerSymbol) -> &'static str {
     crate::pnm::data_type::modulation::ModulationAssignment::from_code(bits).modulation_order
 }
+
+pub mod aggregate;

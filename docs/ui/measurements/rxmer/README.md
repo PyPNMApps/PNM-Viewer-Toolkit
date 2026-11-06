@@ -115,3 +115,63 @@ Press **Recalculate** to update it. A failed calculation keeps the reminder.
   <source media="(prefers-color-scheme: light)" srcset="images/rxmer-recalculate-pending-light.png">
   <img alt="Changed margin highlights the Recalculate button border while preserving the prior result" src="images/rxmer-recalculate-pending-dark.png" width="1000">
 </picture>
+
+## Min-Avg-Max
+
+Show the left gutter and select **Min-Avg-Max**. Choose **Choose folder…** for
+an entire capture directory (including subfolders), or **Open archive…** for
+ZIP, TAR or TAR.GZ/TGZ. Compressed GZIP/Zstandard captures inside the import are
+read automatically. Nothing is unpacked onto your filesystem.
+
+1. Select a MAC address in the popup, displayed as `xx:xx:xx:xx:xx:xx`.
+2. Choose a channel/grid from the selector. Each channel and distinct frequency
+   grid stays separate, even when it belongs to the same MAC.
+3. View the **Min** (blue), **Avg** (teal) and **Max** (amber) lines. Their buttons
+   show or hide individual curves. Drag to zoom; double-click to reset.
+4. Right-click the graph and select **Modulation & Capacity…**. The existing
+   models and controls analyze the **average** over the visible frequency range,
+   using full-resolution values rather than the displayed subset of points.
+5. **Export JSON** saves the complete result, including source epochs, group
+   metadata, all carrier statistics and per-carrier valid-reading counts.
+
+MAC, channel, format, frequency grid and capture epoch come from parsed binary
+headers. Filenames and filesystem modification times do not determine identity
+or ordering. Byte-identical duplicates count once. Captures are ordered by
+ascending encoded epoch, with source-name ordering for ties.
+
+For each subcarrier, Min and Max are the lowest and highest valid RxMER readings
+across the selected captures. Avg is their **arithmetic mean in dB**. Unavailable
+readings do not contribute to the average; a carrier with no valid readings
+stays a gap. A carrier with only one valid reading has equal Min/Avg/Max. This
+is a temporal summary, separate from spectrum linear-power averaging.
+
+The separation between Min and Max shows how much reception varied over the
+capture period. A stable average with a low minimum can expose intermittent
+impairments hidden by a single capture. Modulation estimates from Avg describe
+the average line; they do not guarantee that every individual capture met that
+modulation target. Use the Min curve to inspect the worst observed readings.
+
+**Import details…** lists accepted, duplicate and skipped counts, with a bounded
+list of skip reasons. Other PNM types are ignored. Import failures appear in a
+file-error popup and preserve your previous results. **Cancel** stops a pending
+import; selecting another channel replaces the graph once its calculation succeeds.
+Returning to **Original capture** preserves the collection for later use.
+
+Imports are bounded to 4096 visited entries, eight nesting levels, 64 MiB per
+file/expanded member, 256 MiB total bytes read across expansion layers and four
+million decoded samples. Symlinks and unsafe archive paths are skipped. Damaged,
+encrypted or unsupported archive compression and exceeded limits report errors.
+
+For the prepared local lab demo, open
+`~/Downloads/demo-rxmer-min-avg-max/README.md`. Select its `captures` subfolder,
+`captures.zip` or `captures.tar.gz`; use one input source at a time. Lab inputs
+remain local and are not included in Git or release installers.
+
+The screenshots use twelve lab captures from one compatible channel, with the
+MAC replaced by the repository's demonstration address for documentation.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/rxmer-min-avg-max-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="images/rxmer-min-avg-max-light.png">
+  <img alt="RxMER Min-Avg-Max workspace with header-based MAC/channel selection and three temporal statistic curves" src="images/rxmer-min-avg-max-dark.png" width="1000">
+</picture>

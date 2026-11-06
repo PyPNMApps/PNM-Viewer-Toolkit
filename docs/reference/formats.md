@@ -391,3 +391,6 @@ Validation rejects wrong roles, unsupported/mismatched headers and counts,
 nonmatching device/channel/grid, empty data, and equal/older correction times.
 Precheck can be exported without a prediction mode. Apply-then-delta and all
 summaries are shared Rust code; UI sampling never changes full exports.
+
+RxMER temporal [Min-Avg-Max statistics and average-line analysis](rxmer-min-avg-max.md)
+are derived analyses; they do not change the binary parser JSON.

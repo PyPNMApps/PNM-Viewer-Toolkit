@@ -363,3 +363,25 @@ source range while retaining full summaries and full-channel I/Q maps. Only
 `write_json_new` exports the full snapshot; existing destinations are rejected.
 See the [user flow](../ui/measurements/upstream-pre-eq/README.md#correction--delta-from-the-left-gutter)
 and [CLI options](../cli/usage.md#pre-eq-precheck-and-correction-comparison).
+
+## RxMER temporal collections
+
+`crates/core/src/pnm/analysis/rxmer/aggregate.rs` owns compatible per-carrier
+statistics and average-line model analysis.
+`apps/viewer/src/measurements/rxmer/collection/` owns bounded container I/O,
+SHA-256 deduplication, catalogs, viewport selection and no-clobber export.
+Qt uses a generation/cancellation-guarded worker adapter.
+See [equations and JSON](../reference/rxmer-min-avg-max.md).
+
+Exercise the public batch API without Qt (PATH is a directory or archive):
+
+```bash
+./scripts/cargo-local.sh run -p viewer --example rxmer_collection -- PATH
+./scripts/cargo-local.sh run -p viewer --example rxmer_collection -- PATH GROUP_ID
+```
+
+The first command prints a catalog; the second prints full aggregate JSON for
+one catalog group. This is a Rust API example, not a new pnm-decode CLI flag.
+The importer uses bundled Rust archive/decompression crates; no external tar,
+unzip, zstd command or new system development package is required. Existing
+C/C++ build prerequisites also build the bundled Zstandard decoder.

@@ -61,21 +61,25 @@ ApplicationWindow {
     }
     Connections {
         target: backend
+        function onRxmer_collection_errorChanged() { fileError.showError(backend.rxmer_collection_error) }
         function onError_messageChanged() { fileError.showError(backend.error_message) }
         function onPre_eq_errorChanged() { fileError.showError(backend.pre_eq_error) }
         function onPre_eq_currentChanged() { if (!backend.pre_eq_current) window.comparisonSelected=false }
         function onPre_eq_jsonChanged() { if (!JSON.parse(backend.pre_eq_json).pair) window.comparisonSelected=false }
         function onMetadata_jsonChanged() {
+            window.rxmerCollectionSelected = false
             window.spectrumPresentations = ({})
             spectrumControls.restorePresentation(null)
             bitLoadingDialog.close()
         }
     }
     property bool comparisonSelected: false
+    property bool rxmerCollectionSelected: false
+    property bool averageAnalysisSelected: false
     readonly property var preEqAttachment: JSON.parse(backend.pre_eq_attachment_json)
     readonly property var preEqResult: JSON.parse(backend.pre_eq_json)
     property bool navigationVisible: false
-    readonly property bool blocked: backend.busy || backend.pre_eq_busy || fileError.visible || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
+    readonly property bool blocked: backend.busy || backend.pre_eq_busy || backend.rxmer_collection_busy || rxmerCollection.popupVisible || collectionArchiveDialog.visible || collectionFolderDialog.visible || collectionSaveDialog.visible || fileError.visible || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
 
     CaptureDropArea {
         parent: Overlay.overlay
@@ -96,9 +100,31 @@ ApplicationWindow {
         analysis: JSON.parse(backend.rxmer_analysis_json)
         working: backend.rxmer_analysis_busy
         errorMessage: backend.rxmer_analysis_error
-        onAnalysisRequested: (start, count, model, margin, cap) => backend.analyze_rxmer(start, count, model, margin, cap)
+        onAnalysisRequested: (start, count, model, margin, cap) => {
+            if (window.averageAnalysisSelected) backend.analyze_rxmer_average(start, count, model, margin, cap)
+            else backend.analyze_rxmer(start, count, model, margin, cap)
+        }
         onCancelRequested: backend.cancel_rxmer_analysis()
         onExportRequested: analysisSaveDialog.open()
+    }
+    FolderDialog {
+        id: collectionFolderDialog
+        title: "Choose RxMER capture folder"
+        onAccepted: backend.import_rxmer_collection(selectedFolder)
+    }
+    FileDialog {
+        id: collectionArchiveDialog
+        title: "Open RxMER capture archive"
+        nameFilters: ["Capture archives (*.tar *.zip *.tar.gz *.tgz)", "All files (*)"]
+        onAccepted: backend.import_rxmer_collection(selectedFile)
+    }
+    FileDialog {
+        id: collectionSaveDialog
+        title: "Export full-resolution RxMER Min-Avg-Max"
+        fileMode: FileDialog.SaveFile
+        nameFilters: ["JSON files (*.json)"]
+        defaultSuffix: "json"
+        onAccepted: backend.export_rxmer_collection(selectedFile)
     }
     FileDialog {
         id: preEqOpenDialog
@@ -283,9 +309,24 @@ ApplicationWindow {
 
                 Label { text: "WORKSPACE"; color: appTheme.muted; font.pixelSize: 10 }
                 Label { text: backend.loaded ? (window.metadata.title || "Measurement") : "Home"; color: appTheme.accent; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                ThemeButton {
+                    objectName: "showRxmerMinAvgMax"
+                    theme: appTheme
+                    text: "Min-Avg-Max"
+                    Layout.fillWidth: true
+                    borderHighlighted: window.rxmerCollectionSelected
+                    onClicked: { window.rxmerCollectionSelected=true; window.comparisonSelected=false }
+                }
+                ThemeButton {
+                    theme: appTheme
+                    text: "Original capture"
+                    visible: window.rxmerCollectionSelected
+                    Layout.fillWidth: true
+                    onClicked: window.rxmerCollectionSelected=false
+                }
                 PreEqComparisonSidebar {
                     id: preEqSidebar
-                    visible: backend.pre_eq_current
+                    visible: backend.pre_eq_current && !window.rxmerCollectionSelected
                     Layout.fillWidth: true
                     theme: appTheme
                     comparisonSelected: window.comparisonSelected
@@ -317,7 +358,7 @@ ApplicationWindow {
                 Accessible.role: Accessible.AlertMessage
             }
                 Rectangle {
-                    visible: !backend.loaded
+                    visible: !backend.loaded && !window.rxmerCollectionSelected
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     color: appTheme.panel
@@ -339,8 +380,25 @@ ApplicationWindow {
                         }
                     }
                 }
+                RxMerCollectionView {
+                    id: rxmerCollection
+                    visible: window.rxmerCollectionSelected
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    theme: appTheme
+                    catalog: JSON.parse(backend.rxmer_collection_catalog)
+                    viewport: JSON.parse(backend.rxmer_collection_view)
+                    working: backend.rxmer_collection_busy
+                    onChooseDirectory: collectionFolderDialog.open()
+                    onChooseArchive: collectionArchiveDialog.open()
+                    onCancelImport: backend.cancel_rxmer_collection()
+                    onGroupRequested: groupId => backend.select_rxmer_group(groupId)
+                    onRangeRequested: (start,count) => backend.show_rxmer_collection_range(start,count)
+                    onBitLoadingRequested: (start,count) => { window.averageAnalysisSelected=true; bitLoadingDialog.openRange(start,count) }
+                    onExportRequested: collectionSaveDialog.open()
+                }
                 PreEqComparisonView {
-                    visible: backend.loaded && window.comparisonSelected && backend.pre_eq_current
+                    visible: backend.loaded && window.comparisonSelected && backend.pre_eq_current && !window.rxmerCollectionSelected
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     theme: appTheme
@@ -349,7 +407,7 @@ ApplicationWindow {
                     onResetRequested: backend.show_pre_eq_range(0,window.preEqResult.pair ? window.preEqResult.pair.sample_count : 0)
                 }
                 Rectangle {
-                    visible: backend.loaded && !window.comparisonSelected
+                    visible: backend.loaded && !window.comparisonSelected && !window.rxmerCollectionSelected
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 300
@@ -522,7 +580,7 @@ ApplicationWindow {
                             showSpectrumAverage: spectrumControls.showAverage
                             visible: window.viewport.constellation === undefined && window.metadata.view_index !== 2 && window.metadata.histogram !== true && window.metadata.fec_summary === undefined
                             rxmerEnabled: window.metadata.title === "Downstream RxMER"
-                            onBitLoadingRequested: bitLoadingDialog.openRange(window.viewport.start || 0, window.viewport.count || 0)
+                            onBitLoadingRequested: { window.averageAnalysisSelected=false; bitLoadingDialog.openRange(window.viewport.start || 0, window.viewport.count || 0) }
                             stepPlot: window.metadata.modulation_profile !== undefined
                             unit: window.metadata.unit || "dB"
                             axisLabel: window.metadata.axis_label || "Amplitude"
