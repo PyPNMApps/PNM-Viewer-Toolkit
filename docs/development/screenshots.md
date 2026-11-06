@@ -54,7 +54,8 @@ file dialogs in the gallery.
 - Confirm constellation has no numeric axes or sample-count footer; show MER/EVM
   at lower right and its visibility toggle.
 - Confirm Spectrum shows the original and 300–350 MHz tabs, compact range-close
-  button, N=101, red average, highlighted power band and dBmV result. The lower
+  button, N=101, red average, highlighted power band and larger integrated-level,
+  frequency-range and bandwidth chips beside the small MAC/RBW chips. The lower
   frequency-selection readout must match the selected power band.
 - Confirm modulation images show all four profiles and the correct metric.
 - Keep README's Home picture and the gallery's `<picture>` paths consistent.

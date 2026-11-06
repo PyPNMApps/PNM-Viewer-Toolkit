@@ -120,12 +120,15 @@ TestCase {
         compare(tools.request, [120, 180, "MHz"])
         tryCompare(dialog, "visible", false)
     }
-    function test_power_label_uses_dbmv_and_one_decimal() {
+    function test_power_chips_use_dbmv_and_one_decimal() {
         tools.workspace = {tabs: [{title: "Spectrum"}], power: {
             start_hz: 100, stop_hz: 200, bandwidth_hz: 100, level_dbmv: 3.01029995664}}
-        const label = findChild(tools, "spectrumIntegratedPower")
-        compare(label.visible, true)
-        verify(label.text.indexOf("3.0 dBmV") >= 0)
-        verify(label.text.indexOf("dBm ·") < 0)
+        compare(tools.powerChips.length, 3)
+        compare(tools.powerChips[0].title, "Integrated level")
+        compare(tools.powerChips[0].value, "3.0 dBmV")
+        compare(tools.powerChips[1].value, "100–200 Hz")
+        compare(tools.powerChips[2].value, "100 Hz")
+        tools.workspace = {tabs: []}
+        compare(tools.powerChips.length, 0)
     }
 }

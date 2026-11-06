@@ -69,6 +69,7 @@ fn main() {
                 "qml/MeasurementChart.qml",
                 "qml/SpectrumControls.qml",
                 "qml/SpectrumTools.qml",
+                "qml/SpectrumPowerChip.qml",
                 "qml/IqScatterChart.qml",
                 "qml/ConstellationChart.qml",
                 "qml/ConstellationMerOverlay.qml",

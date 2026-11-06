@@ -98,7 +98,10 @@ No silent clamping or out-of-capture extrapolation is applied.
 - `apps/qt/src/backend/spectrum.rs` owns bounded tab state over the existing
   `Arc<Capture>`; no capture bytes are duplicated. Maximum 16 tabs including the
   original. Each stores a bounded viewport, range, averaging mode and result.
-- `SpectrumTools.qml` renders tabs, the integrated result and Frequency dialog.
+- `SpectrumTools.qml` renders tabs and the Frequency dialog and supplies formatted
+  result-chip values. `SpectrumPowerChip.qml` presents the integrated level,
+  frequency range and bandwidth as larger two-line chips in the metadata Flow,
+  beside MAC/RBW. The Flow wraps chips at narrow window widths.
   `MeasurementChart.qml` handles the context menu and drag highlight.
 - Frequency units are Hz, kHz, MHz or GHz; Rust validates again after the dialog.
   Start must precede Stop. A new graph requires at least two source bin centers;

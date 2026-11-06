@@ -40,8 +40,9 @@ contain the full original capture.
 Right-click the spectrum for:
 
 - **Calculate power…**: drag across the graph to highlight a band and calculate
-  its integrated level in **dBmV**, shown to one decimal place with the selected
-  endpoints and bandwidth. Press Escape to cancel selection or clear its highlight.
+  its integrated level in **dBmV**, shown to one decimal place. Larger labeled
+  chips beside MAC and RBW show the integrated level, frequency range and
+  bandwidth. They wrap onto another row when the window is narrow. Press Escape to cancel selection or clear its highlight.
   The calculation uses original bins and acquisition ENBW, even when an averaged
   trace is visible. It sums mean-square voltage; it does not average dB values.
 - **Frequency…**: enter Start and Stop, select **Hz**, **kHz**, **MHz** or **GHz**,
@@ -64,7 +65,7 @@ Example: `spectrum_analyzer.bin`.
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../images/user-guide/spectrum-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="../images/user-guide/spectrum-light.png">
-  <img alt="Spectrum Analyzer range tab with red WindowAvg trace, selected frequency band, integrated dBmV level and RBW chip" src="../images/user-guide/spectrum-dark.png" width="1000">
+  <img alt="Spectrum Analyzer range tab with red WindowAvg trace, selected frequency band, large integrated-level, frequency-range and bandwidth chips beside MAC and RBW" src="../images/user-guide/spectrum-dark.png" width="1000">
 </picture>
 
 <details>

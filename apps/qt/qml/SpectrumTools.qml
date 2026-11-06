@@ -13,6 +13,17 @@ ColumnLayout {
     readonly property bool popupVisible: frequencyDialog.visible
     property var workspace: ({tabs: []})
     property var validateRange: function(start, stop, unit) { return "No spectrum capture" }
+    readonly property var powerChips: {
+        const power = workspace.power
+        if (power === undefined || power === null) {
+            return []
+        }
+        return [
+            {title: "Integrated level", value: power.level_dbmv.toFixed(1) + " dBmV"},
+            {title: "Frequency range", value: power.start_hz.toFixed(0) + "–" + power.stop_hz.toFixed(0) + " Hz"},
+            {title: "Bandwidth", value: power.bandwidth_hz.toFixed(0) + " Hz"}
+        ]
+    }
     signal rangeRequested(real start, real stop, string unit)
     signal tabRequested(int index)
     signal closeRequested(int index)
@@ -49,17 +60,6 @@ ColumnLayout {
                 }
             }
         }
-    }
-    Label {
-        objectName: "spectrumIntegratedPower"
-        visible: tools.workspace.power !== undefined && tools.workspace.power !== null
-        color: tools.theme.accent
-        text: visible ? "Integrated level: " + tools.workspace.power.level_dbmv.toFixed(1)
-            + " dBmV · " + tools.workspace.power.start_hz.toFixed(0) + "–"
-            + tools.workspace.power.stop_hz.toFixed(0) + " Hz · BW "
-            + tools.workspace.power.bandwidth_hz.toFixed(0) + " Hz" : ""
-        Layout.fillWidth: true
-        wrapMode: Text.Wrap
     }
     Dialog {
         id: frequencyDialog

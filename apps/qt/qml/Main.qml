@@ -289,7 +289,8 @@ ApplicationWindow {
                                 Layout.fillWidth: true
                                 spacing: 6
                                 Label { text: (window.metadata.title || "Measurement"); elide: Text.ElideMiddle; Layout.fillWidth: true; color: appTheme.text; font.pixelSize: 17; font.bold: true }
-                                RowLayout {
+                                Flow {
+                                    Layout.fillWidth: true
                                     spacing: 8
                                     Repeater {
                                         model: window.metadata.chips || []
@@ -307,6 +308,15 @@ ApplicationWindow {
                                                 Label { text: modelData.title; color: appTheme.accent; font.pixelSize: 12; font.bold: true }
                                                 Label { text: modelData.value === undefined ? "" : modelData.value.toString(); color: appTheme.text; font.pixelSize: 12 }
                                             }
+                                        }
+                                    }
+                                    Repeater {
+                                        model: spectrumTools.powerChips
+                                        SpectrumPowerChip {
+                                            required property var modelData
+                                            theme: appTheme
+                                            title: modelData.title
+                                            value: modelData.value
                                         }
                                     }
                                     ProfileBandwidth {
