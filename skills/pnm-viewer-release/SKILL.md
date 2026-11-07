@@ -112,9 +112,11 @@ separate desktop/ARP ICO entries a .ico identifier; an ICO override on an
 advertised .exe key file violates ICE50. Keep native installer validation on.
 macOS uses conventional Applications/Dock icons and an optional Finder alias.
 
-The user approved nine sanitized demonstration captures in desktop installers
-on 2026-11-05. scripts/release/samples.py owns the allowlist and upstream notices/
-provenance; CLI-only archives remain capture-free. Resolve the initial Open
+Desktop installers include nine single captures, generated RxMER collection ZIPs
+and the pre-EQ comparison pair. scripts/release/samples.py owns bundling, upstream
+notices/provenance and the expanded-source manifest. Apply the sw-qa-hygiene skill:
+check expanded captures before generating any ZIP; never use prebuilt demo archives
+as installer sources. Failed hygiene stops packaging. CLI-only archives stay capture-free. Resolve the initial Open
 folder from the installed executable, fall back to Home for unpackaged builds,
 and never select an installation directory as the default export destination.
 Require installed smoke checks to use and verify bundled examples, not silently

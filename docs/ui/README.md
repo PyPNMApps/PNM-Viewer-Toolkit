@@ -102,7 +102,13 @@ The panel button at the top right shows or hides the left navigation pane.
 **About** shows the installed version, development status, project link and
 software-update status. A background check runs once per normal launch;
 it does not delay opening captures. Offline or failed checks leave the viewer
-usable. **Check for updates** retries manually and reports the outcome.
+usable. **Check for updates** retries manually and reports the outcome. On Windows,
+**Uninstall…** opens Windows Installed apps; close the viewer and select its
+Uninstall action there. See the [Windows uninstall guide](../install/windows.md#uninstall).
+
+**Report issue** opens a GitHub draft in your browser, prefilled with the viewer
+version, OS family and architecture. Add reproduction steps and review the draft
+before submitting. Captures, file paths, logs and user/host names are not included.
 
 When a newer published stable release exists, a compact green **Update** button
 appears near the top-right navigation toggle. Click it to open About, see the

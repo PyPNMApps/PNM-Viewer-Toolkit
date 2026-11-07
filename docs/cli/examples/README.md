@@ -68,7 +68,7 @@ desktop exports. Modulation capacity is an ideal gross useful-symbol estimate
 with explicit overhead exclusions; see [the contract](../../reference/formats.md#per-profile-ideal-capacity-analysis).
 
 All example MAC fields, including the synthetic latency example, use
-`aa:bb:cc:dd:ee:ff` (`aabb.ccdd.eeff`). Measurement values are unchanged.
+`00:ca:00:00:00:01` (`00ca.0000.0001`). Measurement values are unchanged.
 
 Constellation JSON also includes `constellation_analysis.mer`: the full-capture,
 Rust-calculated decision-directed MER result and availability status. The desktop

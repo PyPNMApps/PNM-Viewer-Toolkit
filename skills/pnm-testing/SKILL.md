@@ -76,3 +76,9 @@ Windows native lifecycle checks cover shortcut opt-out, opt-in and removal;
 macOS checks its Info.plist icon reference and packaged ICNS. XML/asset checks
 on Linux supplement native MSI/DMG tests; they do not prove interactive wizard,
 Finder or Windows Explorer appearance.
+
+Installer demo tests must prove hygiene passes on expanded sources before ZIP
+creation, that failure leaves no payload, and that repeated ZIP generation gives
+identical bytes. Check unsafe/extra files and manifest drift. Verify all packaged
+single captures, RxMER ZIP members and the pre-EQ pair in Windows/Linux and macOS
+resource layouts. Sources and measurements remain unchanged by packaging.

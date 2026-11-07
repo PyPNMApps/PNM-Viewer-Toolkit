@@ -7,7 +7,7 @@
     "capture_time": 1466967
   },
   "channel_id": 34,
-  "mac_address": "aa:bb:cc:dd:ee:ff",
+  "mac_address": "00:ca:00:00:00:01",
   "num_profiles": 4,
   "subcarrier_zero_frequency": 631100000,
   "first_active_subcarrier_index": 356,

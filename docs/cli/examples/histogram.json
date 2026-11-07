@@ -6,7 +6,7 @@
     "minor_version": 0,
     "capture_time": 1495481
   },
-  "mac_address": "aa:bb:cc:dd:ee:ff",
+  "mac_address": "00:ca:00:00:00:01",
   "symmetry": 2,
   "dwell_count_values_length": 4,
   "hit_count_values_length": 1024,

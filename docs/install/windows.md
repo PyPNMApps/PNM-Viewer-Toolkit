@@ -83,6 +83,10 @@ folder. Or use the copy bundled with the viewer:
 
 ## Uninstall
 
+In Windows builds, **About → Uninstall…** opens Windows **Installed apps**.
+Close the viewer, select **PNM Viewer Toolkit**, then choose **Uninstall**.
+You can also open this page directly:
+
 Settings → Apps → Installed apps → PNM Viewer Toolkit → Uninstall.
 Windows Installer owns removal; no separate `uninstall.exe` is installed.
 A separately extracted CLI is independent. Keep captures outside installation

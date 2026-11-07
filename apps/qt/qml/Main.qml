@@ -239,6 +239,8 @@ ApplicationWindow {
         captureBusy: backend.busy
         onRestartRequested: Qt.quit()
         onOpenReleaseRequested: address => Qt.openUrlExternally(address)
+        onOpenIssueRequested: address => Qt.openUrlExternally(address)
+        onOpenUninstallRequested: Qt.openUrlExternally("ms-settings:appsfeatures")
     }
     RowLayout {
         id: captureSurface

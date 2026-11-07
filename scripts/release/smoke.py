@@ -52,7 +52,7 @@ def smoke(gui, cli):
     with tempfile.TemporaryDirectory(prefix='pnm-package-smoke-') as directory:
         output = Path(directory)
         for filename in FIXTURES:
-            capture = examples / filename
+            capture = examples / 'single' / filename
             raw = output / (filename + '.cli.json')
             decoded = output / (filename + '.ui.json')
             subprocess.run([str(cli), str(capture), '--output', str(raw)],

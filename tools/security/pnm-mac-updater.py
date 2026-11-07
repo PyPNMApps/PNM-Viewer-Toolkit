@@ -12,14 +12,21 @@ standalone development tooling, never a production Python dependency.
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import tarfile
+import zipfile
+
+# Direct invocation from any working directory and unittest discovery share this module.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from dataset_mac import Dataset, is_alias
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / 'tests/fixtures/pypnm'
-DEFAULT_MAC = 'aabb.ccdd.eeff'
+DEFAULT_MAC = '00ca.0000.0001'
 MAC_BYTES = 6
 # Format 1.0 layout evidence: pnm_file_type.rs selects 10-byte common headers
 # except FEC (6 bytes); each cm_* parser reads channel before MAC except hist.
@@ -179,15 +186,105 @@ def check_examples(address):
                 visit(item)
     for path in (ROOT / 'docs/cli/examples').glob('*.json'):
         visit(json.loads(path.read_text()))
-    data = bytes.fromhex((ROOT / 'docs/cli/examples/latency-synthetic.hex').read_text())
-    if rewrite(data, address) != data:
-        raise ValueError('Synthetic latency source needs the approved MAC alias')
+    for path in (ROOT / 'docs/cli/examples').glob('*.hex'):
+        data = bytes.fromhex(path.read_text())
+        if data[:4] == b'PNN\x01':
+            continue  # Header-only Symbol stub has no evidenced MAC layout.
+        if rewrite(data, address) != data:
+            raise ValueError('Synthetic source needs the approved MAC alias')
+
+
+
+def validate_rewrite(decoder, original, updated):
+    """Require identical decoded non-MAC measurements before replacing a capture."""
+    if without_identity(decode(decoder, original)) != without_identity(decode(decoder, updated)):
+        raise ValueError('Demo measurement comparison failed; no files written')
+
+
+def process_directory(directory, write=False, dry_run=False, decoder=None):
+    """Sanitize a demo collection with stable aliases, archives and metadata.
+
+    Repeated CM identities retain one alias across channels and timestamps.
+    CMTS fields share the same mapping when identities overlap. Plan and validate the
+    entire collection before writing; never print original addresses.
+    """
+    validator = None
+    if write:
+        validator = lambda original, updated: validate_rewrite(decoder, original, updated)
+    dataset = Dataset(directory, field_ranges, validator)
+    plan = dataset.plan()
+    changes = [(source, destination, original, updated)
+               for source, destination, original, updated in plan
+               if source != destination or original != updated]
+    if changes and not write and not dry_run:
+        raise ValueError('Demo collection needs MAC sanitization; run with --directory PATH --write')
+    if write:
+        for source, destination, _, updated in changes:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            if source == destination:
+                atomic_write(source, updated)
+            else:
+                # The plan has checked collisions; retain permissions for renamed files.
+                atomic_write(source, updated)
+                source.replace(destination)
+        for path in sorted(Path(directory).rglob('*'), reverse=True):
+            if path.is_dir() and not any(path.iterdir()):
+                path.rmdir()
+    print(f'Demo captures: {dataset.capture_count}; modems: '
+          f'{len(dataset.identities["mac_address"])}; changed files: {len(changes)}')
+
+
+def update_examples(address):
+    """Update structured JSON identity keys and evidenced synthetic hex sources."""
+    # Match only JSON identity string values (for example "mac_address": "aa:bb:cc:dd:ee:ff").
+    # Group 1 retains the key/spacing; whole documents keep their numeric spelling.
+    identity_field = re.compile(r'("(?:mac_address|cmts_mac_address)"\s*:\s*)"[^"]*"')
+    for path in (ROOT / 'docs/cli/examples').glob('*.json'):
+        original = path.read_text()
+        json.loads(original)  # Reject malformed source before replacing anything.
+        updated = identity_field.sub(lambda match: match[1] + '"' + address.hex(':') + '"', original)
+        atomic_write(path, updated.encode())
+    for path in (ROOT / 'docs/cli/examples').glob('*.hex'):
+        data = bytes.fromhex(path.read_text())
+        if data[:4] != b'PNN\x01':
+            atomic_write(path, (rewrite(data, address).hex() + '\n').encode())
+
+
+def check_tracked_captures():
+    """Check tracked and new nonignored capture assets, including archive members.
+
+    Inventory comes from Git, so adding a new demo folder cannot bypass the
+    gate. Ignored private working datasets are inspected only on explicit request.
+    """
+    result = subprocess.run(['git', '-C', str(ROOT), 'ls-files', '--cached',
+                             '--others', '--exclude-standard', '-z'],
+                            capture_output=True, check=True)
+    dataset = Dataset(ROOT, field_ranges)
+    budget = [0, 0]
+    for name in sorted(set(result.stdout.decode().split('\0')) - {''}):
+        path = ROOT / name
+        candidate = name.lower().endswith(('.bin', '.zip', '.tar', '.tar.gz', '.tgz', '.bin.gz', '.zst', '.zts'))
+        if not candidate and path.is_file() and not path.is_symlink():
+            with path.open('rb') as stream:
+                prefix = stream.read(4)
+            candidate = (len(prefix) == 4 and prefix[:3] in (b'PNN', b'LLD', b'PNM')
+                         and prefix[3] < 0x20) or prefix.startswith((b'PK\x03\x04', b'\x1f\x8b'))
+        if not candidate:
+            continue
+        if path.is_symlink():
+            raise ValueError('Tracked capture assets must not be symlinks')
+        if path.stat().st_size > 256 * 1024 * 1024:
+            raise ValueError('Tracked capture asset exceeds size limit')
+        dataset.walk(name, path.read_bytes(), dataset.collect, budget)
+    if any(not is_alias(address) for values in dataset.identities.values() for address in values):
+        raise ValueError('Tracked demo MAC outside approved 00ca.00 namespace; sanitize before push')
 
 
 def main():
     """Check by default; dry-run never writes and --write explicitly sanitizes."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mac-address', default=DEFAULT_MAC)
+    parser.add_argument('--directory', type=Path, help='Demo directory; preserve distinct CM identities with sequential aliases')
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument('--write', action='store_true')
     modes.add_argument('--dry-run', action='store_true')
@@ -195,10 +292,24 @@ def main():
     args = parser.parse_args()
     try:
         address = normalize_mac(args.mac_address)
-        process(address, args.write, args.dry_run, args.decoder.resolve())
-        if not args.write and not args.dry_run:
-            check_examples(address)
-    except (ValueError, OSError, KeyError) as error:
+        if not is_alias(address):
+            raise ValueError('Use the approved 00ca.00 MAC namespace with a nonzero suffix')
+        if args.directory is not None:
+            process_directory(args.directory, args.write, args.dry_run, args.decoder.resolve())
+        else:
+            process(address, args.write, args.dry_run, args.decoder.resolve())
+            if args.write:
+                update_examples(address)
+                demos = ROOT / 'tests/fixtures/demos'
+                if demos.exists():
+                    for directory in sorted(demos.iterdir()):
+                        if directory.is_dir():
+                            process_directory(directory, write=True, decoder=args.decoder.resolve())
+            if not args.dry_run:
+                check_examples(address)
+                check_tracked_captures()
+    except (ValueError, OSError, KeyError, subprocess.SubprocessError,
+            tarfile.TarError, zipfile.BadZipFile, EOFError) as error:
         print(f'ERROR: {error}', file=sys.stderr)
         return 1
     return 0

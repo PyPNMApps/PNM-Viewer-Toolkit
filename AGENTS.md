@@ -168,8 +168,8 @@ active outputs by deleting directories directly; let Cargo own build locking.
 
 ## Fixture MAC hygiene
 
-Imported fixture CM and CMTS MAC fields use aabb.ccdd.eeff, serialized as
-aa:bb:cc:dd:ee:ff, as explicitly selected by the user. Run the read-only
+Imported single-fixture CM and CMTS MAC fields use 00ca.0000.0001, serialized
+as 00:ca:00:00:00:01. Collections retain distinct sequential modem aliases. Run the read-only
 `python3 tools/security/pnm-mac-updater.py` check before staging. Use its explicit
 --write mode for fixture identity changes, preserve original/current provenance
 hashes, and regenerate JSON examples and affected screenshots. See
@@ -178,9 +178,11 @@ upstream PyPNM. This policy concerns development fixtures, not user captures.
 
 ## Installed branding and examples
 
-User authorization on 2026-11-05 includes the nine sanitized binary captures
-in desktop installers, with upstream license/NOTICE and provenance. Use the
-explicit allowlist in scripts/release/samples.py; do not ship Python tests,
+Desktop installers include nine single captures, generated RxMER collection ZIPs
+and the sanitized pre-EQ comparison pair, with applicable license/NOTICE and
+provenance. Expanded sources are registered in tests/fixtures/demos/installer-demos.json.
+Use scripts/release/samples.py to check hygiene before creating ZIPs; never use
+prebuilt demo archives as installer sources. Apply skills/sw-qa-hygiene/SKILL.md; do not ship Python tests,
 private evidence or arbitrary customer captures. Standalone CLI archives stay
 capture-free. Installed Open starts in the examples folder and exports target
 user-selected writable locations. Test installed sample bytes and default folder.
@@ -191,3 +193,9 @@ installation; macOS uses its bundle icon and standard user-created Finder alias.
 Keep tools/branding/generate.py reproducible and development-only. Add new host
 build/conversion prerequisites to --development and its docs; do not install
 packages merely to validate script syntax or argument handling.
+
+## Example and demo hygiene
+
+Apply skills/sw-qa-hygiene/SKILL.md for capture examples and demo collections.
+Use the standalone MAC sanitizer and retain distinct modem identities.
+The read-only SW-QA hygiene gate is required before pushes and in CI.

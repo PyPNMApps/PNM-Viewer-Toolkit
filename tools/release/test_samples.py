@@ -2,15 +2,109 @@
 # Copyright 2026 PNM Viewer contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-"""Packaged samples retain sanitized source bytes and upstream provenance."""
+"""Generated installer demos must pass hygiene before any archive is created."""
+import hashlib
+import json
 from pathlib import Path
-import sys
+import shutil
 import struct
+import subprocess
+import sys
 import tempfile
 import unittest
+from unittest.mock import patch
+import zipfile
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'scripts/release'))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'scripts/release'))
 import samples
+
+
+class InstallerSampleTests(unittest.TestCase):
+    """Exercise real sanitized sources and deliberately invalid build inputs."""
+
+    def test_expanded_hygiene_never_opens_a_source_archive(self):
+        """Check all registered sources without opening or generating a ZIP."""
+        with patch.object(zipfile, 'ZipFile', side_effect=AssertionError('Unexpected ZIP access')):
+            datasets = samples.check_sources()
+        self.assertEqual(len(datasets), 4)
+        self.assertEqual(sum(len([item for item in entry['files'] if item['path'].endswith('.bin')])
+                             for entry in datasets), 369)
+
+    def test_generated_zips_repeat_and_installed_resources_match(self):
+        """Bundle deterministic ZIPs and verify deployed bytes on each OS layout."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = root / 'first/share/examples'
+            second = root / 'second/share/examples'
+            samples.bundle(first)
+            samples.bundle(second)
+            self.assertEqual(samples.installed_directory(root / 'first/pnm-viewer.exe'), first)
+            mac = root / 'Viewer.app/Contents/Resources/share/examples'
+            mac.parent.mkdir(parents=True)
+            shutil.copytree(first, mac)
+            self.assertEqual(samples.installed_directory(root / 'Viewer.app/Contents/MacOS/pnm-viewer'), mac)
+            for archive in first.glob('rxmer/*.zip'):
+                self.assertEqual(archive.read_bytes(), (second / archive.relative_to(first)).read_bytes())
+                with zipfile.ZipFile(archive) as source:
+                    self.assertTrue(all(info.date_time == (1980, 1, 1, 0, 0, 0) for info in source.infolist()))
+            alias_capture = first / 'single/rxmer.bin'
+            alias_capture.write_bytes(alias_capture.read_bytes() + b'corrupt')
+            with self.assertRaisesRegex(ValueError, 'missing or modified'):
+                samples.installed_directory(root / 'first/pnm-viewer.exe')
+            with self.assertRaises(FileExistsError):
+                samples.bundle(second)
+
+    def test_hygiene_failure_stops_before_zip_or_destination(self):
+        """Even checksum-registered input with a private MAC cannot be packaged."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            demos = root / 'demos'
+            shutil.copytree(samples.DEMO_ROOT, demos)
+            manifest_path = demos / 'installer-demos.json'
+            manifest = json.loads(manifest_path.read_text())
+            entry = manifest['datasets'][0]
+            item = next(item for item in entry['files'] if item['path'].endswith('.bin'))
+            capture = demos / entry['source'] / item['path']
+            data = bytearray(capture.read_bytes())
+            data[11:17] = bytes.fromhex('102030405060')
+            capture.write_bytes(data)
+            item['sha256'] = hashlib.sha256(data).hexdigest()
+            manifest_path.write_text(json.dumps(manifest))
+            output = root / 'examples'
+            with patch.object(samples, 'DEMO_ROOT', demos), patch.object(samples, 'DEMO_MANIFEST', manifest_path), \
+                    patch.object(samples, 'create_archive') as create:
+                with self.assertRaises(subprocess.CalledProcessError):
+                    samples.bundle(output)
+                create.assert_not_called()
+            self.assertFalse(output.exists())
+            self.assertEqual(capture.read_bytes(), data)
+
+    def test_extra_archive_corrupt_source_and_path_escape_fail(self):
+        """Reject unregistered/private inputs and unsafe output paths early."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            demos = root / 'demos'
+            shutil.copytree(samples.DEMO_ROOT, demos)
+            manifest_path = demos / 'installer-demos.json'
+            manifest = json.loads(manifest_path.read_text())
+            source = demos / manifest['datasets'][0]['source']
+            extra = source / 'prebuilt.zip'
+            extra.write_bytes(b'never unzip me')
+            with patch.object(samples, 'DEMO_ROOT', demos), patch.object(samples, 'DEMO_MANIFEST', manifest_path):
+                with self.assertRaisesRegex(ValueError, 'unregistered'):
+                    samples.check_sources()
+                extra.unlink()
+                manifest['datasets'][0]['output'] = '../outside.zip'
+                manifest_path.write_text(json.dumps(manifest))
+                with self.assertRaisesRegex(ValueError, 'Unsafe'):
+                    samples.check_sources()
+                manifest['datasets'][0]['output'] = 'rxmer/single-channel.zip'
+                manifest_path.write_text(json.dumps(manifest))
+                capture = next(source.glob('*.bin'))
+                capture.write_bytes(capture.read_bytes() + b'changed')
+                with self.assertRaisesRegex(ValueError, 'checksum'):
+                    samples.check_sources()
 
 
 class SamplePackageTests(unittest.TestCase):
@@ -25,14 +119,14 @@ class SamplePackageTests(unittest.TestCase):
                 root = Path(directory)
                 destination = root / relative
                 samples.bundle(destination)
-                self.assertEqual(len(list(destination.glob('*.bin'))), 9)
+                self.assertEqual(len(list((destination / 'single').glob('*.bin'))), 9)
                 self.assertFalse(list(destination.rglob('*.py')))
                 for name in ('LICENSE', 'NOTICE', 'provenance.json', 'README.md'):
-                    self.assertTrue((destination / name).is_file())
+                    self.assertTrue((destination / 'single' / name).is_file())
                 self.assertEqual(samples.installed_directory(root / executable), destination)
                 with self.assertRaises(FileExistsError):
                     samples.bundle(destination)
-                (destination / 'rxmer.bin').write_bytes(b'corrupt')
+                (destination / 'single/rxmer.bin').write_bytes(b'corrupt')
                 with self.assertRaisesRegex(ValueError, 'modified: rxmer.bin'):
                     samples.installed_directory(root / executable)
 
@@ -63,3 +157,7 @@ class SamplePackageTests(unittest.TestCase):
             bitmap = (samples.ROOT / 'packaging/windows' / name).read_bytes()
             self.assertEqual(bitmap[:2], b'BM')
             self.assertEqual(struct.unpack_from('<ii', bitmap, 18), expected)
+
+
+if __name__ == '__main__':
+    unittest.main()

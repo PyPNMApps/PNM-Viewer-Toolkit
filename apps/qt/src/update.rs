@@ -16,6 +16,7 @@ mod bridge {
         #[qproperty(QString, update_status)]
         #[qproperty(QString, latest_version)]
         #[qproperty(QString, release_url)]
+        #[qproperty(QString, issue_report_url)]
         #[qproperty(bool, install_available)]
         #[qproperty(QString, install_state)]
         #[qproperty(QString, install_status)]
@@ -56,6 +57,7 @@ pub struct UpdateBackendRust {
     update_status: QString,
     latest_version: QString,
     release_url: QString,
+    issue_report_url: QString,
     install_available: bool,
     install_state: QString,
     install_status: QString,
@@ -74,6 +76,11 @@ impl Default for UpdateBackendRust {
             update_status: QString::from("Updates have not been checked."),
             latest_version: QString::default(),
             release_url: QString::from(RELEASES_URL),
+            issue_report_url: QString::from(viewer::support::issue_report_url(
+                env!("CARGO_PKG_VERSION"),
+                std::env::consts::OS,
+                std::env::consts::ARCH,
+            )),
             install_available: false,
             install_state: QString::from("idle"),
             install_status: QString::default(),

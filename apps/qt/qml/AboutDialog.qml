@@ -14,6 +14,9 @@ Dialog {
     property url iconSource: theme.dark ? "qrc:/branding/icon-dark.png" : "qrc:/branding/icon-light.png"
     signal openReleaseRequested(url address)
     signal restartRequested()
+    signal openUninstallRequested()
+    signal openIssueRequested(url address)
+    property string platformOs: Qt.platform.os
     property bool captureBusy: false
     // Emit the close request only after Rust starts the updated executable.
     // Active capture/export work finishes first; failed launches remain retryable.
@@ -59,11 +62,28 @@ Dialog {
         }
         Label { text: "PNM Viewer Toolkit"; color: dialog.theme.text; font.pixelSize: 20; font.bold: true }
         Label { text: "Version " + dialog.appVersion + " · In development"; color: dialog.theme.muted }
-        ThemeButton {
-            theme: dialog.theme
-            objectName: "projectButton"
-            text: "GitHub project"
-            onClicked: Qt.openUrlExternally("https://github.com/PyPNMApps/PNM-Viewer-Toolkit")
+        RowLayout {
+            ThemeButton {
+                theme: dialog.theme
+                objectName: "projectButton"
+                text: "GitHub project"
+                onClicked: Qt.openUrlExternally("https://github.com/PyPNMApps/PNM-Viewer-Toolkit")
+            }
+            ThemeButton {
+                theme: dialog.theme
+                objectName: "reportIssueButton"
+                text: "Report issue"
+                ToolTip.visible: hovered
+                ToolTip.text: "Open a GitHub issue draft to review before submitting"
+                onClicked: dialog.openIssueRequested(dialog.updates.issue_report_url)
+            }
+            ThemeButton {
+                theme: dialog.theme
+                objectName: "windowsUninstallButton"
+                text: "Uninstall…"
+                visible: dialog.platformOs === "windows"
+                onClicked: dialog.openUninstallRequested()
+            }
         }
         Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: dialog.theme.line }
         Label { text: "Software updates"; color: dialog.theme.text; font.bold: true }

@@ -6,7 +6,7 @@
   "files": [
     {
       "path": "tests/files/rxmer.bin",
-      "sha256": "d80e8518ac66c4d41f0dda224795b3afab378f9ed4710b750dd0be1a5dd3cbe2",
+      "sha256": "864ba70b0361bd8b4912b55f55e8db72dd7b319b478ce1988103979e0b19c98e",
       "size_bytes": 7508,
       "original_sha256": "406d98c348a3481c73015690fd576e83cbc12ff403486bc15c0c680a73cc4b88",
       "modified": true,
@@ -16,7 +16,7 @@
     },
     {
       "path": "tests/files/fec_summary.bin",
-      "sha256": "f4a35f40453f0e3e685095f7334b9b95a7457e0c15554b9bbf5edfd340fca35a",
+      "sha256": "26f5d3311a9b8f76eadf6787ccdf4722ec344dafcbb67d0d654b06f111ad6ee9",
       "size_bytes": 48030,
       "original_sha256": "331b0bca95ec1a9507529a46f433cd012adb1127176a89ba196df69e22c358b1",
       "modified": true,
@@ -41,7 +41,7 @@
     },
     {
       "path": "tests/files/channel_estimation.bin",
-      "sha256": "846fa8001aeb9e7ea50ba31dbbab379c6a543e8bf5101ecc31156ee62ec6be81",
+      "sha256": "e06997c3fcc35456ebbec5d03933814f3aebb1e412afe68989850e8c506103e5",
       "size_bytes": 29948,
       "original_sha256": "ef55e55ecfd4f3019d28c97ef709f1ce9f1269a0bd3da921cb00421ff812a808",
       "modified": true,
@@ -51,7 +51,7 @@
     },
     {
       "path": "tests/files/const_display.bin",
-      "sha256": "310404cc7bbb965cb7b41ecad5e2598fa3f2f54533f86cd205b8847c799ac9e5",
+      "sha256": "21b818b6a3f1c2604582672b93ab34356978983fafc84a998d344435f96c5d59",
       "size_bytes": 32798,
       "original_sha256": "082bdf30c3cf67059df4d73c58b9d0e70a718abccd37a9d4e4aa3071dcbcd8e0",
       "modified": true,
@@ -61,7 +61,7 @@
     },
     {
       "path": "tests/files/histogram.bin",
-      "sha256": "62d7aa17db6be4a13352aaa9b56b1fb57a528631f340508dc7809896884e7869",
+      "sha256": "6bc8fcf845655a8d1280214d000a52750c68132d582e3e95618affd3d97384de",
       "size_bytes": 1053,
       "original_sha256": "f72d4ea1a5f536666966c2f7b58f8b43030427faa3fbe42bfd2496bd6a876c66",
       "modified": true,
@@ -71,7 +71,7 @@
     },
     {
       "path": "tests/files/us_pre_equalizer_coef.bin",
-      "sha256": "32215c6467bf05e1251abdac509bd34c001cab2b5b5396308e1cfbd48a939619",
+      "sha256": "179c15e74bb9565833c5182c2f9dc91da877f2da5313dc393b272cb02082f6d5",
       "size_bytes": 7138,
       "original_sha256": "e5e40252e636a65d2fb462a67a3a4cc520cbdabcf107f1c65bd87851cd54c4fe",
       "modified": true,
@@ -82,7 +82,7 @@
     },
     {
       "path": "tests/files/us_pre_equalizer_coef_last.bin",
-      "sha256": "8e6593ba4ecad1baae56dd1334104fb74ac82447d6af41fbda72825cc1262ad2",
+      "sha256": "93861ed87b6b6a38354354704b87572fb0366f2b0f963eb11c266e9ff878bb28",
       "size_bytes": 7138,
       "original_sha256": "98e2a30a587895dc3981da0c72333ee64946cde14b99a7cface9caed533698fd",
       "modified": true,
@@ -93,7 +93,7 @@
     },
     {
       "path": "tests/files/spectrum_analyzer.bin",
-      "sha256": "9b024a6e70487ad8b73bfec117d2bd5a08d9684be4ed1d11682a68535b032a0e",
+      "sha256": "db6c9e5b38eef9de5b36e25989f7d592191c8626c65e8d0c08c58af511e9a1a4",
       "size_bytes": 41511,
       "original_sha256": "85a2e6508d6be4d1ba2e9eb817ddccf1b9fbba71e2e50c106ea58b96e1a4beea",
       "modified": true,
@@ -103,7 +103,7 @@
     },
     {
       "path": "tests/files/modulation_profile.bin",
-      "sha256": "16db39610258fa6b6e1c62e579ad100cbe33c2ead4d8c9529960de5a19650bab",
+      "sha256": "bfefd266de98685fe158630c5f98c4a7a57cb22feb55bcdd92012c06135c824a",
       "size_bytes": 1881,
       "original_sha256": "34790aafa578883d1aedca6e79befc413ff193632142f6c55c680bdcabbc54de",
       "modified": true,
@@ -113,7 +113,7 @@
     }
   ],
   "sanitization": {
-    "mac_address": "aa:bb:cc:dd:ee:ff",
+    "mac_address": "00:ca:00:00:00:01",
     "tool": "tools/security/pnm-mac-updater.py",
     "scope": "All CM and CMTS MAC fields; measurement bytes unchanged"
   }

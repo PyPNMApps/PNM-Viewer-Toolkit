@@ -16,8 +16,8 @@
       "capture_time": 108
     },
     "channel_id": 41,
-    "mac_address": "aa:bb:cc:dd:ee:ff",
-    "cmts_mac_address": "aa:bb:cc:dd:ee:ff",
+    "mac_address": "00:ca:00:00:00:01",
+    "cmts_mac_address": "00:ca:00:00:00:01",
     "first_frequency_hz": 39900000,
     "last_frequency_hz": 39950000,
     "subcarrier_spacing_hz": 25000,

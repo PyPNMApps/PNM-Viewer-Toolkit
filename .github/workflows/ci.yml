@@ -50,10 +50,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - name: Check sanitized fixtures
+      - name: SW-QA hygiene and tooling checks
         run: |
-          python3 tools/security/pnm-mac-updater.py
-          python3 -m unittest discover -s tools/security -p 'test_*.py'
+          ./scripts/sw-qa-hygiene.sh
           python3 -m unittest discover -s tools/ci -p 'test_*.py'
           python3 -m unittest discover -s scripts/tests -p 'test_disk_guard.py'
       - name: Load pinned Rust toolchain

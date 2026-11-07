@@ -7,7 +7,7 @@
     "capture_time": null
   },
   "channel_id": 160,
-  "mac_address": "aa:bb:cc:dd:ee:ff",
+  "mac_address": "00:ca:00:00:00:01",
   "summary_type": 2,
   "num_profiles": 5,
   "fec_summary_data": [

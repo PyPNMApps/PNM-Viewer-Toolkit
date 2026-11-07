@@ -21,6 +21,7 @@ TestCase {
         property string update_status: "Updates have not been checked."
         property string latest_version: ""
         property string release_url: "https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases"
+        property string issue_report_url: "https://github.com/PyPNMApps/PNM-Viewer-Toolkit/issues/new?title=test&body=Environment"
         property bool install_available: false
         property string install_state: "idle"
         property string install_status: ""
@@ -55,6 +56,8 @@ TestCase {
         iconSource: ""
     }
     SignalSpy { id: restartRequested; target: about; signalName: "restartRequested" }
+    SignalSpy { id: issueOpened; target: about; signalName: "openIssueRequested" }
+    SignalSpy { id: uninstallOpened; target: about; signalName: "openUninstallRequested" }
     SignalSpy { id: releaseOpened; target: about; signalName: "openReleaseRequested" }
     function init() {
         about.close()
@@ -70,11 +73,32 @@ TestCase {
         service.restarts = 0
         service.restartSucceeds = false
         about.captureBusy = false
+        about.platformOs = Qt.platform.os
+        uninstallOpened.clear()
+        issueOpened.clear()
         restartRequested.clear()
         appearance.preference = 1
         releaseOpened.clear()
     }
     function cleanup() { about.close() }
+    function test_issue_draft_action_both_themes() {
+        for (const preference of [1, 2]) {
+            appearance.preference = preference
+            about.open()
+            tryCompare(about, "opened", true)
+            const button = findChild(about, "reportIssueButton")
+            verify(button.visible)
+            compare(button.palette.buttonText, appearance.text)
+            waitForPolish(button)
+            verify(waitForRendering(button))
+            mouseClick(button)
+            compare(issueOpened.count, preference)
+            compare(issueOpened.signalArguments[preference - 1][0], service.issue_report_url)
+            about.close()
+        }
+        compare(service.requests, 0)
+        compare(service.installs, 0)
+    }
     function test_chip_only_shows_newer_release_and_opens_about() {
         for (const state of ["idle", "checking", "current", "ahead", "no_release", "error"]) {
             service.update_state = state
@@ -120,6 +144,33 @@ TestCase {
             verify(about.width > 400)
             about.close()
             tryCompare(about, "opened", false)
+        }
+    }
+    function test_windows_uninstall_link_is_platform_specific_data() {
+        const cases=[]
+        for (const platform of ["windows", "linux", "osx"]) {
+            for (const preference of [1, 2]) {
+                cases.push({tag:platform+"-"+preference, platform:platform, preference:preference})
+            }
+        }
+        return cases
+    }
+    function test_windows_uninstall_link_is_platform_specific(data) {
+        about.platformOs=data.platform
+        appearance.preference=data.preference
+        about.open()
+        tryCompare(about,"opened",true)
+        const button=findChild(about,"windowsUninstallButton")
+        compare(button.visible,data.platform==="windows")
+        if (data.platform==="windows") {
+            verify(waitForPolish(button))
+            verify(waitForRendering(button))
+            compare(button.contentItem.color,appearance.text)
+            mouseClick(button)
+            compare(uninstallOpened.count,1)
+            verify(about.opened)
+        } else {
+            compare(uninstallOpened.count,0)
         }
     }
     function test_install_success_automatically_requests_restart_once() {
@@ -172,6 +223,9 @@ TestCase {
         wait(100)
         compare(service.restarts, 0)
         about.captureBusy = false
+        about.platformOs = Qt.platform.os
+        uninstallOpened.clear()
+        issueOpened.clear()
         tryCompare(restartRequested, "count", 1)
         compare(service.restarts, 1)
         service.install_state = "error"

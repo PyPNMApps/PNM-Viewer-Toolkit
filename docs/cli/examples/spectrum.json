@@ -7,7 +7,7 @@
     "capture_time": 5071269
   },
   "channel_id": 0,
-  "mac_address": "aa:bb:cc:dd:ee:ff",
+  "mac_address": "00:ca:00:00:00:01",
   "first_segment_center_frequency": 300000000,
   "last_segment_center_frequency": 900000000,
   "segment_frequency_span": 7500000,

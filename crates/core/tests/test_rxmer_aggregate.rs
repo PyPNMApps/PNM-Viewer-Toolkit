@@ -42,7 +42,7 @@ fn temporal_statistics_use_exact_carriers_and_preserve_missing_values() {
     );
     let json = serde_json::to_value(&result).unwrap();
     assert!(json["points"][2]["minimum_db"].is_null());
-    assert_eq!(json["group"]["mac_address"], "aa:bb:cc:dd:ee:ff");
+    assert_eq!(json["group"]["mac_address"], "00:ca:00:00:00:01");
 }
 #[test]
 fn incompatible_devices_channels_formats_and_grids_are_never_combined() {

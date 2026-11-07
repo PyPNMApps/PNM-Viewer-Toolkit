@@ -88,8 +88,9 @@ pinned source-tag archives cached under `local/release-sources/`, with measured
 source hashes recorded for review. Packaging needs network access for the first
 source/notice collection. Packages include project licenses, NOTICE and CLI
 usage/manual. Desktop installers additionally include the nine explicitly
-approved sanitized [example captures](../ui/examples.md), upstream license/NOTICE
-and provenance; Python tests and other fixtures remain excluded. Standalone CLI
+approved single [example captures](../ui/examples.md), generated RxMER demo ZIPs
+and the pre-EQ comparison pair, with applicable license/NOTICE and provenance.
+Python tests and unregistered fixtures remain excluded. Standalone CLI
 archives contain no captures. Private PDFs, customer files and development tools
 are never packaged.
 
@@ -163,3 +164,41 @@ verifies one registration and removes it. This checks MSI transitions, not histo
 binary compatibility. The viewer runs as the normal user; only installation needs
 administrator approval. Windows 11 SmartScreen/UAC and native Open/Save behavior
 remain interactive target-device checks. See [Windows installation](../install/windows.md).
+
+## Generate installer demo ZIPs
+
+`tests/fixtures/demos/installer-demos.json` lists approved expanded demo files,
+sizes and current SHA-256 hashes. Source control contains expanded captures;
+ZIPs are generated build output. Prepare/sanitize changed source captures using
+the [MAC hygiene tool](../../tools/security/README.md), then review and refresh
+their manifest entries. Release builds never rewrite tracked source data.
+
+All native builders call the shared `scripts/release/samples.py` bundler:
+
+```text
+Expanded, sanitized sources → checksum + SW-QA hygiene checks
+                           → deterministic RxMER ZIPs
+                           → examples payload → DEB / MSI / DMG
+```
+
+Any missing/extra source file, checksum mismatch, unsupported layout or unapproved
+MAC stops bundling before archive generation. Sources must be expanded; the build
+path does not unzip/rezip existing demo archives. ZIP entries use sorted names,
+fixed timestamps and permissions. The same inputs produce identical ZIP bytes.
+
+Check sources without creating archives:
+
+```bash
+python3 scripts/release/samples.py --check
+```
+
+Build a fresh local examples payload for inspection:
+
+```bash
+python3 scripts/release/samples.py --output local/installer-examples-review
+```
+
+Installed lifecycle checks verify `single/`, generated ZIP member bytes and the
+pre-EQ pair against repository sources. The initial Open folder remains the
+examples root. See the [installed examples guide](../ui/examples.md). CLI-only
+packages remain capture-free; existing per-installer size gates still apply.

@@ -17,8 +17,7 @@ fi
 command -v python3 >/dev/null
 python3 tools/maintenance/rust_clean.py --if-disk-full
 command -v shellcheck >/dev/null
-python3 tools/security/pnm-mac-updater.py
-python3 -m unittest discover -s tools/security -p 'test_*.py'
+"${SCRIPT_DIR}/sw-qa-hygiene.sh"
 python3 -m unittest discover -s tools/ci -p 'test_*.py'
 "${CARGO_COMMAND[@]}" fmt --all -- --check
 "${CARGO_COMMAND[@]}" clippy --workspace --all-targets --locked -- -D warnings
@@ -29,7 +28,7 @@ python3 -m unittest discover -s tools/git/tests -p 'test_*.py'
 if [[ "$(uname -s)" == Linux ]]; then
   python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 fi
-SHELL_SCRIPTS=(install.sh scripts/install-development.sh scripts/cargo-local.sh tools/bump-version.sh scripts/install-cli.sh scripts/check-before-push.sh scripts/qt-desktop.sh scripts/setup-qt.sh tools/git/git-save.sh tools/git/git-push.sh)
+SHELL_SCRIPTS=(install.sh scripts/install-development.sh scripts/cargo-local.sh tools/bump-version.sh scripts/install-cli.sh scripts/check-before-push.sh scripts/sw-qa-hygiene.sh scripts/qt-desktop.sh scripts/setup-qt.sh tools/git/git-save.sh tools/git/git-push.sh)
 for script in "${SHELL_SCRIPTS[@]}"; do
   bash -n "${script}"
 done

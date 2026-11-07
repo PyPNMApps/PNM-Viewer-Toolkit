@@ -37,7 +37,7 @@ signal/error energy is available to reconstruct that different statistic.
   "analysis_type": "rxmer_min_avg_max",
   "average_method": "arithmetic_db_valid_readings",
   "group": {
-    "mac_address": "aa:bb:cc:dd:ee:ff",
+    "mac_address": "00:ca:00:00:00:01",
     "channel_id": 34,
     "major_version": 1,
     "minor_version": 0,

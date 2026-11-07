@@ -2,7 +2,7 @@
 
 A ready-to-open, sanitized pair used for the comparison screenshots. No modem,
 network connection or archive extraction is needed. Both CM and CMTS addresses
-are `aa:bb:cc:dd:ee:ff`. Each file contains 1776 coefficients.
+are `00:ca:00:00:00:01`. Each file contains 1776 coefficients.
 
 1. Open **original.bin** in the Qt viewer.
 2. Show the left gutter and select **Compare**.
@@ -35,8 +35,8 @@ pnm-decode tests/fixtures/demos/us-pre-eq-comparison/original.bin \
 ```
 
 A source build can use `./target/debug/pnm-decode` instead. Export to a new file
-in your own writable folder when desired. This demo is available in the source
-checkout; current installers still include only their existing nine captures.
+in your own writable folder when desired. Desktop installers include this pair under
+`share/examples/us-pre-eq/comparison/`.
 
 See [the user guide](../../../../docs/ui/measurements/upstream-pre-eq/README.md#correction--delta-from-the-left-gutter).
 [provenance.json](provenance.json) records source/current hashes and the exact

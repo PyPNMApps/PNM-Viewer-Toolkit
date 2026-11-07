@@ -4,15 +4,15 @@
   "files": [
     {
       "name": "original.bin",
-      "sha256": "32215c6467bf05e1251abdac509bd34c001cab2b5b5396308e1cfbd48a939619",
+      "sha256": "179c15e74bb9565833c5182c2f9dc91da877f2da5313dc393b272cb02082f6d5",
       "source": "../../pypnm/tests/files/us_pre_equalizer_coef.bin",
-      "source_sha256": "32215c6467bf05e1251abdac509bd34c001cab2b5b5396308e1cfbd48a939619",
+      "source_sha256": "179c15e74bb9565833c5182c2f9dc91da877f2da5313dc393b272cb02082f6d5",
       "capture_time": 1764785273,
       "changes": []
     },
     {
       "name": "last-update.bin",
-      "sha256": "34503e0aac37789524b3146ed56b268aa937b6ecb5a5a5f346039e39023437e0",
+      "sha256": "8de44c823a125e44bd782f0a21b5559d848054bbbd02136b0628865dd2ce1da4",
       "source": "../../pypnm/tests/files/us_pre_equalizer_coef_last.bin",
       "source_sha256": "8e6593ba4ecad1baae56dd1334104fb74ac82447d6af41fbda72825cc1262ad2",
       "capture_time": 1764785281,

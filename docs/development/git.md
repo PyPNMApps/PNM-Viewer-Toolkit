@@ -48,6 +48,11 @@ locked workspace tests, release-helper and push-gate tests, mocked installer
 tests on Linux, Bash/ShellCheck, a release CLI build/JSON smoke test, and Qt
 adapter/build/QML checks.
 Required missing tools or any failed check stop the push; there is no skip flag.
+
+The gate starts with `scripts/sw-qa-hygiene.sh`. It checks the approved MAC
+namespace in example captures, demo/archive members and linked JSON/hex outputs.
+Run it independently before sharing data; see the [hygiene guide](../../tools/security/README.md)
+for standalone sanitizing commands and multi-modem alias assignment.
 It uses the local Rust toolchain when installed, otherwise standard Cargo.
 
 The helper verifies branch, HEAD and the clean working tree again after checks,

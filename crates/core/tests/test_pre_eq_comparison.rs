@@ -32,8 +32,8 @@ fn precheck_requires_cm_cmts_grid_count_roles_and_strictly_newer_time() {
     assert_eq!(pair.file_time_difference_s, 1);
     assert_eq!(pair.sample_count, 3);
     let metadata = serde_json::to_value(&pair).unwrap();
-    assert_eq!(metadata["mac_address"], "aa:bb:cc:dd:ee:ff");
-    assert_eq!(metadata["cmts_mac_address"], "aa:bb:cc:dd:ee:ff");
+    assert_eq!(metadata["mac_address"], "00:ca:00:00:00:01");
+    assert_eq!(metadata["cmts_mac_address"], "00:ca:00:00:00:01");
     for (offset, field) in [
         (10, "channel_id"),
         (11, "mac_address"),
