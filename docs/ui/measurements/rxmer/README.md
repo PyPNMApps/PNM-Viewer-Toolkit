@@ -118,7 +118,7 @@ Press **Recalculate** to update it. A failed calculation keeps the reminder.
 
 ## Min-Avg-Max
 
-Show the left gutter and select **Min-Avg-Max**. Choose **Choose folder…** for
+Show the left gutter, expand **RxMER**, and select **Min-Avg-Max**. Choose **Choose folder…** for
 an entire capture directory (including subfolders), or **Open archive…** for
 ZIP, TAR or TAR.GZ/TGZ. Compressed GZIP/Zstandard captures inside the import are
 read automatically. Nothing is unpacked onto your filesystem.
@@ -185,7 +185,7 @@ The left gutter organizes imported files as:
 
 ```text
 MAC address
-  Channel ID · index-zero frequency in MHz
+  Channel ID · frequency in MHz
     epoch (oldest)
     epoch
     epoch (newest)
@@ -206,3 +206,27 @@ The larger local demo is
 `~/Downloads/demo-rxmer-all-channels-over-time/captures.zip`: 279 unchanged
 captures from one MAC across five channels. Its folder also contains `TREE.txt`
 with the full hierarchy in epoch order.
+
+### Larger TFTP-backup demos
+
+Local demos recovered from the supplied TFTP backup are in
+`~/Downloads/demo-rxmer-tftp-backup/`:
+
+- `channel-35-983-captures.zip`: 983 captures from one MAC/channel.
+- `channel-34-971-captures.zip`: 971 captures from that MAC on another channel.
+- `channel-33-965-captures.zip`: 965 captures from that MAC on a third channel.
+- `multi-channel-900-captures.zip`: 300 captures per channel across three channels.
+
+Open one ZIP with **RxMER → Min-Avg-Max → Open archive…**. Each dataset stays
+within the current import limits. Use its folder README for folder-selection
+alternatives and provenance. The source backup was truncated; only complete
+recovered files were included. Raw recovered files and the extraction report
+remain under ignored `development/files/demo-rxmer-min-avg-max/tftp-backup/`.
+These local lab datasets are not distributed in Git or installers.
+
+## Playback
+
+[Playback](playback.md) steps through individual captures in ascending header
+epoch order. Use the same MAC/channel tree and imported collection as Min-Avg-Max,
+with Play/Pause, frame speed and manual stepping. Zoom stays fixed as frames
+advance. See the guide for controls, screenshots and the 983-capture local demo.

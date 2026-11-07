@@ -56,6 +56,23 @@ mod bridge {
         /// Retrieves exact source indices for a temporal-statistics viewport.
         #[qinvokable]
         fn show_rxmer_collection_range(self: Pin<&mut ViewerBackend>, start: u32, count: u32);
+        /// Displays one header-ordered capture over an exact carrier range.
+        ///
+        /// # Arguments
+        /// * `group`, `frame` - Catalog group and ascending epoch position.
+        /// * `start`, `count` - Source-carrier range retained during playback.
+        ///
+        /// # Returns
+        /// Publishes a bounded frame and retains full-resolution analysis data.
+        /// Invalid selections preserve the viewport and report a file error.
+        #[qinvokable]
+        fn show_rxmer_frame(
+            self: Pin<&mut ViewerBackend>,
+            group: u32,
+            frame: u32,
+            start: u32,
+            count: u32,
+        );
         /// Applies Modulation & Capacity to the average line without quantization.
         #[qinvokable]
         fn analyze_rxmer_average(

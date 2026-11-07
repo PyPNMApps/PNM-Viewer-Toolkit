@@ -11,6 +11,10 @@ Item {
     property var catalog: ({})
     property string selectedMac: ""
     property bool working: false
+    property bool playbackEnabled: false
+    property int selectedGroup: -1
+    property int selectedFrame: -1
+    signal frameRequested(string macAddress, int groupId, int frameIndex)
     property var expandedMacs: ({})
     property var expandedGroups: ({})
     signal groupRequested(string macAddress, int groupId)
@@ -49,8 +53,9 @@ Item {
             if (!expandedMacs[mac]) continue
             result.push({kind:"channel",depth:1,label:group.tree_label || group.label,key:group.id,mac:mac,expanded:!!expandedGroups[group.id],detail:group.capture_count+" captures · "+group.label})
             if (!expandedGroups[group.id]) continue
-            for (const source of (group.sources || [])) {
-                result.push({kind:"epoch",depth:2,label:String(source.capture_time),detail:source.name})
+            for (let frameIndex=0;frameIndex<(group.sources || []).length;frameIndex++) {
+                const source=group.sources[frameIndex]
+                result.push({kind:"epoch",depth:2,label:String(source.capture_time),detail:source.name,mac:mac,key:group.id,frame:frameIndex})
             }
         }
         return result
@@ -92,8 +97,23 @@ Item {
                     ToolTip.visible: hovered
                     ToolTip.text: modelData.detail || ""
                 }
+                ToolButton {
+                    objectName: "rxmerTreeFrame_"+modelData.key+"_"+modelData.frame
+                    visible: modelData.kind==="epoch" && tree.playbackEnabled
+                    Layout.fillWidth: true
+                    enabled: !tree.working
+                    text: modelData.label
+                    contentItem: Label {
+                        text: parent.text
+                        color: tree.selectedGroup===modelData.key && tree.selectedFrame===modelData.frame ? tree.theme.accent : tree.theme.muted
+                        font.family: "monospace"
+                        font.pixelSize: 12
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    onClicked: tree.frameRequested(modelData.mac,modelData.key,modelData.frame)
+                }
                 Label {
-                    visible: modelData.kind!=="channel"
+                    visible: modelData.kind==="mac" || (modelData.kind==="epoch" && !tree.playbackEnabled)
                     Layout.fillWidth: true
                     text: modelData.label
                     color: modelData.kind==="mac" ? tree.theme.accent : tree.theme.muted

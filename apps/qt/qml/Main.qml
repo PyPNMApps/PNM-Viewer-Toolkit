@@ -75,6 +75,7 @@ ApplicationWindow {
     }
     property bool comparisonSelected: false
     property bool rxmerCollectionSelected: false
+    property bool rxmerPlaybackSelected: false
     property bool averageAnalysisSelected: false
     readonly property var preEqAttachment: JSON.parse(backend.pre_eq_attachment_json)
     readonly property var preEqResult: JSON.parse(backend.pre_eq_json)
@@ -310,29 +311,70 @@ ApplicationWindow {
                 Label { text: "WORKSPACE"; color: appTheme.muted; font.pixelSize: 10 }
                 Label { text: backend.loaded ? (window.metadata.title || "Measurement") : "Home"; color: appTheme.accent; Layout.fillWidth: true; wrapMode: Text.Wrap }
                 ThemeButton {
-                    objectName: "showRxmerMinAvgMax"
-                    theme: appTheme
-                    text: "Min-Avg-Max"
-                    Layout.fillWidth: true
-                    borderHighlighted: window.rxmerCollectionSelected
-                    onClicked: { window.rxmerCollectionSelected=true; window.comparisonSelected=false }
-                }
-                ThemeButton {
                     theme: appTheme
                     text: "Original capture"
                     visible: window.rxmerCollectionSelected
                     Layout.fillWidth: true
                     onClicked: window.rxmerCollectionSelected=false
                 }
-                RxMerCollectionTree {
-                    visible: window.rxmerCollectionSelected && (catalog.groups || []).length>0
+                ToolButton {
+                    id: rxmerToolGroup
+                    objectName: "toggleRxmerTools"
+                    text: (checked ? "▾  " : "▸  ")+"RxMER"
+                    Accessible.name: "RxMER tools"
+                    checkable: true
+                    checked: true
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 360
-                    theme: appTheme
-                    catalog: JSON.parse(backend.rxmer_collection_catalog)
-                    selectedMac: rxmerCollection.selectedMac
-                    working: backend.rxmer_collection_busy
-                    onGroupRequested: (macAddress,groupId) => rxmerCollection.selectGroup(macAddress,groupId)
+                    contentItem: Label {
+                        text: rxmerToolGroup.text
+                        color: appTheme.text
+                        font.bold: true
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                }
+                ColumnLayout {
+                    visible: rxmerToolGroup.checked
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 14
+                    spacing: 8
+                    ThemeButton {
+                        objectName: "showRxmerMinAvgMax"
+                        theme: appTheme
+                        text: "Min-Avg-Max"
+                        enabled: !backend.rxmer_collection_busy
+                        Layout.fillWidth: true
+                        borderHighlighted: window.rxmerCollectionSelected && !window.rxmerPlaybackSelected
+                        onClicked: { window.rxmerPlaybackSelected=false; window.rxmerCollectionSelected=true; window.comparisonSelected=false }
+                    }
+                    ThemeButton {
+                        objectName: "showRxmerPlayback"
+                        theme: appTheme
+                        text: "Playback"
+                        enabled: !backend.rxmer_collection_busy
+                        Layout.fillWidth: true
+                        borderHighlighted: window.rxmerCollectionSelected && window.rxmerPlaybackSelected
+                        onClicked: { window.rxmerPlaybackSelected=true; window.rxmerCollectionSelected=true; window.comparisonSelected=false }
+                    }
+                    RxMerCollectionTree {
+                        visible: window.rxmerCollectionSelected && (catalog.groups || []).length>0
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 360
+                        theme: appTheme
+                        catalog: JSON.parse(backend.rxmer_collection_catalog)
+                        selectedMac: rxmerCollection.selectedMac
+                        working: backend.rxmer_collection_busy
+                        playbackEnabled: window.rxmerPlaybackSelected
+                        selectedGroup: rxmerCollection.selectedGroup
+                        selectedFrame: rxmerCollection.viewport.frame_index===undefined ? -1 : rxmerCollection.viewport.frame_index
+                        onFrameRequested: (macAddress,groupId,frameIndex) => {
+                            rxmerCollection.pausePlayback()
+                            if (rxmerCollection.selectedGroup!==groupId) {
+                                rxmerCollection.selectGroup(macAddress,groupId)
+                            }
+                            rxmerCollection.showFrame(frameIndex)
+                        }
+                        onGroupRequested: (macAddress,groupId) => rxmerCollection.selectGroup(macAddress,groupId)
+                    }
                 }
                 PreEqComparisonSidebar {
                     id: preEqSidebar
@@ -399,6 +441,9 @@ ApplicationWindow {
                     catalog: JSON.parse(backend.rxmer_collection_catalog)
                     viewport: JSON.parse(backend.rxmer_collection_view)
                     working: backend.rxmer_collection_busy
+                    playbackMode: window.rxmerPlaybackSelected
+                    playbackBlocked: window.blocked || !window.active
+                    onFrameRequested: (groupId,frameIndex,start,count) => backend.show_rxmer_frame(groupId,frameIndex,start,count)
                     onChooseDirectory: collectionFolderDialog.open()
                     onChooseArchive: collectionArchiveDialog.open()
                     onCancelImport: backend.cancel_rxmer_collection()

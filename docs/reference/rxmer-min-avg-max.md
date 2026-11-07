@@ -76,7 +76,7 @@ See the [user walkthrough](../ui/measurements/rxmer/README.md#min-avg-max).
 ## Capture catalog hierarchy
 
 Each desktop catalog group also carries a Rust-formatted `tree_label`, such as
-`Channel 193 · 827.600 MHz (index 0)`, and `sources` in ascending encoded epoch
+`Channel 193 · 827.600 MHz`, and `sources` in ascending encoded epoch
 order. Source records contain `name` and `capture_time` only; coefficient arrays
 are never copied into tree rows. MACs/channels retain the existing catalog/group
 order. Expanded/collapsed state is transient QML navigation state, and the

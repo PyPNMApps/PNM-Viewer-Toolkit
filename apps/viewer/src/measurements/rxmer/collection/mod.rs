@@ -4,8 +4,10 @@
  */
 //! Bounded batch import and immutable temporal RxMER collections.
 mod import;
+mod playback;
 use crate::capture::{Diagnostic, MAX_VIEW_SAMPLES};
 pub use import::ImportLimits;
+pub use playback::playback_viewport;
 pub use pnm::pnm::analysis::rxmer::aggregate::RxMerAggregate as AggregateResult;
 use pnm::pnm::analysis::rxmer::aggregate::{GroupKey, RxMerAggregate, Series, Source};
 use serde::Serialize;
@@ -70,7 +72,7 @@ impl Collection {
             .map(|(id, captures)| Group {
                 id,
                 tree_label: format!(
-                    "Channel {} · {:.3} MHz (index 0)",
+                    "Channel {} · {:.3} MHz",
                     captures[0].key.channel_id,
                     f64::from(captures[0].key.zero_frequency_hz) / 1_000_000.0
                 ),
@@ -82,7 +84,7 @@ impl Collection {
                     })
                     .collect(),
                 label: format!(
-                    "Channel {} · {:.3} MHz (index 0) · first {} · {} kHz · {} carriers",
+                    "Channel {} · {:.3} MHz · first {} · {} kHz · {} carriers",
                     captures[0].key.channel_id,
                     f64::from(captures[0].key.zero_frequency_hz) / 1_000_000.0,
                     captures[0].key.first_active_subcarrier_index,

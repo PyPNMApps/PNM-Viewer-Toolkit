@@ -51,7 +51,7 @@ fn mixed_directory_groups_by_headers_deduplicates_and_sorts_epochs() {
     assert_eq!(collection.catalog.groups.len(), 2);
     let group = &collection.catalog.groups[0];
     assert!(group.tree_label.starts_with("Channel 34 · "));
-    assert!(group.tree_label.ends_with(" MHz (index 0)"));
+    assert!(group.tree_label.ends_with(" MHz"));
     assert_eq!(
         group
             .sources
@@ -175,4 +175,66 @@ fn oversized_archive_names_do_not_expand_tree_metadata_without_bounds() {
     archive.finish().unwrap();
     let result = Collection::scan(&path, ImportLimits::default(), &AtomicBool::new(false));
     assert!(matches!(result,Err(error) if error.code=="ImportLimit"));
+}
+
+#[test]
+fn playback_uses_header_epoch_order_and_preserves_exact_carrier_zoom() {
+    let directory = tempfile::tempdir().unwrap();
+    let mut early = capture(10, 34);
+    // Synthetic unavailable carrier, low trough and high peak.
+    early[28] = 0xff;
+    early[29] = 4;
+    early[30] = 200;
+    std::fs::write(directory.path().join("z-early.bin"), &early).unwrap();
+    std::fs::write(directory.path().join("a-late.bin"), capture(30, 34)).unwrap();
+    let mut tied = capture(10, 34);
+    tied[29] = 8;
+    std::fs::write(directory.path().join("a-tied.bin"), tied).unwrap();
+    let collection = scan(directory.path());
+    let first = collection.frame(0, 0).unwrap();
+    assert_eq!(first.sources.len(), 1);
+    assert_eq!(first.sources[0].capture_time, 10);
+    assert!(first.sources[0].name.ends_with("a-tied.bin"));
+    assert_eq!(collection.frame(0, 2).unwrap().sources[0].capture_time, 30);
+    let frame = collection.frame(0, 1).unwrap();
+    assert_eq!(frame.points[0].average_db, None);
+    assert_eq!(frame.points[1].average_db, Some(1.0));
+    assert_eq!(frame.points[2].average_db, Some(50.0));
+    let full = collection::viewport(&frame, 0, frame.points.len()).unwrap();
+    assert!(full["points"].as_array().unwrap().len() <= 1024);
+    for frame_index in 0..3 {
+        let frame = collection.frame(0, frame_index).unwrap();
+        let view = collection::viewport(&frame, 17, 200).unwrap();
+        assert_eq!(view["start"], 17);
+        assert_eq!(view["count"], 200);
+        assert_eq!(view["points"][0]["sample_index"], 17);
+    }
+    assert!(collection.frame(1, 0).is_err());
+    assert!(collection.frame(0, 3).is_err());
+    assert!(collection.frame(usize::MAX, usize::MAX).is_err());
+    assert_eq!(collection.aggregate(0).unwrap().sources.len(), 3);
+}
+
+#[test]
+fn playback_average_uses_all_valid_carriers_independently_of_zoom() {
+    let directory = tempfile::tempdir().unwrap();
+    let mut bytes = capture(10, 34);
+    bytes[28..].fill(0xff);
+    bytes[29] = 40; // 10 dB, synthetic RxMER.
+    bytes[30] = 120; // 30 dB.
+    bytes[31] = 200; // 50 dB.
+    std::fs::write(directory.path().join("frame.bin"), &bytes).unwrap();
+    let frame = scan(directory.path()).frame(0, 0).unwrap();
+    for (start, count) in [(0, frame.points.len()), (1, 1), (100, 20)] {
+        let view = collection::playback_viewport(&frame, 0, 0, 1, start, count).unwrap();
+        assert_eq!(view["average_mer_db"], 30.0);
+        assert_eq!(view["capture_epoch"], 10);
+        assert_eq!(view["frame_count"], 1);
+        assert!(view.get("rxmer_statistics").is_none());
+    }
+    bytes[28..].fill(0xff);
+    std::fs::write(directory.path().join("frame.bin"), bytes).unwrap();
+    let frame = scan(directory.path()).frame(0, 0).unwrap();
+    let view = collection::playback_viewport(&frame, 0, 0, 1, 0, frame.points.len()).unwrap();
+    assert!(view["average_mer_db"].is_null());
 }

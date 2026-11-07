@@ -39,7 +39,7 @@ The current viewer supports:
 
 | Capture | Views |
 | --- | --- |
-| [RxMER](docs/ui/measurements/rxmer/README.md) | MER by frequency; [Min-Avg-Max](docs/ui/measurements/rxmer/README.md#min-avg-max); [Modulation & Capacity](docs/ui/measurements/rxmer/README.md#modulation--capacity) |
+| [RxMER](docs/ui/measurements/rxmer/README.md) | MER by frequency; [Playback](docs/ui/measurements/rxmer/playback.md); [Min-Avg-Max](docs/ui/measurements/rxmer/README.md#min-avg-max); [Modulation & Capacity](docs/ui/measurements/rxmer/README.md#modulation--capacity) |
 | [Spectrum Analyzer](docs/ui/measurements/spectrum-analyzer/README.md) | Amplitude by frequency and calculated RBW |
 | [DS Channel Estimation](docs/ui/measurements/channel-estimation/README.md) | Magnitude, group delay and I/Q dots and density |
 | [US Pre-EQ (current)](docs/ui/measurements/upstream-pre-eq/README.md) | Coefficient magnitude, group delay, I/Q, and [Correction & Delta](docs/ui/measurements/upstream-pre-eq/README.md#correction--delta-from-the-left-gutter) |

@@ -131,6 +131,52 @@ impl bridge::ViewerBackend {
             self.set_rxmer_collection_error(QString::from(error.to_string()));
         }
     }
+    /// Displays a single immutable capture using the shared Rust chart pipeline.
+    ///
+    /// # Arguments
+    /// * `group`, `frame` - Catalog group and ascending header-epoch position.
+    /// * `start`, `count` - Source-carrier range, retained across playback frames.
+    ///
+    /// # Returns
+    /// Publishes a bounded plot and retains only the current frame for analysis.
+    /// Invalid selections preserve the prior result and report a file error.
+    pub fn show_rxmer_frame(
+        mut self: Pin<&mut Self>,
+        group: u32,
+        frame: u32,
+        start: u32,
+        count: u32,
+    ) {
+        if *self.rxmer_collection_busy() {
+            return;
+        }
+        let Some(collection) = self.rust().rxmer_collection.collection.clone() else {
+            return;
+        };
+        // One decoded frame only: no file I/O or collection-wide work on each tick.
+        let result = collection
+            .frame(group as usize, frame as usize)
+            .and_then(|result| {
+                let view = collection::playback_viewport(
+                    &result,
+                    group as usize,
+                    frame as usize,
+                    collection.catalog.groups[group as usize].capture_count,
+                    start as usize,
+                    count as usize,
+                )?;
+                Ok((Arc::new(result), view.to_string()))
+            });
+        match result {
+            Ok((result, json)) => {
+                self.as_mut().cancel_rxmer_collection();
+                self.as_mut().set_rxmer_collection_error(QString::default());
+                self.as_mut().rust_mut().rxmer_collection.result = Some(result);
+                self.set_rxmer_collection_view(QString::from(json));
+            }
+            Err(error) => self.set_rxmer_collection_error(QString::from(error.message)),
+        }
+    }
     /// Retrieves a bounded viewport from the full-resolution aggregate.
     /// # Arguments
     /// * `start`, `count` - Exact source-carrier positions requested by mouse zoom.

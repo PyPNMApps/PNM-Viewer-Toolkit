@@ -385,3 +385,23 @@ one catalog group. This is a Rust API example, not a new pnm-decode CLI flag.
 The importer uses bundled Rust archive/decompression crates; no external tar,
 unzip, zstd command or new system development package is required. Existing
 C/C++ build prerequisites also build the bundled Zstandard decoder.
+
+### RxMER Playback
+
+`collection/playback.rs` adds `Collection::frame(group_id, frame_index)`. Indices
+follow the catalog's header-epoch/source-name order. It projects only the chosen
+capture into the existing single-source result, preserving missing samples and
+full resolution; it does not duplicate the whole collection. The shared viewport
+bounds each plot to 1024 source positions. Invalid groups, frames and ranges fail
+without replacing the current plot.
+
+The Qt adapter performs no file I/O or collection-wide aggregation on timer ticks.
+It retains the selected frame for shared Modulation & Capacity analysis. Each
+successful frame selection invalidates pending analysis; QML pauses before modal
+analysis and keeps the exact carrier range between frames. Play speed is UI
+cadence, independent of the capture timestamp interval. No new packages are
+required. See the [Playback user guide](../ui/measurements/rxmer/playback.md).
+
+Playback viewport `average_mer_db` is the full displayed capture's arithmetic
+dB mean over valid carriers, not the decimated or zoomed plot. All unavailable
+returns null. QML displays Avg MER to one decimal and retains Capture UTC.
