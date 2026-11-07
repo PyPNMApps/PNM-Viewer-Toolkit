@@ -27,9 +27,9 @@ class InstallerSampleTests(unittest.TestCase):
         """Check all registered sources without opening or generating a ZIP."""
         with patch.object(zipfile, 'ZipFile', side_effect=AssertionError('Unexpected ZIP access')):
             datasets = samples.check_sources()
-        self.assertEqual(len(datasets), 4)
+        self.assertEqual(len(datasets), 5)
         self.assertEqual(sum(len([item for item in entry['files'] if item['path'].endswith('.bin')])
-                             for entry in datasets), 369)
+                             for entry in datasets), 381)
 
     def test_generated_zips_repeat_and_installed_resources_match(self):
         """Bundle deterministic ZIPs and verify deployed bytes on each OS layout."""

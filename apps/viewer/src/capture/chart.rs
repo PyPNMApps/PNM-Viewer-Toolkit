@@ -283,51 +283,19 @@ impl Capture {
                 })
                 .collect()),
             DecodedPnm::SpectrumAnalysis(capture) => {
-                let span = u64::from(capture.segment_frequency_span);
-                let bins = u64::from(capture.num_bins_per_segment);
-                let first = u64::from(capture.first_segment_center_frequency);
-                let last = u64::from(capture.last_segment_center_frequency);
-                if span == 0
-                    || span < bins
-                    || last < first
-                    || (last - first) % span != 0
-                    || first * 2 < span
-                {
-                    return Err(Diagnostic::new(
-                        "InvalidFrequencyGrid",
-                        "Spectrum segment frequencies or bin spacing are invalid.",
-                    ));
-                }
-                let configured_bins = ((last - first) / span + 1) * bins;
-                // OSSI D.2.4.1.5: contiguous segment centers advance by the span.
-                // Use PyPNM's bin-center convention; round each position to Hz,
-                // not the spacing, so rounding does not accumulate across bins.
-                let origin = (first * 2 - span) * bins;
-                capture
-                    .amplitudes_db()
+                let frequencies = pnm::pnm::analysis::spectrum::GroupKey::from_capture(&capture)
+                    .frequencies_hz()
+                    .map_err(|error| Diagnostic::new("InvalidFrequencyGrid", error))?;
+                Ok(frequencies
+                    .into_iter()
+                    .zip(capture.amplitudes_db())
                     .enumerate()
-                    .map(|(sample_index, value)| {
-                        let index = sample_index as u64;
-                        if index >= configured_bins {
-                            return Err(Diagnostic::new(
-                                "InvalidFrequencyGrid",
-                                "Spectrum contains more bins than its configured span.",
-                            ));
-                        }
-                        let frequency = (origin + (2 * index + 1) * span) / (2 * bins);
-                        let frequency_hz = FrequencyHz::try_from(frequency).map_err(|_| {
-                            Diagnostic::new(
-                                "InvalidFrequencyGrid",
-                                "Spectrum frequency exceeds the supported Hz range.",
-                            )
-                        })?;
-                        Ok(ChartPoint {
-                            sample_index,
-                            frequency_hz,
-                            value: Some(value),
-                        })
+                    .map(|(sample_index, (frequency_hz, value))| ChartPoint {
+                        sample_index,
+                        frequency_hz,
+                        value: Some(value),
                     })
-                    .collect()
+                    .collect())
             }
             _ => Err(Diagnostic::new(
                 "UnsupportedViewer",

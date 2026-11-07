@@ -13,7 +13,7 @@ use pnm::{
 use serde::Serialize;
 
 // CM-OSSI Table 57: ENBW is encoded in hundredths of bin spacing.
-const ENBW_UNITS_PER_FACTOR: f64 = 100.0;
+use pnm::pnm::analysis::spectrum::ENBW_UNITS_PER_FACTOR;
 
 /// Derived spectrum values, distinct from the unchanged decoded fields.
 #[derive(Debug, Serialize)]
@@ -126,3 +126,5 @@ pub(crate) fn window_average_view(
 }
 
 pub mod range;
+
+pub mod collection;

@@ -293,7 +293,7 @@ impl bridge::ViewerBackend {
         let spawn = std::thread::Builder::new()
             .name("rxmer-statistics-export".into())
             .spawn(move || {
-                let outcome = collection::write_json_new(&result, &path);
+                let outcome = collection::write_json_new(result.as_ref(), &path);
                 let _ = thread.queue(move |mut backend| {
                     if backend.rust().rxmer_collection.generation != generation {
                         return;

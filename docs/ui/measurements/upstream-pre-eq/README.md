@@ -82,16 +82,14 @@ For a ready-to-open pair and walkthrough, use the
 [sanitized comparison demo](../../../../tests/fixtures/demos/us-pre-eq-comparison/README.md).
 It contains the two files used for the screenshots below.
 
-Open a **current US Pre-EQ** capture, show the left navigation with the panel
-button, and select **Compare**. This section is available for current
-PNN6 captures; opening a Last Update file by itself keeps its existing view.
-The **Compare** tool opens its attachment and calculation controls. Choose
-**Original capture** to return to the measurement and hide those controls; the
-attached pair and completed comparison are retained.
+Select **US Pre-EQ → Compare** from the left navigation, then use **Open original…**
+for a current PNN6 capture. The comparison is independent of **Single Capture**;
+individual PNN6/PNN7 files can still be viewed there. Switching workspaces retains
+the attached pair and completed comparison.
 
 1. Drop one Last Update file onto **Drop Last Update here**, or choose it with
    **Browse…** using the OS file picker. Dropping there attaches it;
-   dropping elsewhere keeps the usual behavior of opening a new capture.
+   dropping elsewhere in this workspace selects a new original.
 2. Wait for the mode selector to become available. Rust requires a PNN7 correction and checks the
    format version, channel, **CM MAC and CMTS MAC**, zero frequency, first-active
    index, spacing, data length, and coefficient count. Grids must match exactly.
@@ -159,3 +157,11 @@ a real update sequence or known modem application mode.
   <source media="(prefers-color-scheme: light)" srcset="images/pre-eq-comparison-iq-light.png">
   <img alt="Complex predicted-minus-original delta I/Q scatter with Dots and Density modes" src="images/pre-eq-comparison-iq-dark.png" width="1000">
 </picture>
+
+## Dedicated comparison workspace
+
+Select **US Pre-EQ → Compare** in the left gutter. Use **Open original…** for the
+current pre-EQ file, then Browse/drop its Last Update in this workspace. The
+original must be a current pre-EQ capture; unsupported originals produce a popup
+and preserve the prior comparison. All CM/CMTS, acquisition-grid and newer-time
+prechecks still apply. Opening another single capture leaves this comparison intact.

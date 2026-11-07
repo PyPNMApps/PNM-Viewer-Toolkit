@@ -70,3 +70,24 @@ pub fn window_average_dbmv(
             .collect(),
     )
 }
+
+/// Averages compatible levels in linear mean-square voltage, returning dBmV.
+/// # Arguments
+/// * `levels` - Finite dBmV readings sharing one acquisition/reference convention.
+/// # Returns
+/// Equal-weight 10 log10(mean(10^(L/10))), or None for empty/nonfinite input.
+/// Maximum-relative summation avoids overflow for extreme levels. Impedance
+/// cancels for a shared reference; this does not change acquisition RBW.
+pub fn mean_level_dbmv(levels: &[f64]) -> Option<f64> {
+    if levels.is_empty() || levels.iter().any(|level| !level.is_finite()) {
+        return None;
+    }
+    let maximum = levels.iter().copied().max_by(f64::total_cmp)?;
+    let mean = levels
+        .iter()
+        .map(|level| 10.0_f64.powf((level - maximum) / 10.0))
+        .sum::<f64>()
+        / levels.len() as f64;
+    let result = maximum + 10.0 * mean.log10();
+    result.is_finite().then_some(result)
+}

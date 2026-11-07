@@ -68,7 +68,7 @@ def check_sources():
         directory = DEMO_ROOT / source_name
         if directory.is_symlink() or not directory.is_dir() or len(source_name.parts) != 1:
             raise ValueError('Invalid expanded demo source')
-        if str(output) in outputs or output.parts[0] not in ('rxmer', 'us-pre-eq'):
+        if str(output) in outputs or output.parts[0] not in ('rxmer', 'spectrum', 'us-pre-eq'):
             raise ValueError('Duplicate or invalid demo output')
         outputs.add(str(output))
         if entry['archive'] != str(output).endswith('.zip'):
@@ -162,6 +162,7 @@ def bundle(destination):
             '# Example PNM captures\n\n'
             '- single/: nine captures; open with the main Open action.\n'
             '- rxmer/: ZIP collections for Min-Avg-Max and Playback.\n'
+            '- spectrum/: explicitly synthetic standard PNN9 temporal demo.\n'
             '- us-pre-eq/comparison/: original.bin and last-update.bin; use Compare.\n\n'
             'All captures are sanitized before ZIP generation. Distinct modems use '
             'sequential 00:ca:00 aliases. Installed examples are read-only; export '

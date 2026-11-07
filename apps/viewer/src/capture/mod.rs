@@ -4,6 +4,7 @@
  */
 //! Capture ownership and bounded chart presentation.
 pub mod chart;
+pub mod collection;
 mod diagnostic;
 mod file;
 

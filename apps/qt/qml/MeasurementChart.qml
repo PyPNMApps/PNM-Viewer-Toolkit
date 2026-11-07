@@ -220,14 +220,14 @@ ColumnLayout {
             context.textAlign = "center"
             context.fillText("Frequency · MHz", width / 2, height - 3)
             const overlays = chart.viewport.modulation_profiles
-            const statistics = chart.viewport.rxmer_statistics
+            const statistics = chart.viewport.rxmer_statistics || chart.viewport.spectrum_statistics
             const traces = overlays ? overlays.series : (statistics && !chart.showRxmerAverage ? [] : [{points: chart.viewport.points, color: statistics ? chart.theme.rxmerAverage : chart.theme.accent}])
             if (statistics) {
                 if (chart.showRxmerMinimum) traces.push({points: statistics.minimum, color: chart.theme.rxmerMinimum})
                 if (chart.showRxmerMaximum) traces.push({points: statistics.maximum, color: chart.theme.rxmerMaximum})
             }
             if (!overlays && chart.showSpectrumAverage && chart.viewport.spectrum_average) {
-                traces.push({points: chart.viewport.spectrum_average.points, color: chart.theme.spectrumAverage})
+                traces.push({points: chart.viewport.spectrum_average.points, color: chart.theme.spectrumAverage, dashed: !!statistics})
             }
             for (let traceIndex = 0; traceIndex < traces.length; traceIndex++) {
                 const trace = traces[traceIndex]
@@ -235,6 +235,7 @@ ColumnLayout {
                 const color = overlays ? chart.theme.profileColor(trace.profile_id) : (trace.color || chart.theme.accent)
                 context.strokeStyle = color
                 context.lineWidth = 1.5
+                if (context.setLineDash) context.setLineDash(trace.dashed ? [6,4] : [])
                 context.beginPath()
                 let connected = false
                 let previousVertical = 0

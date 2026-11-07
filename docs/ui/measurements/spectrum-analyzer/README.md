@@ -3,6 +3,10 @@
 [All measurements](../../measurements.md) · [User guide](../../README.md) · [Project README](../../../../README.md)
 
 
+[Min-Avg-Max and Playback](collections.md) are available from **Spectrum Analyzer**
+in the left navigation pane. The main **Single Capture** workspace opens individual
+PNM files.
+
 Amplitude in dBmV against frequency in MHz. The RBW chip shows resolution
 bandwidth calculated in Rust from the capture fields.
 

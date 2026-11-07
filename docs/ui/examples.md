@@ -26,6 +26,8 @@ examples/
 │   ├── single-channel.zip
 │   ├── multiple-channels.zip
 │   └── multiple-modems.zip
+├── spectrum/
+│   └── synthetic-time-series.zip
 └── us-pre-eq/
     └── comparison/
         ├── original.bin
@@ -68,11 +70,18 @@ for [Min-Avg-Max](measurements/rxmer/README.md#min-avg-max) and
 
 ## US Pre-EQ comparison
 
-Open `us-pre-eq/comparison/original.bin`, choose **Compare** in the left gutter,
-then attach `last-update.bin`. The pair's update timestamp is explicitly synthetic
+Select **US Pre-EQ → Compare** in the left gutter. Use **Open original…** for
+`us-pre-eq/comparison/original.bin`, then attach `last-update.bin`. The pair's update timestamp is explicitly synthetic
 and eight seconds later; normal prechecks remain enabled. The included README
 provides a walkthrough. See the [comparison guide](measurements/upstream-pre-eq/README.md)
 and [source pair](../../tests/fixtures/demos/us-pre-eq-comparison/README.md).
 
 Demo ZIPs are generated at installer build time after expanded-source hygiene
 and checksum checks pass. No prebuilt demo ZIP is used as a packaging source.
+
+## Standard spectrum time series
+
+Open `spectrum/synthetic-time-series.zip` from **Spectrum Analyzer → Min-Avg-Max**
+or **Playback**. Its twelve frames have synthetic timestamps/levels and a moving
+peak; acquisition settings remain identical. This is a labeled demonstration,
+not real time-series measurement data. See [the guide](measurements/spectrum-analyzer/collections.md).

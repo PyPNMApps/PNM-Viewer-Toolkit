@@ -8,6 +8,7 @@ import QtQuick.Layouts
 RowLayout {
     id: controls
     required property Theme theme
+    property string namePrefix:"rxmer"
     property int frameIndex: 0
     property int frameCount: 0
     property bool suspended: false
@@ -44,14 +45,16 @@ RowLayout {
         }
     }
     ThemeButton {
-        objectName: "rxmerPreviousFrame"
+        objectName: controls.namePrefix+"PreviousFrame"
+        Accessible.name: controls.namePrefix==="spectrum" ? "Spectrum Previous" : "Previous"
         theme: controls.theme
         text: "Previous"
         enabled: !controls.suspended && controls.frameIndex>0
         onClicked: controls.jump(controls.frameIndex-1)
     }
     ThemeButton {
-        objectName: "rxmerPlayPause"
+        objectName: controls.namePrefix+"PlayPause"
+        Accessible.name: controls.namePrefix==="spectrum" ? "Spectrum "+text : text
         theme: controls.theme
         text: controls.playing ? "Pause" : "Play"
         enabled: !controls.suspended && controls.frameCount>1
@@ -64,13 +67,14 @@ RowLayout {
         }
     }
     ThemeButton {
-        objectName: "rxmerNextFrame"
+        objectName: controls.namePrefix+"NextFrame"
+        Accessible.name: controls.namePrefix==="spectrum" ? "Spectrum Next" : "Next"
         theme: controls.theme
         text: "Next"
         enabled: !controls.suspended && controls.frameIndex<controls.frameCount-1
         onClicked: controls.jump(controls.frameIndex+1)
     }
     Label { text: "Frames/s"; color: controls.theme.muted }
-    ComboBox { id: speed; objectName: "rxmerPlaybackSpeed"; Accessible.name: "Playback frames per second"; model: ["1","2","4","8"]; currentIndex: 1 }
+    ComboBox { id: speed; objectName: controls.namePrefix+"PlaybackSpeed"; Accessible.name: "Playback frames per second"; model: ["1","2","4","8"]; currentIndex: 1 }
     Label { text: controls.frameCount>0 ? (controls.frameIndex+1)+" / "+controls.frameCount : "—"; color: controls.theme.text }
 }

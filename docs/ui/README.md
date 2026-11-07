@@ -141,3 +141,17 @@ Developer details belong in the [Qt guide](../development/qt.md).
 
 Current US Pre-EQ captures also offer [Correction & Delta](measurements/upstream-pre-eq/README.md#correction--delta-from-the-left-gutter)
 from the left gutter, with a mandatory pair precheck and explicit Adjust/Set mode.
+
+## Workspaces
+
+Use **Single Capture** for individual PNM files. The top Open action returns to
+that view after a successful decode. The left gutter contains RxMER and Spectrum
+Analyzer **Min-Avg-Max / Playback**, plus **US Pre-EQ → Compare**. Each workflow
+keeps independent in-memory state when navigating; opening a single file does not
+replace a comparison or spectrum collection. Drops are routed to the selected
+workflow. [Spectrum collections](measurements/spectrum-analyzer/collections.md)
+use MAC → capture settings → epoch chronology.
+
+To compare pre-EQ files, select **US Pre-EQ → Compare**, press **Open original…**,
+then **Browse…** for Last Update or drop it on the attachment target. Choose the
+update mode and Compare. This entry is available before any single file is open.

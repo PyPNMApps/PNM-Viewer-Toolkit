@@ -100,6 +100,9 @@ mod bridge {
         /// `url` must be a local file URL. Errors retain the previous capture.
         #[qinvokable]
         fn open_file(self: Pin<&mut ViewerBackend>, url: &QUrl);
+        /// Opens only a current upstream pre-EQ capture for an independent comparison.
+        #[qinvokable]
+        fn open_pre_eq_original(self: Pin<&mut ViewerBackend>, url: &QUrl);
 
         /// Exports full core JSON to a new local destination on a worker.
         /// `url` is the selected destination; existing files are rejected.
@@ -360,7 +363,7 @@ impl bridge::ViewerBackend {
             .unwrap_or_default()
     }
 }
-fn local_path(url: &QUrl) -> Result<PathBuf, Diagnostic> {
+pub(crate) fn local_path(url: &QUrl) -> Result<PathBuf, Diagnostic> {
     let path = url
         .to_local_file()
         .ok_or_else(|| Diagnostic::new("InvalidPath", "Select a local file."))?
@@ -399,7 +402,16 @@ impl bridge::ViewerBackend {
     /// # Returns
     /// Immediately starts one bounded worker, or reports an input error. A queued
     /// completion replaces the capture only after successful validation.
-    pub fn open_file(mut self: Pin<&mut Self>, url: &QUrl) {
+    pub fn open_file(self: Pin<&mut Self>, url: &QUrl) {
+        self.open_local(url, false);
+    }
+    /// Loads a validated current pre-EQ original, preserving prior state on wrong types.
+    /// # Arguments
+    /// * `url` - Native local file selection for the comparison workspace.
+    pub fn open_pre_eq_original(self: Pin<&mut Self>, url: &QUrl) {
+        self.open_local(url, true);
+    }
+    fn open_local(mut self: Pin<&mut Self>, url: &QUrl, require_pre_eq: bool) {
         if *self.busy() {
             return;
         }
@@ -417,7 +429,16 @@ impl bridge::ViewerBackend {
         let spawn = std::thread::Builder::new()
             .name("qt-open-capture".into())
             .spawn(move || {
-                let result = load_capture(path);
+                let result = load_capture(path).and_then(|loaded| {
+                    if require_pre_eq && !loaded.capture.supports_pre_eq_comparison() {
+                        Err(Diagnostic::new(
+                            "PreEqOriginal",
+                            "Choose a current upstream Pre-EQ capture as the original.",
+                        ))
+                    } else {
+                        Ok(loaded)
+                    }
+                });
                 // A closed window safely rejects queued work; no raw QObject pointers escape.
                 let _queued = qt_thread.queue(move |mut backend| {
                     backend.as_mut().set_busy(false);

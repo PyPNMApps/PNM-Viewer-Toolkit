@@ -15,7 +15,7 @@ ColumnLayout {
     spacing: 10
     function number(value) {return value===null || value===undefined ? "—" : value.toFixed(2)}
     Label { text: "Pre-EQ · Predicted correction & delta"; color: view.theme.text; font.pixelSize: 20; font.bold: true }
-    Label { visible: !view.result.pair; text: "Attach a Last Update file in the left gutter, pass the precheck, then choose Adjust or Set and Compare."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: view.theme.muted }
+    Label { visible: !view.result.pair; text: "Open an original capture, attach its Last Update, then choose Adjust or Set and Compare."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: view.theme.muted }
     Flow {
         visible: !!view.result.pair
         Layout.fillWidth: true

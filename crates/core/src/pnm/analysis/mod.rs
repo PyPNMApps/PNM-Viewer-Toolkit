@@ -8,3 +8,5 @@ pub mod modulation_profile;
 pub mod upstream_pre_equalization;
 
 pub mod rxmer;
+
+pub mod spectrum;

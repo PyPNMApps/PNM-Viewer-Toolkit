@@ -59,7 +59,11 @@ fn main() {
         .qt_module("QuickControls2")
         .qml_module(QmlModule {
             uri: "Pnm.Viewer",
-            rust_files: &["src/backend.rs", "src/update.rs"],
+            rust_files: &[
+                "src/backend.rs",
+                "src/update.rs",
+                "src/spectrum_collection.rs",
+            ],
             qml_files: &[
                 "qml/Main.qml",
                 "qml/AboutDialog.qml",
@@ -76,6 +80,8 @@ fn main() {
                 "qml/PreEqComparisonView.qml",
                 "qml/MeasurementChart.qml",
                 "qml/SpectrumControls.qml",
+                "qml/SpectrumCollectionView.qml",
+                "qml/PreEqWorkspace.qml",
                 "qml/SpectrumTools.qml",
                 "qml/SpectrumPowerChip.qml",
                 "qml/IqScatterChart.qml",

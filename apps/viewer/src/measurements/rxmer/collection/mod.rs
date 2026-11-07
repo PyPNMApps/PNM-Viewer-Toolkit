@@ -5,7 +5,7 @@
 //! Bounded batch import and immutable temporal RxMER collections.
 mod import;
 mod playback;
-use crate::capture::{Diagnostic, MAX_VIEW_SAMPLES};
+use crate::capture::Diagnostic;
 pub use import::ImportLimits;
 pub use playback::playback_viewport;
 pub use pnm::pnm::analysis::rxmer::aggregate::RxMerAggregate as AggregateResult;
@@ -144,39 +144,11 @@ pub fn viewport(
             Diagnostic::new("InvalidRange", "Select a range inside the RxMER aggregate.")
         })?;
     let source = &result.points[start..end];
-    let mut indices = Vec::new();
-    let width = source.len().div_ceil(MAX_VIEW_SAMPLES / 9).max(1);
-    for (bucket_index, bucket) in source.chunks(width).enumerate() {
-        let offset = bucket_index * width;
-        indices.extend([offset, offset + bucket.len() - 1]);
-        for field in 0..3 {
-            for minimum in [true, false] {
-                let value = |index: usize| match field {
-                    0 => bucket[index].minimum_db,
-                    1 => bucket[index].average_db,
-                    _ => bucket[index].maximum_db,
-                };
-                if let Some(index) = (0..bucket.len())
-                    .filter(|index| value(*index).is_some())
-                    .min_by(|first, last| {
-                        let order = value(*first).unwrap().total_cmp(&value(*last).unwrap());
-                        if minimum {
-                            order
-                        } else {
-                            order.reverse()
-                        }
-                    })
-                {
-                    indices.push(offset + index);
-                }
-            }
-        }
-        if let Some(index) = bucket.iter().position(|point| point.valid_count == 0) {
-            indices.push(offset + index);
-        }
-    }
-    indices.sort_unstable();
-    indices.dedup();
+    let indices = crate::capture::collection::joint_indices(source, |point, field| match field {
+        0 => point.minimum_db,
+        1 => point.average_db,
+        _ => point.maximum_db,
+    });
     let points: Vec<_> = indices.iter().map(|index| &source[*index]).collect();
     let curve = |field: usize| {
         points.iter().enumerate().map(|(index, point)| {
@@ -192,30 +164,4 @@ pub fn viewport(
         "last_epoch":result.sources.last().map(|source|source.capture_time)}),
     )
 }
-/// Exports all source epochs, valid counts and full-resolution statistics.
-/// # Arguments
-/// * `result` - Complete aggregate, never a decimated plot.
-/// * `path` - New writable destination.
-/// # Returns
-/// Success after syncing the new JSON file.
-/// # Errors
-/// Rejects existing destinations, serialization limits and write failures.
-pub fn write_json_new(result: &RxMerAggregate, path: &Path) -> Result<(), Diagnostic> {
-    use std::io::Write;
-    let json = pnm::common::json::to_json(result, pnm::common::json::DEFAULT_MAX_JSON_BYTES)
-        .map_err(|error| Diagnostic::new("Json", error))?;
-    let mut file = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(path)
-        .map_err(|error| Diagnostic::new("Export", error))?;
-    if let Err(error) = file
-        .write_all(json.as_bytes())
-        .and_then(|()| file.sync_all())
-    {
-        drop(file);
-        let _ = std::fs::remove_file(path);
-        return Err(Diagnostic::new("Export", error));
-    }
-    Ok(())
-}
+pub use crate::capture::collection::write_json_new;

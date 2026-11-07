@@ -8,6 +8,7 @@ import QtQuick.Layouts
 Item {
     id: tree
     required property Theme theme
+    property string namePrefix:"rxmer"
     property var catalog: ({})
     property string selectedMac: ""
     property bool working: false
@@ -62,7 +63,7 @@ Item {
     }
     ListView {
         id: nodes
-        objectName: "rxmerCaptureTree"
+        objectName: tree.namePrefix+"CaptureTree"
         anchors.fill: parent
         clip: true
         model: tree.rows()
@@ -76,7 +77,7 @@ Item {
                 anchors.leftMargin: modelData.depth*14
                 spacing: 2
                 ToolButton {
-                    objectName: "rxmerTreeExpand_"+modelData.kind+"_"+(modelData.key===undefined ? "" : modelData.key)
+                    objectName: tree.namePrefix+"TreeExpand_"+modelData.kind+"_"+(modelData.key===undefined ? "" : modelData.key)
                     visible: modelData.kind!=="epoch"
                     Layout.preferredWidth: 24
                     text: modelData.expanded ? "▾" : "▸"
@@ -87,7 +88,7 @@ Item {
                     }
                 }
                 ToolButton {
-                    objectName: "rxmerTreeChannel_"+modelData.key
+                    objectName: tree.namePrefix+"TreeChannel_"+modelData.key
                     visible: modelData.kind==="channel"
                     Layout.fillWidth: true
                     enabled: !tree.working
@@ -98,7 +99,7 @@ Item {
                     ToolTip.text: modelData.detail || ""
                 }
                 ToolButton {
-                    objectName: "rxmerTreeFrame_"+modelData.key+"_"+modelData.frame
+                    objectName: tree.namePrefix+"TreeFrame_"+modelData.key+"_"+modelData.frame
                     visible: modelData.kind==="epoch" && tree.playbackEnabled
                     Layout.fillWidth: true
                     enabled: !tree.working

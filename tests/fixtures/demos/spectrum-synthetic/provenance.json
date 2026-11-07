@@ -1,0 +1,12 @@
+{
+  "purpose": "Synthetic standard PNN9 temporal demonstration, not real repeated measurements.",
+  "source_fixture": "../../pypnm/tests/files/spectrum_analyzer.bin",
+  "source_sha256": "db6c9e5b38eef9de5b36e25989f7d592191c8626c65e8d0c08c58af511e9a1a4",
+  "generator": "crates/core/examples/generate_spectrum_demo.rs",
+  "changes": [
+    "Set synthetic epochs at five-second intervals.",
+    "Add deterministic level drift and a moving synthetic peak.",
+    "Preserve every encoded acquisition setting."
+  ],
+  "capture_count": 12
+}

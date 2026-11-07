@@ -8,6 +8,7 @@ import QtQuick.Layouts
 ColumnLayout {
     id: panel
     required property var theme
+    property bool standalone:false
     property bool comparisonSelected: false
     property var attachment: ({})
     property string resultMode: ""
@@ -23,9 +24,9 @@ ColumnLayout {
     signal exportResult()
     spacing: 8
     onAttachmentChanged: mode.currentIndex = 0
-    Label { text: "TOOLS"; color: panel.theme.muted; font.pixelSize: 10 }
-    ThemeButton { objectName: "showOriginalPreEq"; theme: panel.theme; text: "Original capture"; borderHighlighted: !panel.comparisonSelected; Layout.fillWidth: true; onClicked: panel.showOriginal() }
-    ThemeButton { objectName: "showPreEqCompare"; theme: panel.theme; text: "Compare"; borderHighlighted: panel.comparisonSelected; Layout.fillWidth: true; onClicked: panel.showComparison() }
+    Label { visible:!panel.standalone; text: "TOOLS"; color: panel.theme.muted; font.pixelSize: 10 }
+    ThemeButton { objectName: "showOriginalPreEq"; theme: panel.theme; text: "Original capture"; visible:!panel.standalone; borderHighlighted: !panel.comparisonSelected; Layout.fillWidth: true; onClicked: panel.showOriginal() }
+    ThemeButton { objectName: "showPreEqCompare"; theme: panel.theme; text: "Compare"; visible:!panel.standalone; borderHighlighted: panel.comparisonSelected; Layout.fillWidth: true; onClicked: panel.showComparison() }
     ColumnLayout {
         objectName: "preEqCompareControls"
         visible: panel.comparisonSelected

@@ -24,7 +24,7 @@ its graph, and export decoded JSON. The native Qt interface uses a Rust backend.
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/ui/images/home/home-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/ui/images/home/home-light.png">
-  <img alt="PNM Viewer Toolkit starting screen with RxMER tools in the default open navigation pane" src="docs/ui/images/home/home-dark.png" width="1000">
+  <img alt="PNM Viewer Toolkit starting screen with Single Capture, RxMER, Spectrum Analyzer and US Pre-EQ navigation" src="docs/ui/images/home/home-dark.png" width="1000">
 </picture>
 
 ## Start here
@@ -40,7 +40,7 @@ The current viewer supports:
 | Capture | Views |
 | --- | --- |
 | [RxMER](docs/ui/measurements/rxmer/README.md) | MER by frequency; [Playback](docs/ui/measurements/rxmer/playback.md); [Min-Avg-Max](docs/ui/measurements/rxmer/README.md#min-avg-max); [Modulation & Capacity](docs/ui/measurements/rxmer/README.md#modulation--capacity) |
-| [Spectrum Analyzer](docs/ui/measurements/spectrum-analyzer/README.md) | Amplitude by frequency and calculated RBW |
+| [Spectrum Analyzer](docs/ui/measurements/spectrum-analyzer/README.md) | Amplitude/RBW, [Min-Avg-Max and Playback](docs/ui/measurements/spectrum-analyzer/collections.md) |
 | [DS Channel Estimation](docs/ui/measurements/channel-estimation/README.md) | Magnitude, group delay and I/Q dots and density |
 | [US Pre-EQ (current)](docs/ui/measurements/upstream-pre-eq/README.md) | Coefficient magnitude, group delay, I/Q, and [Correction & Delta](docs/ui/measurements/upstream-pre-eq/README.md#correction--delta-from-the-left-gutter) |
 | [US Pre-EQ (last update)](docs/ui/measurements/upstream-pre-eq-last/README.md) | RNG-RSP update magnitude, group delay and I/Q dots and density |

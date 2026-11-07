@@ -4,6 +4,7 @@
  */
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 mod backend;
+mod spectrum_collection;
 mod update;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};
 #[cfg(target_os = "linux")]

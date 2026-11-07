@@ -1889,8 +1889,8 @@
         },
         {
           "path": "README.md",
-          "size_bytes": 2262,
-          "sha256": "585d5fa059d54016e5812700db54e9ca6a29fea4d319f457272a9164154c659b"
+          "size_bytes": 2283,
+          "sha256": "cd5f9832834f79c01583b4526f8b23c96472a77460c83bec08ae2453e321cf1c"
         },
         {
           "path": "last-update.bin",
@@ -1906,6 +1906,93 @@
           "path": "provenance.json",
           "size_bytes": 922,
           "sha256": "5e71ccf68c58a8927793bf477ff1a11920d3effdcac092fda13bece36d06a3b8"
+        }
+      ]
+    },
+    {
+      "source": "spectrum-synthetic",
+      "output": "spectrum/synthetic-time-series.zip",
+      "archive": true,
+      "files": [
+        {
+          "path": "LICENSE",
+          "size_bytes": 11344,
+          "sha256": "507435d71ab5dacd16fd13e968649a1940b72b67faa6381124200ec5d0162ef3"
+        },
+        {
+          "path": "NOTICE",
+          "size_bytes": 500,
+          "sha256": "067995de122a64cc41a5d561c3c79c1ba0b88f81e965506000d60d66ca3092a7"
+        },
+        {
+          "path": "README.md",
+          "size_bytes": 572,
+          "sha256": "3d58d4e76ff0f4839244055792d2f7bf822fd3df335cfb311c0a245d530e735a"
+        },
+        {
+          "path": "capture-001.bin",
+          "size_bytes": 41511,
+          "sha256": "9e818a8261af50c2acf87ccb56cf2c6ea3286477a1bd88bb9671c6b7f79d84c4"
+        },
+        {
+          "path": "capture-002.bin",
+          "size_bytes": 41511,
+          "sha256": "a7b21cb336a87a85f73a3833ee19bfb2cb8cdd5443e83bc087f2e26bd6a207a6"
+        },
+        {
+          "path": "capture-003.bin",
+          "size_bytes": 41511,
+          "sha256": "06d80045009df3b00ab1c4296b5ab9d25ff577b92db56ec79e5ca559c5bec5a6"
+        },
+        {
+          "path": "capture-004.bin",
+          "size_bytes": 41511,
+          "sha256": "c31946ba9ce121c8ca09b77260f0ed8416265c0504e79cf53e24bdd516216255"
+        },
+        {
+          "path": "capture-005.bin",
+          "size_bytes": 41511,
+          "sha256": "e0bbdaace82eae1efb76b7cda8c353614d9b888db2a97effccbe5f376196a534"
+        },
+        {
+          "path": "capture-006.bin",
+          "size_bytes": 41511,
+          "sha256": "044d26fa02e01adbde3569191aac0aab485638e95aee2f4229471b737dad5a99"
+        },
+        {
+          "path": "capture-007.bin",
+          "size_bytes": 41511,
+          "sha256": "00794879a76885f4eaeae37d2872f9fe27cb7b76016a7add738f8790146f5c87"
+        },
+        {
+          "path": "capture-008.bin",
+          "size_bytes": 41511,
+          "sha256": "28cc503c74b979a2b1422969133f709b86a63475a1b6d72fa3bd7fa7cd065160"
+        },
+        {
+          "path": "capture-009.bin",
+          "size_bytes": 41511,
+          "sha256": "189ee50cd141879949f8cdf98d760ec8fddc66747c328df276b4a417cd55c11f"
+        },
+        {
+          "path": "capture-010.bin",
+          "size_bytes": 41511,
+          "sha256": "8c0c0dd493fce525cd733df59960665ab5d7e9256c4c92941e379a60f7515239"
+        },
+        {
+          "path": "capture-011.bin",
+          "size_bytes": 41511,
+          "sha256": "9aa98275abf6bc470902b77073691d473050e7382b6032c375b96e50380bdec7"
+        },
+        {
+          "path": "capture-012.bin",
+          "size_bytes": 41511,
+          "sha256": "119272083f814a95f8d8b0273e8053b6713b9df3cc062680fc5dca7d18035aec"
+        },
+        {
+          "path": "provenance.json",
+          "size_bytes": 533,
+          "sha256": "8948818d564f962ecef34730184780f6f0d01025fd992f76bc5e6cb396d540ba"
         }
       ]
     }

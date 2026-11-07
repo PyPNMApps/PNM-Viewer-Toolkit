@@ -4,8 +4,8 @@ A ready-to-open, sanitized pair used for the comparison screenshots. No modem,
 network connection or archive extraction is needed. Both CM and CMTS addresses
 are `00:ca:00:00:00:01`. Each file contains 1776 coefficients.
 
-1. Open **original.bin** in the Qt viewer.
-2. Show the left gutter and select **Compare**.
+1. Select **US Pre-EQ → Compare** in the left gutter.
+2. Use **Open original…** to choose **original.bin**.
 3. Drop **last-update.bin** into **Drop Last Update here**, or use
    **Browse…**. Wait for the mode selector to become available.
 4. Select **Adjust (multiply)** and **Compare**.
