@@ -26,8 +26,11 @@ Earlier Windows axis-width and Mac offscreen interaction failures prompted dynam
 font-based axis margins, test synchronization and the Cocoa selection; native
 hosted success remains to be established for this revised configuration.
 
-Master/PR CI remains lean CodeQL/static checking. Manual CI can request the full
-native test matrix without packages; tags always require it with packages.
+Master/PR CI runs CodeQL/static checks followed by lightweight desktop preflight:
+packaging/tooling tests on Windows and both Macs, plus Cocoa QML tests on both
+Macs. These jobs perform no Rust compilation or installer build. Manual CI can
+request the full native test matrix without packages; tags always require it
+with packages and skip the redundant preflight jobs.
 [The former Ubuntu-only workflow](../../.github/workflows/ubuntu-deb-temp.yml)
 is now manual troubleshooting only; it has no tag trigger, avoiding duplicate
 release builds. Never run it against an already published tag to change assets.
@@ -52,17 +55,20 @@ and incremental state are excluded. All native and installer tests run again.
 ## Full CI mode
 
 [CI](../../.github/workflows/ci.yml) runs on pushes to `master`/`main`, pull
-requests, manual dispatch, and reusable calls. Master/PR runs use the lean scope above; tags and explicit manual full mode use
-the native matrix below.
+requests, manual dispatch, and reusable calls. Master/PR runs use the preflight scope above; tags and explicit manual full mode
+use the native matrix below.
 
 ```text
 CodeQL + code checks
          │ both pass
-         └── One native job on each OS:
+         ├── Master/PR: desktop preflight
+         │     Windows/Mac packaging tests + both Mac Cocoa QML suites
+         │
+         └── Full native/tag: one native job on each OS
                Rust tests + tooling tests
                CLI release build + JSON smoke
                Qt tests + Clippy + build + QML tests
-                          │ all pass
+                          │ selected scope passes
                     Required checks
 ```
 
@@ -96,7 +102,9 @@ build/smoke and desktop checks share one runner per platform. This replaces the
 three separate six-platform matrices, reducing hosted runner allocations from
 18 to six while retaining every check on every platform. In full mode, a failed,
 canceled or skipped stage makes **Required checks** fail. Lean master/PR
-mode accepts only the deliberately skipped native job; CodeQL/quality must pass.
+mode requires desktop preflight, CodeQL and quality to pass; only its full
+native jobs may be deliberately skipped. Full-native mode instead requires the
+preflight job to be deliberately skipped.
 
 For tag packaging, CI calls the same native workflow twice: a one-runner
 `native-baseline` call for Ubuntu 22.04, and a five-runner `native` call for the
@@ -130,6 +138,61 @@ synthetic-tool tests cover the export, but hosted Windows validation is still
 required. Re-running the old tag uses its original workflow, without this fix.
 
 ## QML failure diagnostics
+
+### Recurring failure audit
+
+The completed v0.3.0 run passed Windows, Intel macOS, all three Ubuntu native jobs
+and all three Ubuntu DEB lifecycle jobs. Apple Silicon failed one RxMER tree
+render wait (120 QML tests passed); Required checks then failed as designed.
+Successful same-run installers were published as a partial prerelease; Apple
+Silicon is absent and the prerelease is not the stable updater target.
+
+Recent release evidence shows repeated presentation-test failures rather than
+repeated parser/compiler defects:
+
+| Tag | Failed native checks | Evidence |
+| --- | --- | --- |
+| v0.2.6 | Intel Mac profile click routed the wrong index | [Job](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/42159742162/job/127704011785) |
+| v0.2.8 | Apple Silicon spectrum context-menu render wait | [Job](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/42183443166/job/127779386542) |
+| v0.2.9 | Intel spectrum and Apple Silicon profile presentation waits | [Run](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/42274739507) |
+| v0.2.11 | Apple Silicon constellation overlay render wait | [Job](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/42292766066/job/128152702197) |
+| v0.2.13 | Mac temporary-root symlink guard and Windows fixture bytes | [Run](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/42346987106) |
+| v0.3.0 | Apple Silicon RxMER epoch-leaf render wait | [Run](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/42348046251) |
+
+A local Linux/offscreen pass does not establish Cocoa event/render readiness.
+The previous static-only branch pipeline left native presentation and packaging
+failures undiscovered until tags. The new reusable
+[desktop preflight](../../.github/workflows/desktop-preflight.yml) runs the same
+QML suite and packaging tests on the relevant native hosts for master/PR. Reports
+remain downloadable; failures block Required checks. No assertions are skipped
+or automatically retried, and release native/lifecycle gates are unchanged.
+
+Push the implementation branch first and wait for its Required checks before
+creating a release tag. The combined tag-push helper still validates locally and
+pushes master/tag atomically; it does not wait for a separate branch CI run. A
+release bump from an already-published clean HEAD uses explicit `--force` under
+the existing release rules; this never force-pushes Git history.
+
+Rendering tests share `apps/qt/tests/helpers/RenderTestCase.qml`. It waits for
+window layout, requests Canvas painting where supported, and invokes
+[QQuickWindow::update()](https://doc.qt.io/qt-6/qquickwindow.html#update) before
+waiting for the new frame. Static windows therefore have a defined render request
+even when the theme or dimensions did not change. Pixel assertions still use
+actual rendered images. Input-only tests wait for hit geometry and assert real
+mouse-click signals; render completion is not a substitute for a signal check.
+
+The shared regression verifies consecutive renders of an unchanged scene. Native
+macOS confirmation of these changes remains pending the next branch CI run.
+
+
+In [the v0.3.0 Apple Silicon job](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/42348046251/job/128331202787),
+120 QML checks passed and the RxMER playback epoch-leaf test failed while waiting
+for rendering, before its click/signal assertion. The test now ensures the
+virtualized target row is instantiated, visible and laid out, then clicks it and
+asserts the exact MAC/group/frame signal. Both themes exercise that path. This
+avoids depending on an additional frame from an already static Cocoa window;
+it does not skip the interaction or retry failed tests. Hosted macOS confirmation
+requires a subsequent tag.
 
 v0.2.6's Intel Mac QML run reported profile index 1 after the modulation test
 clicked index 0. That test used a fixed 50 ms delay after replacing the model.

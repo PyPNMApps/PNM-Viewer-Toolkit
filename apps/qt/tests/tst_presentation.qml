@@ -4,9 +4,10 @@
  */
 import QtQuick
 import QtTest
+import "helpers"
 import "../qml"
 
-TestCase {
+RenderTestCase {
     name: "MeasurementPresentation"
     when: windowShown
     visible: true
@@ -242,7 +243,7 @@ TestCase {
             wait(50)
             const plot = findChild(chart, "measurementPlot")
             plot.requestPaint()
-            verify(waitForRendering(plot))
+            verify(waitForFrame(plot))
             const image = grabImage(plot)
             const horizontal = Math.round((plot.width + plot.leftMargin - plot.rightMargin) / 2)
             for (const trace of series) {
@@ -397,7 +398,7 @@ TestCase {
             cells: [{column: 5, row: 5, count: 1}, {column: 25, row: 25, count: 10}]}
         const dots = findChild(scatter, "iqDotsButton")
         const density = findChild(scatter, "iqDensityButton")
-        verify(waitForRendering(density))
+        verify(waitForFrame(density))
         compare(dots.width, density.width)
         compare(scatter.densityMode, false)
         mouseClick(density)
@@ -527,7 +528,7 @@ TestCase {
             sourcePoints.push({frequency_hz: 640000000 + index * 25000, value: 43})
         }
         chart.viewport = {start: 0, count: 100, total: 100, points: sourcePoints}
-        verify(waitForRendering(chart))
+        verify(waitForFrame(chart))
         const plot = findChild(chart, "measurementPlot")
         const plotWidth = plot.width - plot.leftMargin - plot.rightMargin
         const left = plot.leftMargin + plotWidth * 0.25

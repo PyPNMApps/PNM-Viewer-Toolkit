@@ -5,8 +5,9 @@
 import QtQuick
 import QtQuick.Controls
 import QtTest
+import "helpers"
 import "../qml"
-TestCase {
+RenderTestCase {
     id: testCase
     name: "PreEqComparison"
     width: 1280; height: 820; visible: true; when: windowShown
@@ -132,7 +133,7 @@ TestCase {
     function test_paired_graph_metric_alignment_iq_and_mouse_zoom(data) {
         appearance.preference=data.theme
         const plot=findChild(comparison,"preEqComparisonOverlay")
-        plot.requestPaint();verify(waitForRendering(plot))
+        plot.requestPaint();verify(waitForFrame(plot))
         const image=grabImage(plot)
         verify(image.width>500 && image.height>100)
         mousePress(plot,100,60);mouseMove(plot,500,60);mouseRelease(plot,500,60)
@@ -141,11 +142,11 @@ TestCase {
         compare(resets,1)
         const metric=findChild(comparison,"preEqComparisonMetric")
         metric.currentIndex=1
-        plot.requestPaint();verify(waitForRendering(plot))
+        plot.requestPaint();verify(waitForFrame(plot))
         metric.currentIndex=2
         verify(!plot.visible)
         metric.currentIndex=0
         findChild(comparison,"preEqAlignment").currentIndex=1
-        plot.requestPaint();verify(waitForRendering(plot))
+        plot.requestPaint();verify(waitForFrame(plot))
     }
 }

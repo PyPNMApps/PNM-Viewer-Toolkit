@@ -1,0 +1,50 @@
+# Copyright 2026 PNM Viewer contributors
+# SPDX-License-Identifier: Apache-2.0
+name: Desktop preflight
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  preflight:
+    name: Desktop preflight / ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-15-intel, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Test Qt environment selection
+        run: python -m unittest discover -s scripts/tests -p 'test_qt_sdk.py'
+      - name: Test version and packaging tools
+        run: python -m unittest discover -s tools/release -p 'test_*.py'
+      - name: Cache pinned native Qt SDK
+        if: runner.os == 'macOS'
+        uses: actions/cache@v5
+        with:
+          path: local/qt
+          key: qt-sdk-${{ matrix.os }}-${{ runner.arch }}-${{ hashFiles('scripts/qt-sdk.py') }}
+      - name: Prepare pinned native Qt SDK
+        if: runner.os == 'macOS'
+        run: python scripts/qt-sdk.py setup --download-attempts 3
+      - name: Test native Cocoa presentation
+        if: runner.os == 'macOS'
+        run: python scripts/qt-sdk.py qml-test
+      - name: Retain QML test reports
+        if: always() && runner.os == 'macOS'
+        uses: actions/upload-artifact@v6
+        with:
+          name: preflight-qml-${{ matrix.os }}
+          path: local/qt-test-results/
+          if-no-files-found: ignore
+          retention-days: 14

@@ -22,7 +22,7 @@ TestCase {
         onGroupRequested: (macAddress,groupId)=>{testCase.requestedMac=macAddress;testCase.requestedGroup=groupId}
     }
     function init() {
-        tree.catalog=({});tree.selectedMac="";tree.working=false
+        tree.catalog=({});tree.selectedMac="";tree.working=false;tree.playbackEnabled=false
         requestedGroup=-1;requestedMac=""
     }
     function test_mac_channel_epoch_tree_and_channel_selection_data() {return [{tag:"dark",theme:1},{tag:"light",theme:2}]}
@@ -48,16 +48,28 @@ TestCase {
         tree.toggleMac("aa:bb:cc:dd:ee:ff")
         compare(tree.rows().length,2)
     }
-    function test_playback_epoch_leaf_selects_header_ordered_frame() {
+    function test_playback_epoch_leaf_selects_header_ordered_frame_data() {
+        return [{tag:"dark",theme:1},{tag:"light",theme:2}]
+    }
+    function test_playback_epoch_leaf_selects_header_ordered_frame(data) {
+        appearance.preference=data.theme
         tree.playbackEnabled=true
         tree.catalog=({groups:[{id:0,mac_address:"aa:bb:cc:dd:ee:ff",label:"Channel 34",capture_count:2,sources:[{capture_time:10,name:"z.bin"},{capture_time:20,name:"a.bin"}]}]})
         tree.selectedMac="aa:bb:cc:dd:ee:ff";tree.toggleGroup(0)
         const spy=createTemporaryObject(signalSpy,tree,{target:tree,signalName:"frameRequested"})
         const nodes=findChild(tree,"rxmerCaptureTree")
         verify(waitForPolish(nodes))
+        nodes.forceLayout()
+        nodes.positionViewAtIndex(3,ListView.Contain)
+        tryVerify(()=>findChild(tree,"rxmerTreeFrame_0_1")!==null)
         const action=findChild(tree,"rxmerTreeFrame_0_1")
-        verify(waitForRendering(action));mouseClick(action)
-        compare(spy.count,1);compare(Array.from(spy.signalArguments[0]),["aa:bb:cc:dd:ee:ff",0,1])
+        verify(waitForPolish(action))
+        // A static Cocoa window may have no new frame to await. Synchronize
+        // the click with delegate layout and assert the actual routed signal.
+        tryVerify(()=>action.visible && action.enabled && action.width>0 && action.height>0)
+        mouseClick(action)
+        tryCompare(spy,"count",1)
+        compare(Array.from(spy.signalArguments[0]),["aa:bb:cc:dd:ee:ff",0,1])
         tree.playbackEnabled=false
     }
     Component { id: signalSpy; SignalSpy {} }

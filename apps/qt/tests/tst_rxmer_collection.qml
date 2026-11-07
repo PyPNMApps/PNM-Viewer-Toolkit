@@ -5,8 +5,9 @@
 import QtQuick
 import QtQuick.Controls
 import QtTest
+import "helpers"
 import "../qml"
-TestCase {
+RenderTestCase {
     id: testCase
     name: "RxMerCollection"
     width: 1280; height: 820
@@ -54,16 +55,16 @@ TestCase {
         workspace.viewport=({group:{channel_id:34},start:2,count:4,total:10,capture_count:3,first_epoch:10,last_epoch:20,points:points,rxmer_statistics:{minimum:points.map(point=>({sample_index:point.sample_index,frequency_hz:point.frequency_hz,value:point.value===null ? null : point.value-2})),maximum:points.map(point=>({sample_index:point.sample_index,frequency_hz:point.frequency_hz,value:point.value===null ? null : point.value+2}))}})
         const chart=findChild(workspace,"rxmerCollectionChart")
         const plot=findChild(chart,"measurementPlot")
-        plot.requestPaint();verify(waitForRendering(plot))
+        plot.requestPaint();verify(waitForFrame(plot))
         verify(grabImage(plot).width>500)
         verify(chart.rxmerEnabled)
         const action=findChild(chart,"analyzeRxmerBitLoading")
         mouseClick(plot,250,100,Qt.RightButton)
         tryCompare(findChild(chart,"spectrumContextMenu"),"opened",true)
-        verify(waitForRendering(action))
+        verify(waitForFrame(action))
         mouseClick(action)
         compare(requestedStart,2);compare(requestedCount,4)
-        chart.showRxmerMinimum=false;plot.requestPaint();verify(waitForRendering(plot))
-        chart.showRxmerMaximum=false;plot.requestPaint();verify(waitForRendering(plot))
+        chart.showRxmerMinimum=false;plot.requestPaint();verify(waitForFrame(plot))
+        chart.showRxmerMaximum=false;plot.requestPaint();verify(waitForFrame(plot))
     }
 }

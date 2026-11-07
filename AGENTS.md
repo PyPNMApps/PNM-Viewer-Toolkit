@@ -140,8 +140,9 @@ native test jobs, MSI/DMG packaging and installed lifecycle checks, baseline DEB
 on Ubuntu 22.04/24.04/26.04, complete assets, budgets and verified publication.
 Tests and packaging share native hosts to avoid a second cold compilation matrix.
 The old Ubuntu-only workflow is manual troubleshooting only; never trigger both
-for an automatic tag. Master/PR remains lean CodeQL/static, with native checks
-available manually. No failing native tests may be skipped to make CI pass.
+for an automatic tag. Master/PR runs CodeQL/static checks plus lightweight
+Windows/Mac packaging and Mac Cocoa QML preflight without Rust compilation.
+Full native checks remain available manually. No failing native tests may be skipped to make CI pass.
 User authorization on 2026-11-05 permits a clearly labeled partial prerelease
 from successful same-run platforms when another platform fails. Global identity,
 CodeQL and code checks must pass. Each published platform must pass its native

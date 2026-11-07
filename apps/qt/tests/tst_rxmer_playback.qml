@@ -5,8 +5,9 @@
 import QtQuick
 import QtQuick.Controls
 import QtTest
+import "helpers"
 import "../qml"
-TestCase {
+RenderTestCase {
     id: testCase
     name: "RxMerPlayback"
     width: 1100; height: 800
@@ -36,7 +37,7 @@ TestCase {
     function test_play_pause_step_restart_and_end(data) {
         appearance.preference=data.theme
         const play=findChild(controls,"rxmerPlayPause")
-        verify(waitForPolish(controls));verify(waitForRendering(play))
+        verify(waitForPolish(controls));verify(waitForFrame(play))
         mouseClick(play);verify(controls.playing)
         tryCompare(testCase,"requested",1,1500)
         mouseClick(play);verify(!controls.playing)

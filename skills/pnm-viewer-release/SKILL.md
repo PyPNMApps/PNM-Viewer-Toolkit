@@ -123,3 +123,18 @@ Require installed smoke checks to use and verify bundled examples, not silently
 substitute checkout fixtures. Keep installed icon/shortcut lifecycle checks and
 the 50 MB artifact gate. Add new build/asset-conversion packages to the explicit
 development installer and documentation; do not install them while validating.
+
+## Catch platform failures before tags
+
+Master/PR desktop preflight runs packaging tests on Windows and both Macs, and
+the complete QML suite under Cocoa on both Macs, without Rust compilation. Push
+the implementation branch separately and inspect Required checks before offering
+a release tag. Combined tag-push still performs local checks and an atomic push;
+it does not itself wait for branch CI. Full native/tag runs skip duplicate
+preflight but retain every native and installed lifecycle gate.
+
+For QML frame assertions use the shared RenderTestCase waitForFrame helper, which
+requests a frame even for unchanged scenes. For input assertions await polished,
+visible hit geometry and check the actual signal arguments. Never replace failed
+assertions with retries, sleeps or skips. A Linux offscreen pass does not prove
+native Cocoa behavior; retain reports and require native confirmation.

@@ -4,9 +4,10 @@
  */
 import QtQuick
 import QtTest
+import "helpers"
 import "../qml"
 
-TestCase {
+RenderTestCase {
     id: testCase
     name: "SpectrumWindowAverage"
     when: windowShown
@@ -104,7 +105,7 @@ TestCase {
     }
     function test_red_average_trace_renders_and_mutes_in_both_themes() {
         waitForPolish(controls)
-        verify(waitForRendering(controls))
+        verify(waitForFrame(controls))
         mouseClick(findChild(controls, "spectrumWindowAverageButton"))
         compare(controls.requested, 101)
         compare(chart.showSpectrumAverage, true)
@@ -113,7 +114,7 @@ TestCase {
         for (const preference of [1, 2]) {
             appearance.preference = preference
             controls.showAverage = true
-            verify(waitForRendering(findChild(chart, "measurementPlot")))
+            verify(waitForFrame(findChild(chart, "measurementPlot")))
             tryVerify(redAtAverage, 5000, "Red trace in theme " + preference)
             mouseClick(toggle)
             tryVerify(function() { return !redAtAverage() })

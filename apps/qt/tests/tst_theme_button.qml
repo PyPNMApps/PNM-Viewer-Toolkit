@@ -4,9 +4,10 @@
  */
 import QtQuick
 import QtTest
+import "helpers"
 import "../qml"
 
-TestCase {
+RenderTestCase {
     id: testCase
     name: "ThemeButtonContrast"
     when: windowShown
@@ -54,7 +55,7 @@ TestCase {
         appearance.systemScheme = data.systemScheme
         button.highlighted = data.highlighted
         button.enabled = data.enabled
-        verify(waitForRendering(button))
+        verify(waitForFrame(button))
         const image = grabImage(button)
         const background = image.pixel(Math.floor(button.width / 2), 3)
         const foreground = button.contentItem.color

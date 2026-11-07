@@ -5,9 +5,10 @@
 import QtQuick
 import QtQuick.Controls
 import QtTest
+import "helpers"
 import "../qml"
 
-TestCase {
+RenderTestCase {
     id: testCase
     name: "ApplicationUpdates"
     when: windowShown
@@ -90,7 +91,7 @@ TestCase {
             verify(button.visible)
             compare(button.palette.buttonText, appearance.text)
             waitForPolish(button)
-            verify(waitForRendering(button))
+            verify(waitForFrame(button))
             mouseClick(button)
             compare(issueOpened.count, preference)
             compare(issueOpened.signalArguments[preference - 1][0], service.issue_report_url)
@@ -164,7 +165,7 @@ TestCase {
         compare(button.visible,data.platform==="windows")
         if (data.platform==="windows") {
             verify(waitForPolish(button))
-            verify(waitForRendering(button))
+            verify(waitForFrame(button))
             compare(button.contentItem.color,appearance.text)
             mouseClick(button)
             compare(uninstallOpened.count,1)
@@ -191,7 +192,7 @@ TestCase {
             for (const name of ["projectButton", "checkUpdatesButton", "releaseDownloadsButton"]) {
                 const button = findChild(about, name)
                 compare(button.contentItem.color, appearance.text)
-                verify(waitForRendering(button))
+                verify(waitForFrame(button))
                 const image = grabImage(button)
                 const background = image.pixel(Math.floor(button.width / 2), 3)
                 // Check rendered background, not only palette metadata: pale

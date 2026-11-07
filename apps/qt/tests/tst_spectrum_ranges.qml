@@ -5,9 +5,10 @@
 import QtQuick
 import QtQuick.Controls
 import QtTest
+import "helpers"
 import "../qml"
 
-TestCase {
+RenderTestCase {
     id: testCase
     name: "SpectrumRanges"
     when: windowShown
@@ -62,7 +63,7 @@ TestCase {
         // Explicitly schedule the frame this wait observes, including when
         // the first data row keeps the already-rendered default dark theme.
         plot.requestPaint()
-        verify(waitForRendering(plot))
+        verify(waitForFrame(plot))
         mouseClick(plot, plot.leftMargin + 100, plot.topMargin + 30, Qt.RightButton)
         const menu = findChild(chart, "spectrumContextMenu")
         tryCompare(menu, "visible", true)
@@ -70,7 +71,7 @@ TestCase {
         waitForPolish(menu.contentItem)
         const calculate = findChild(chart, "calculateSpectrumPower")
         plot.requestPaint()
-        verify(waitForRendering(plot))
+        verify(waitForFrame(plot))
         verify(calculate.width > 0 && calculate.height > 0)
         mouseClick(calculate)
         compare(chart.selectingPower, true)
@@ -118,7 +119,7 @@ TestCase {
         mouseClick(radio)
         compare(dialog.unit, "MHz")
         waitForPolish(dialog.contentItem)
-        verify(waitForRendering(dialog.contentItem))
+        verify(waitForFrame(dialog.contentItem))
         mouseClick(open)
         compare(tools.request, [120, 180, "MHz"])
         tryCompare(dialog, "visible", false)

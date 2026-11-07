@@ -32,6 +32,11 @@ Like OSCAR-UI, the push helper supports explicit release modes:
 | `--tag-minor` | `0.2.0` |
 | `--tag-major` | `1.0.0` |
 
+Push implementation changes to the branch first and wait for **Required checks**,
+including desktop preflight, before creating a release tag. See the
+[CI reliability audit](ci.md#recurring-failure-audit). Combined tag-push modes do
+not wait for a separate branch CI run.
+
 Commit development changes first. Release modes require a clean **master** branch,
 consistent version metadata and an origin that is not ahead/diverged. They read
 local/remote tags and reject collisions before changing files.

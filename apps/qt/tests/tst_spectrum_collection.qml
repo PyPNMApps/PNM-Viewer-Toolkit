@@ -5,8 +5,9 @@
 import QtQuick
 import QtQuick.Controls
 import QtTest
+import "helpers"
 import "../qml"
-TestCase {
+RenderTestCase {
     id:testCase;name:"SpectrumCollections";width:1280;height:820;visible:true;when:windowShown
     Theme {id:appearance}
     QtObject {
@@ -49,7 +50,7 @@ TestCase {
                 points:[{frequency_hz:100000000,sample_index:0,value:-30},{frequency_hz:101000000,sample_index:1,value:-20},{frequency_hz:102000000,sample_index:2,value:-30}],
                 spectrum_statistics:{minimum:[],maximum:[]},workspace:{tabs:[],power:null},minimum:-50,maximum:0})
             const button=findChild(workspace,"spectrumWindowAverageButton")
-            waitForPolish(button);verify(waitForRendering(button));mouseClick(button)
+            waitForPolish(button);verify(waitForFrame(button));mouseClick(button)
             compare(service.window,101)
             const chart=findChild(workspace,"spectrumCollectionChart")
             compare(chart.spectrumEnabled,true);compare(chart.rxmerEnabled,false);compare(chart.unit,"dBmV")

@@ -4,9 +4,10 @@
  */
 import QtQuick
 import QtTest
+import "helpers"
 import "../qml"
 
-TestCase {
+RenderTestCase {
     id: testCase
     name: "RxMerBitLoading"
     width: 1280; height: 820
@@ -144,7 +145,7 @@ TestCase {
         const recalculate = findChild(insights.contentItem,"recalculateRxmerBitLoading")
         margin.text = "1.5"
         model.currentIndex = 0
-        verify(waitForRendering(recalculate))
+        verify(waitForFrame(recalculate))
         mouseClick(recalculate)
         compare(requests.length,2)
         compare(requests[1].margin,1.5)
@@ -158,7 +159,7 @@ TestCase {
         for (const preference of [1,2]) {
             appearance.preference = preference
             const chip = findChild(insights.contentItem,"rxmerGrossRateChip")
-            verify(waitForRendering(chip))
+            verify(waitForFrame(chip))
             mouseClick(chip)
             const grid = findChild(insights,"rxmerUniformRatesDialog")
             tryCompare(grid,"opened",true)
@@ -171,12 +172,12 @@ TestCase {
     }
     function test_right_click_offers_rxmer_action_without_spectrum_actions() {
         const plot = findChild(original,"measurementPlot")
-        verify(waitForRendering(plot))
+        verify(waitForFrame(plot))
         mouseClick(plot,200,150,Qt.RightButton)
         const action = findChild(original,"analyzeRxmerBitLoading")
         verify(action.visible)
         verify(!findChild(original,"calculateSpectrumPower").visible)
-        verify(waitForRendering(action))
+        verify(waitForFrame(action))
         mouseClick(action)
         compare(contextRequests,1)
         original.rxmerEnabled = false

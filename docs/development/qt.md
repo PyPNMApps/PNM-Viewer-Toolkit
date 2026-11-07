@@ -310,3 +310,18 @@ another frame without scheduling one can time out on macOS. For Canvas tests
 that require a new rendered frame, call `requestPaint()` before
 `waitForRendering()`. Keep real mouse interaction and outcome assertions;
 do not replace them with direct signal invocation or skip platform tests.
+
+## Deterministic QML rendering tests
+
+Use `RenderTestCase` from `apps/qt/tests/helpers/` when a test requires pixels or
+a new render. Its `waitForFrame(item)` flushes window layout, schedules Canvas
+painting when applicable and explicitly requests a window frame. Keep the
+following pixel/interaction assertions; do not replace them with a sleep or a
+passing retry. For input-only tests, wait for delegate creation, visibility and
+polished geometry, then assert the actual signal and its exact arguments.
+Reset transient test state between cases, and preserve dark/light coverage.
+
+Master/PR now exercises native Cocoa QML on both Mac architectures before a tag
+when the branch is pushed separately. Windows packaging-tool tests run in the
+same lightweight preflight, without compiling Rust. See the
+[CI failure audit and release sequence](ci.md#recurring-failure-audit).

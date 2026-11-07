@@ -4,9 +4,10 @@
  */
 import QtQuick
 import QtTest
+import "helpers"
 import "../qml"
 
-TestCase {
+RenderTestCase {
     name: "ConstellationPresentation"
     when: windowShown
     visible: true
@@ -85,7 +86,7 @@ TestCase {
             chart.width = dimensions[0]
             chart.height = dimensions[1]
             waitForPolish(chart)
-            verify(waitForRendering(plot))
+            verify(waitForFrame(plot))
             const toggle = findChild(chart, "constellationOverlayToggle")
             const togglePosition = toggle.mapToItem(chart, 0, 0)
             verify(togglePosition.x >= 0 && togglePosition.x + toggle.width <= chart.width)

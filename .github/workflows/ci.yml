@@ -69,6 +69,12 @@ jobs:
           bash -n install.sh
           for script in scripts/*.sh tools/git/*.sh tools/bump-version.sh; do bash -n "$script"; done
           shellcheck install.sh scripts/*.sh tools/git/*.sh tools/bump-version.sh
+  desktop-preflight:
+    # Catch native QML/tooling failures before a tag, without compiling Rust.
+    # Full native runs already execute these checks and need no duplicate job.
+    if: inputs.run_native_checks != true
+    needs: [codeql, quality]
+    uses: ./.github/workflows/desktop-preflight.yml
   native-baseline:
     # Let DEB lifecycle checks follow the baseline, without waiting for Mac/Win.
     if: inputs.run_native_checks == true && inputs.package_release == true
@@ -78,7 +84,7 @@ jobs:
       runners: '["ubuntu-22.04"]'
       package_release: true
   native:
-    # Tags request the full native matrix; branch/PR checks remain lean.
+    # Tags request the full matrix; branch/PR checks use desktop preflight.
     if: inputs.run_native_checks == true
     needs: [codeql, quality]
     uses: ./.github/workflows/native-checks.yml
@@ -88,13 +94,14 @@ jobs:
   required:
     name: Required checks
     if: always()
-    needs: [codeql, quality, native-baseline, native]
+    needs: [codeql, quality, desktop-preflight, native-baseline, native]
     runs-on: ubuntu-24.04
     steps:
       - name: Require every stage to succeed
         env:
           CODEQL_RESULT: ${{ needs.codeql.result }}
           QUALITY_RESULT: ${{ needs.quality.result }}
+          PREFLIGHT_RESULT: ${{ needs.desktop-preflight.result }}
           BASELINE_RESULT: ${{ needs.native-baseline.result }}
           PACKAGE_RELEASE: ${{ inputs.package_release == true }}
           NATIVE_RESULT: ${{ needs.native.result }}
@@ -102,6 +109,11 @@ jobs:
         run: |
           test "$CODEQL_RESULT" = success
           test "$QUALITY_RESULT" = success
+          if [[ "$RUN_NATIVE" == true ]]; then
+            test "$PREFLIGHT_RESULT" = skipped
+          else
+            test "$PREFLIGHT_RESULT" = success
+          fi
           if [[ "$RUN_NATIVE" == true && "$PACKAGE_RELEASE" == true ]]; then
             test "$BASELINE_RESULT" = success
           else
