@@ -79,7 +79,7 @@ ApplicationWindow {
     property bool averageAnalysisSelected: false
     readonly property var preEqAttachment: JSON.parse(backend.pre_eq_attachment_json)
     readonly property var preEqResult: JSON.parse(backend.pre_eq_json)
-    property bool navigationVisible: false
+    property bool navigationVisible: true
     readonly property bool blocked: backend.busy || backend.pre_eq_busy || backend.rxmer_collection_busy || rxmerCollection.popupVisible || collectionArchiveDialog.visible || collectionFolderDialog.visible || collectionSaveDialog.visible || fileError.visible || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
 
     CaptureDropArea {

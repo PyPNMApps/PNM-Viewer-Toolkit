@@ -24,7 +24,7 @@ its graph, and export decoded JSON. The native Qt interface uses a Rust backend.
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/ui/images/home/home-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/ui/images/home/home-light.png">
-  <img alt="PNM Viewer Toolkit starting screen with the left navigation pane open" src="docs/ui/images/home/home-dark.png" width="1000">
+  <img alt="PNM Viewer Toolkit starting screen with RxMER tools in the default open navigation pane" src="docs/ui/images/home/home-dark.png" width="1000">
 </picture>
 
 ## Start here

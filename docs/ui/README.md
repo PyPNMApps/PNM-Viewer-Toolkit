@@ -32,6 +32,9 @@ and packaged installation remain unverified.
 
 ## Starting screen
 
+The left navigation pane opens by default. Use the pane button at the top right
+to hide or show it. Expand **RxMER** to choose **Min-Avg-Max** or **Playback**.
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/home/home-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="images/home/home-light.png">
