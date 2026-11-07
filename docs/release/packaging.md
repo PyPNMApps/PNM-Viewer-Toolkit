@@ -173,11 +173,18 @@ ZIPs are generated build output. Prepare/sanitize changed source captures using
 the [MAC hygiene tool](../../tools/security/README.md), then review and refresh
 their manifest entries. Release builds never rewrite tracked source data.
 
+Fixture paths are marked `-text` in `.gitattributes` so Windows Git checkout
+does not convert line endings in checksum-registered files. Preserve exact source
+bytes; do not refresh hashes to accommodate OS-specific checkout transformations.
+Symlink checks reject redirected demo roots, source folders and nested inputs,
+while allowing ordinary system symlinks above the checkout or temporary directory
+(such as macOS `/var`).
+
 All native builders call the shared `scripts/release/samples.py` bundler:
 
 ```text
 Expanded, sanitized sources → checksum + SW-QA hygiene checks
-                           → deterministic RxMER ZIPs
+                           → deterministic RxMER / spectrum ZIPs
                            → examples payload → DEB / MSI / DMG
 ```
 

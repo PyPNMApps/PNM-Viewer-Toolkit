@@ -1,0 +1,2 @@
+# Keep fixture hashes and generated demo ZIPs byte-identical on every OS.
+/tests/fixtures/** -text

@@ -23,6 +23,69 @@ import samples
 class InstallerSampleTests(unittest.TestCase):
     """Exercise real sanitized sources and deliberately invalid build inputs."""
 
+    def test_fixture_checkout_preserves_bytes_with_windows_line_endings(self):
+        """Exercise Git's real checkout filters with core.autocrlf enabled."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            repository = root / 'repository'
+            repository.mkdir()
+            shutil.copy2(ROOT / '.gitattributes', repository / '.gitattributes')
+            fixtures = repository / 'tests/fixtures/demos/example'
+            fixtures.mkdir(parents=True)
+            expected = {
+                'README.md': b'# Demo\n\nKeep exact bytes.\n',
+                'provenance.json': b'{"approved": true}\n',
+                'capture.bin': b'PNN\x09\x00\n\r\n\xff',
+                'LICENSE': b'License notice\n',
+            }
+            for name, content in expected.items():
+                (fixtures / name).write_bytes(content)
+            subprocess.run(['git', 'init', str(repository)], check=True, capture_output=True)
+            command = ['git', '-C', str(repository), '-c', 'core.autocrlf=true']
+            subprocess.run(command + ['add', '.'], check=True, capture_output=True)
+            checkout = root / 'checkout'
+            subprocess.run(command + ['checkout-index', '--all', '--prefix', checkout.as_posix() + '/'],
+                           check=True, capture_output=True)
+            for name, content in expected.items():
+                self.assertEqual((checkout / 'tests/fixtures/demos/example' / name).read_bytes(), content)
+
+    def test_system_symlink_ancestor_is_allowed_but_demo_redirects_fail(self):
+        """Accept macOS-style temp roots without permitting redirected inputs."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            actual = root / 'actual'
+            actual.mkdir()
+            alias = root / 'alias'
+            try:
+                alias.symlink_to(actual, target_is_directory=True)
+            except (OSError, NotImplementedError) as error:
+                self.skipTest(f'Directory symlinks unavailable: {error}')
+            demos = alias / 'demos'
+            shutil.copytree(samples.DEMO_ROOT, demos)
+            manifest_path = demos / 'installer-demos.json'
+            with patch.object(samples, 'DEMO_ROOT', demos), patch.object(samples, 'DEMO_MANIFEST', manifest_path):
+                entries = samples.check_sources()
+                source = demos / entries[0]['source']
+                capture = next(source.glob('*.bin'))
+                outside = root / 'outside.bin'
+                shutil.copy2(capture, outside)
+                capture.unlink()
+                capture.symlink_to(outside)
+                with self.assertRaisesRegex(ValueError, 'Invalid or oversized'):
+                    samples.check_sources()
+                capture.unlink()
+                shutil.copy2(outside, capture)
+                source.rename(demos / 'redirected-source')
+                source.symlink_to(demos / 'redirected-source', target_is_directory=True)
+                with self.assertRaisesRegex(ValueError, 'Invalid expanded demo source'):
+                    samples.check_sources()
+                source.unlink()
+                (demos / 'redirected-source').rename(source)
+                demos.rename(actual / 'redirected-demos')
+                demos.symlink_to(actual / 'redirected-demos', target_is_directory=True)
+                with self.assertRaisesRegex(ValueError, 'parents must not be symlinks'):
+                    samples.check_sources()
+
     def test_expanded_hygiene_never_opens_a_source_archive(self):
         """Check all registered sources without opening or generating a ZIP."""
         with patch.object(zipfile, 'ZipFile', side_effect=AssertionError('Unexpected ZIP access')):

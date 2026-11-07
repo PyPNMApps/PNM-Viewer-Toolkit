@@ -80,8 +80,10 @@ def check_sources():
                 raise ValueError('Duplicate or unsupported expanded demo file')
             expected.add(name)
             path = directory / name
-            # Refuse redirected parent components as well as redirected files.
-            if any(parent.is_symlink() for parent in path.parents if parent != DEMO_ROOT):
+            # Reject redirects within the trusted tree, including its root.
+            # System ancestors such as macOS /var may legitimately be symlinks.
+            if any((DEMO_ROOT / parent).is_symlink()
+                   for parent in path.relative_to(DEMO_ROOT).parents):
                 raise ValueError('Demo source parents must not be symlinks')
             if digest(path) != item['sha256'] or path.stat().st_size != item['size_bytes']:
                 raise ValueError('Expanded demo checksum mismatch')
