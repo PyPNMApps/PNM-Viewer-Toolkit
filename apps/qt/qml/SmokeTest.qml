@@ -12,6 +12,7 @@ Timer {
     required property var applicationWindow
     required property Item surface
     required property var openCaptureDialog
+    required property var captureSelectionDialogs
     required property var exportCaptureDialog
     readonly property int argumentIndex: Qt.application.arguments.indexOf("--smoke-test")
     property int stage: 0
@@ -29,13 +30,15 @@ Timer {
         }
         if (stage === 0) {
             const examples = viewerBackend.examples_folder().toString()
-            const currentFolder = openCaptureDialog.currentFolder.toString()
-            if (examples.length > 0 && currentFolder !== examples &&
-                currentFolder !== examples + "/" && currentFolder + "/" !== examples) {
-                console.error("UI_SMOKE_FAILED: initial Open folder is not the bundled examples")
-                stop()
-                Qt.exit(1)
-                return
+            for (const captureDialog of captureSelectionDialogs) {
+                const currentFolder = captureDialog.currentFolder.toString()
+                if (examples.length > 0 && currentFolder !== examples &&
+                    currentFolder !== examples + "/" && currentFolder + "/" !== examples) {
+                    console.error("UI_SMOKE_FAILED: capture selection must start in files/demo: " + captureDialog.title)
+                    stop()
+                    Qt.exit(1)
+                    return
+                }
             }
             if (Qt.platform.os === "windows" &&
                 ((openCaptureDialog.options & FileDialog.DontUseNativeDialog) !== 0 ||

@@ -69,6 +69,7 @@ fn main() {
                 "qml/AboutDialog.qml",
                 "qml/UpdateChip.qml",
                 "qml/Theme.qml",
+                "qml/ChartSettingsDialog.qml",
                 "qml/ThemeButton.qml",
                 "qml/PreEqComparisonSidebar.qml",
                 "qml/FileErrorDialog.qml",

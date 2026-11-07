@@ -10,7 +10,7 @@ import plistlib
 import shutil
 
 from common import ROOT, binary_path, inventory, notices, qt, run
-from samples import bundle
+from samples import DEMO_DIRECTORY, bundle
 
 
 def windows(stage, output, version):
@@ -26,7 +26,7 @@ def windows(stage, output, version):
     shutil.copy2(binary_path(gui=True), gui)
     shutil.copy2(binary_path(), payload / 'pnm-decode.exe')
     notices(payload / 'share')
-    bundle(payload / 'share/examples')
+    bundle(payload / DEMO_DIRECTORY)
     run([qt.sdk_path() / 'bin/windeployqt.exe', '--release', '--no-translations',
          '--no-compiler-runtime', '--qmldir', ROOT / 'apps/qt/qml', gui], env=qt.qt_environment())
     if not (payload / 'platforms/qwindows.dll').is_file():
@@ -62,7 +62,7 @@ def macos(stage, output, version, architecture):
     shutil.copy2(ROOT / 'packaging/macos/pnm-viewer.icns', resources / 'pnm-viewer.icns')
     shutil.copy2(binary_path(), binaries / 'pnm-decode')
     notices(resources / 'share')
-    bundle(resources / 'share/examples')
+    bundle(resources / DEMO_DIRECTORY)
     info = {'CFBundleExecutable': 'pnm-viewer', 'CFBundleIdentifier': 'org.pypnm.pnm-viewer-toolkit',
             'CFBundleName': 'PNM Viewer Toolkit', 'CFBundleDisplayName': 'PNM Viewer Toolkit',
             'CFBundlePackageType': 'APPL', 'CFBundleIconFile': 'pnm-viewer.icns',

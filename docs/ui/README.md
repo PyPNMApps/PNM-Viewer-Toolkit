@@ -3,7 +3,10 @@
 [Project README](../../README.md) · [Measurement gallery](measurements.md)
 
 [Bundled example captures](examples.md) are included in desktop installers and
-are the initial location for Open. Standalone CLI archives do not include them.
+are the initial location for capture, archive and folder selection under
+`files/demo`. Standalone CLI archives do not include them.
+
+Use [Settings → Charts…](settings.md) for global line thickness and trace colors.
 
 The application is **under development**. This guide describes the native Qt
 viewer in the current source tree. Screenshots use the repository's preserved

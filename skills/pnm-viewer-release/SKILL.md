@@ -116,8 +116,11 @@ Desktop installers include nine single captures, generated RxMER collection ZIPs
 and the pre-EQ comparison pair. scripts/release/samples.py owns bundling, upstream
 notices/provenance and the expanded-source manifest. Apply the sw-qa-hygiene skill:
 check expanded captures before generating any ZIP; never use prebuilt demo archives
-as installer sources. Failed hygiene stops packaging. CLI-only archives stay capture-free. Resolve the initial Open
-folder from the installed executable, fall back to Home for unpackaged builds,
+as installer sources. Failed hygiene stops packaging. CLI-only archives stay
+capture-free. Install demos in `files/demo` beside Windows/Linux executables or under
+`Contents/Resources/files/demo` on macOS. Resolve the initial capture/file/folder/
+archive selection location from the installed executable, use that shared demo
+root for every picker, fall back to Home for unpackaged builds,
 and never select an installation directory as the default export destination.
 Require installed smoke checks to use and verify bundled examples, not silently
 substitute checkout fixtures. Keep installed icon/shortcut lifecycle checks and

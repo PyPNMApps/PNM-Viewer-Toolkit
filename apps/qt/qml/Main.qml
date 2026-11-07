@@ -34,11 +34,20 @@ ApplicationWindow {
     ViewerBackend { id: comparisonBackend }
     SpectrumCollectionBackend { id: spectrumBackend }
     UpdateBackend { id: updateBackend }
+    readonly property url initialCaptureFolder: {
+        const demos = backend.examples_folder()
+        if (demos.toString().length > 0) {
+            return demos
+        }
+        return StandardPaths.standardLocations(StandardPaths.HomeLocation)[0]
+    }
     SmokeTest {
         viewerBackend: backend
         applicationWindow: window
         surface: captureSurface
         openCaptureDialog: openDialog
+        captureSelectionDialogs: [openDialog, collectionFolderDialog, collectionArchiveDialog,
+            spectrumFolderDialog, spectrumArchiveDialog, preEqOriginalDialog, preEqOpenDialog]
         exportCaptureDialog: saveDialog
     }
     Component.onCompleted: {
@@ -91,7 +100,7 @@ ApplicationWindow {
     readonly property var preEqAttachment: JSON.parse(comparisonBackend.pre_eq_attachment_json)
     readonly property var preEqResult: JSON.parse(comparisonBackend.pre_eq_json)
     property bool navigationVisible: true
-    readonly property bool blocked: spectrumBackend.busy || comparisonBackend.busy || comparisonBackend.pre_eq_busy || spectrumCollection.popupVisible || spectrumFolderDialog.visible || spectrumArchiveDialog.visible || spectrumSaveDialog.visible || preEqOriginalDialog.visible || backend.busy || backend.pre_eq_busy || backend.rxmer_collection_busy || rxmerCollection.popupVisible || collectionArchiveDialog.visible || collectionFolderDialog.visible || collectionSaveDialog.visible || fileError.visible || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
+    readonly property bool blocked: spectrumBackend.busy || comparisonBackend.busy || comparisonBackend.pre_eq_busy || spectrumCollection.popupVisible || spectrumFolderDialog.visible || spectrumArchiveDialog.visible || spectrumSaveDialog.visible || preEqOriginalDialog.visible || backend.busy || backend.pre_eq_busy || backend.rxmer_collection_busy || rxmerCollection.popupVisible || collectionArchiveDialog.visible || collectionFolderDialog.visible || collectionSaveDialog.visible || fileError.visible || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || chartSettings.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
 
     CaptureDropArea {
         parent: Overlay.overlay
@@ -111,10 +120,10 @@ ApplicationWindow {
 
     Connections { target:spectrumBackend;function onError_messageChanged(){fileError.showError(spectrumBackend.error_message)} }
     Connections { target:comparisonBackend;function onError_messageChanged(){fileError.showError(comparisonBackend.error_message)}function onPre_eq_errorChanged(){fileError.showError(comparisonBackend.pre_eq_error)} }
-    FolderDialog {id:spectrumFolderDialog;title:"Choose standard spectrum capture folder";onAccepted:spectrumBackend.import_collection(selectedFolder)}
-    FileDialog {id:spectrumArchiveDialog;title:"Open standard spectrum capture archive";nameFilters:["Capture archives (*.zip *.tar *.tar.gz *.tgz)","All files (*)"];onAccepted:spectrumBackend.import_collection(selectedFile)}
+    FolderDialog {id:spectrumFolderDialog;title:"Choose standard spectrum capture folder";currentFolder:window.initialCaptureFolder;onAccepted:spectrumBackend.import_collection(selectedFolder)}
+    FileDialog {id:spectrumArchiveDialog;title:"Open standard spectrum capture archive";currentFolder:window.initialCaptureFolder;nameFilters:["Capture archives (*.zip *.tar *.tar.gz *.tgz)","All files (*)"];onAccepted:spectrumBackend.import_collection(selectedFile)}
     FileDialog {id:spectrumSaveDialog;title:"Export full-resolution spectrum analysis";fileMode:FileDialog.SaveFile;nameFilters:["JSON files (*.json)"];defaultSuffix:"json";onAccepted:spectrumBackend.export_json(selectedFile)}
-    FileDialog {id:preEqOriginalDialog;title:"Open original US Pre-EQ capture";fileMode:FileDialog.OpenFile;nameFilters:["PNM captures (*)"];currentFolder:openDialog.currentFolder;onAccepted:comparisonBackend.open_pre_eq_original(selectedFile)}
+    FileDialog {id:preEqOriginalDialog;title:"Open original US Pre-EQ capture";fileMode:FileDialog.OpenFile;nameFilters:["PNM captures (*)"];currentFolder:window.initialCaptureFolder;onAccepted:comparisonBackend.open_pre_eq_original(selectedFile)}
     FileErrorDialog { id: fileError; theme: appTheme }
 
     RxMerBitLoadingDialog {
@@ -133,11 +142,13 @@ ApplicationWindow {
     FolderDialog {
         id: collectionFolderDialog
         title: "Choose RxMER capture folder"
+        currentFolder: window.initialCaptureFolder
         onAccepted: backend.import_rxmer_collection(selectedFolder)
     }
     FileDialog {
         id: collectionArchiveDialog
         title: "Open RxMER capture archive"
+        currentFolder: window.initialCaptureFolder
         nameFilters: ["Capture archives (*.tar *.zip *.tar.gz *.tgz)", "All files (*)"]
         onAccepted: backend.import_rxmer_collection(selectedFile)
     }
@@ -154,7 +165,7 @@ ApplicationWindow {
         title: "Attach Pre-EQ Last Update"
         fileMode: FileDialog.OpenFile
         nameFilters: ["PNM captures (*)"]
-        currentFolder: openDialog.currentFolder
+        currentFolder: window.initialCaptureFolder
         onAccepted: comparisonBackend.attach_pre_eq_update(selectedFile)
     }
     FileDialog {
@@ -178,13 +189,7 @@ ApplicationWindow {
         title: "Open PNM capture"
         fileMode: FileDialog.OpenFile
         nameFilters: ["PNM captures (*)"]
-        currentFolder: {
-            const examples = backend.examples_folder()
-            if (examples.toString().length > 0) {
-                return examples
-            }
-            return StandardPaths.standardLocations(StandardPaths.HomeLocation)[0]
-        }
+        currentFolder: window.initialCaptureFolder
         onAccepted: backend.open_file(selectedFile)
     }
     FileDialog {
@@ -212,7 +217,12 @@ ApplicationWindow {
                 text: "Settings"
                 enabled: !window.blocked
                 onClicked: settingsMenu.open()
-                Menu { id: settingsMenu; y: parent.height; MenuItem { text: "System…"; onTriggered: systemDialog.open() } }
+                Menu {
+                    id: settingsMenu
+                    y: parent.height
+                    MenuItem { text: "System…"; onTriggered: systemDialog.open() }
+                    MenuItem { text: "Charts…"; onTriggered: chartSettings.open() }
+                }
             }
             ToolButton { text: "About"; enabled: !window.blocked; onClicked: aboutDialog.open() }
             Item { Layout.fillWidth: true }
@@ -252,6 +262,7 @@ ApplicationWindow {
             Label { text: "System follows your desktop appearance.\nPreferences apply to this session."; color: appTheme.muted }
         }
     }
+    ChartSettingsDialog { id: chartSettings; theme: appTheme; anchors.centerIn: parent }
     AboutDialog {
         id: aboutDialog
         anchors.centerIn: parent

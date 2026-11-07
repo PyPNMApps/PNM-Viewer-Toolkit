@@ -284,3 +284,12 @@ installer assets. Keep the conversion reproducible and development-only; do
 not add an image-processing runtime dependency to the viewer. Add required host
 tools to --development and its documentation when introducing build/conversion
 steps, preserving check/dry-run behavior without downloads or system changes.
+
+## Shared chart appearance
+
+Line charts consume Theme.chartLineWidth and its effective trace colors rather
+than embedding per-chart stroke widths. Theme owns session-scoped overrides;
+ChartSettingsDialog edits them and chartStyleChanged repaints Canvas traces.
+Keep Min/Avg/Max button outlines bound to those same effective colors. Preserve
+specialized series legends and separate grid/marker geometry from line traces.
+Chart style controls must not change parser, DSP or JSON values.

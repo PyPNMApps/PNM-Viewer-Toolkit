@@ -20,8 +20,8 @@ The app uses the branded PNM icon in Finder and the Dock. For a desktop shortcut
 select the installed app in Finder, choose **File → Make Alias**, and move the
 alias to Desktop. The DMG does not silently modify your desktop.
 
-The first Open dialog starts in the bundled [example captures](../ui/examples.md)
-at `PNM Viewer Toolkit.app/Contents/Resources/share/examples`. Navigation is
+Capture, archive and folder selection starts in the bundled [demo files](../ui/examples.md)
+at `PNM Viewer Toolkit.app/Contents/Resources/files/demo`. Navigation is
 retained for the current viewer session. Export JSON to your own writable folder.
 
 The deployment target is macOS 13 or newer; native CI uses macOS 15 runners.

@@ -24,6 +24,7 @@ DEMO_ROOT = ROOT / 'tests/fixtures/demos'
 DEMO_MANIFEST = DEMO_ROOT / 'installer-demos.json'
 HYGIENE_TOOL = ROOT / 'tools/security/pnm-mac-updater.py'
 MAX_DEMO_BYTES = 16 * 1024 * 1024
+DEMO_DIRECTORY = Path('files/demo')
 
 
 def digest(path):
@@ -161,7 +162,7 @@ def bundle(destination):
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(directory / item['path'], target)
         (payload / 'README.md').write_text(
-            '# Example PNM captures\n\n'
+            '# Demo PNM captures\n\n'
             '- single/: nine captures; open with the main Open action.\n'
             '- rxmer/: ZIP collections for Min-Avg-Max and Playback.\n'
             '- spectrum/: explicitly synthetic standard PNN9 temporal demo.\n'
@@ -182,8 +183,8 @@ def installed_directory(gui):
     expanded repository sources. Verification reads ZIPs without extracting or
     rewriting them. Return the examples root, raising on absent/corrupt resources.
     """
-    candidates = (gui.parent / 'share/examples',
-                  gui.parent.parent / 'Resources/share/examples')
+    candidates = (gui.parent / DEMO_DIRECTORY,
+                  gui.parent.parent / 'Resources' / DEMO_DIRECTORY)
     for directory in candidates:
         if not directory.is_dir():
             continue

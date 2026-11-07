@@ -21,8 +21,8 @@ on Windows Server 2022, which does not prove interactive Windows 11 approval UI.
 The default installation directory is `C:\Program Files\PNM Viewer Toolkit`.
 Qt, the MSVC runtime DLLs, CLI, manual and notices are bundled app-local.
 The application does not require an administrator account to run or modify PATH.
-The first Open dialog starts in the bundled [example captures](../ui/examples.md)
-under `share\examples` in the application directory. Navigation is retained for
+Capture, archive and folder selection starts in the bundled [demo files](../ui/examples.md)
+under `files\demo` in the application directory. Navigation is retained for
 the current viewer session; export JSON to your own writable folder.
 
 For an unattended install, `CREATE_DESKTOP_SHORTCUT=1` opts in; omit it or use

@@ -20,7 +20,7 @@ ColumnLayout {
     onAlignedChanged: { overlay.requestPaint(); delta.requestPaint() }
     onShowOriginalChanged: overlay.requestPaint()
     onShowPredictedChanged: overlay.requestPaint()
-    Connections { target: chart.theme; function onDarkChanged() { overlay.requestPaint(); delta.requestPaint() } }
+    Connections { target: chart.theme; function onDarkChanged() { overlay.requestPaint(); delta.requestPaint() } function onChartStyleChanged() { overlay.requestPaint(); delta.requestPaint() } }
     function paint(canvas, deltaOnly) {
         const context=canvas.getContext("2d")
         context.reset()
@@ -64,7 +64,7 @@ ColumnLayout {
             }
         }
         function trace(field,color) {
-            context.strokeStyle=color;context.lineWidth=1.3;context.beginPath();let connected=false
+            context.strokeStyle=color;context.lineWidth=chart.theme.chartLineWidth;context.beginPath();let connected=false
             for (const point of points) {
                 if (!valid(point,field)) {connected=false;continue}
                 if (connected && gaps.indexOf(point.sample_index)<0) context.lineTo(x(point),y(point[field]));else context.moveTo(x(point),y(point[field]))
@@ -81,7 +81,7 @@ ColumnLayout {
             context.strokeStyle=chart.theme.muted;context.setLineDash([4,4]);context.beginPath();context.moveTo(left,y(0));context.lineTo(right,y(0));context.stroke();context.setLineDash([])
             trace(deltaField,amber)
         } else {
-            if (showOriginal) trace(originalField,chart.theme.accent)
+            if (showOriginal) trace(originalField,chart.theme.chartLineColor)
             if (showPredicted) trace(predictedField,amber)
         }
         context.fillStyle=chart.theme.muted;context.textAlign="center"

@@ -188,6 +188,7 @@ ColumnLayout {
         Connections {
             target: chart.theme
             function onDarkChanged() { plot.requestPaint() }
+            function onChartStyleChanged() { plot.requestPaint() }
         }
         onPaint: {
             const context = getContext("2d")
@@ -221,7 +222,7 @@ ColumnLayout {
             context.fillText("Frequency · MHz", width / 2, height - 3)
             const overlays = chart.viewport.modulation_profiles
             const statistics = chart.viewport.rxmer_statistics || chart.viewport.spectrum_statistics
-            const traces = overlays ? overlays.series : (statistics && !chart.showRxmerAverage ? [] : [{points: chart.viewport.points, color: statistics ? chart.theme.rxmerAverage : chart.theme.accent}])
+            const traces = overlays ? overlays.series : (statistics && !chart.showRxmerAverage ? [] : [{points: chart.viewport.points, color: statistics ? chart.theme.rxmerAverage : chart.theme.chartLineColor}])
             if (statistics) {
                 if (chart.showRxmerMinimum) traces.push({points: statistics.minimum, color: chart.theme.rxmerMinimum})
                 if (chart.showRxmerMaximum) traces.push({points: statistics.maximum, color: chart.theme.rxmerMaximum})
@@ -232,9 +233,9 @@ ColumnLayout {
             for (let traceIndex = 0; traceIndex < traces.length; traceIndex++) {
                 const trace = traces[traceIndex]
                 const points = trace.points
-                const color = overlays ? chart.theme.profileColor(trace.profile_id) : (trace.color || chart.theme.accent)
+                const color = overlays ? chart.theme.profileColor(trace.profile_id) : (trace.color || chart.theme.chartLineColor)
                 context.strokeStyle = color
-                context.lineWidth = 1.5
+                context.lineWidth = chart.theme.chartLineWidth
                 if (context.setLineDash) context.setLineDash(trace.dashed ? [6,4] : [])
                 context.beginPath()
                 let connected = false

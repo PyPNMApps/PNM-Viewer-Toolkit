@@ -8,11 +8,11 @@ use viewer::resources::examples_directory;
 fn installed_examples_follow_the_executable_on_each_platform() {
     let temporary = tempfile::tempdir().unwrap();
     for (executable, samples) in [
-        ("windows/pnm-viewer.exe", "windows/share/examples"),
-        ("linux/pnm-viewer-qt", "linux/share/examples"),
+        ("windows/pnm-viewer.exe", "windows/files/demo"),
+        ("linux/pnm-viewer-qt", "linux/files/demo"),
         (
             "mac/Viewer.app/Contents/MacOS/pnm-viewer",
-            "mac/Viewer.app/Contents/Resources/share/examples",
+            "mac/Viewer.app/Contents/Resources/files/demo",
         ),
     ] {
         let executable = temporary.path().join(executable);

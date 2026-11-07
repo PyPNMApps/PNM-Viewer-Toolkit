@@ -224,6 +224,9 @@ RenderTestCase {
         chart.visible = true
     }
     function test_modulation_overlay_rendering_and_empty_selection() {
+        // Verify profile identity at a fixed reference width; fractional-width
+        // rendering and interactive style changes have their own coverage.
+        appearance.chartLineWidth = 1.5
         chart.visible = true
         chart.stepPlot = true
         chart.maximum = 15
@@ -261,6 +264,7 @@ RenderTestCase {
                 verify(distance < 0.6, "Expected profile trace color " + hex + " at its bit-loading level")
             }
         }
+        appearance.chartLineWidth = 0.75
         chart.viewport = {start: 0, count: 4, total: 4, points: anchors, modulation_profiles: {series: []}}
         wait(50)
         verify(chart.frequencySelection.indexOf("640.075") >= 0)

@@ -22,7 +22,7 @@ ColumnLayout {
     signal rangeRequested(int start, int count)
     onViewportChanged: { selection.dragging = false; plot.requestPaint() }
     onThemeChanged: plot.requestPaint()
-    Connections { target: chart.theme; function onDarkChanged() { plot.requestPaint() } }
+    Connections { target: chart.theme; function onDarkChanged() { plot.requestPaint() } function onChartStyleChanged() { plot.requestPaint() } }
     function utc(timestamp) {
         return timestamp === undefined || timestamp === null ? "—" : new Date(timestamp * 1000).toISOString().replace("T", " ").replace(".000Z", " UTC")
     }
@@ -110,7 +110,7 @@ ColumnLayout {
             function horizontal(timestamp) { return leftMargin + (last === first ? 0.5 : (timestamp - first) / span) * usableWidth }
             function draw(field, maximum, color, enabled) {
                 if (!enabled) { return }
-                context.strokeStyle = color; context.lineWidth = 1.4; context.beginPath()
+                context.strokeStyle = color; context.lineWidth = chart.theme.chartLineWidth; context.beginPath()
                 for (let index = 0; index < points.length; index += 1) {
                     const point = points[index]
                     const horizontalPosition = horizontal(point.timestamp)

@@ -180,7 +180,13 @@ Symlink checks reject redirected demo roots, source folders and nested inputs,
 while allowing ordinary system symlinks above the checkout or temporary directory
 (such as macOS `/var`).
 
-All native builders call the shared `scripts/release/samples.py` bundler:
+All native builders call the shared `scripts/release/samples.py` bundler.
+Its shared `DEMO_DIRECTORY` installs demos under `files/demo` beside the Windows
+or Linux executable, and under `Contents/Resources/files/demo` in the macOS app.
+All capture file/folder/archive pickers start there; installed smoke tests verify
+each picker, and resource tests cover all three package layouts.
+
+The build flow is:
 
 ```text
 Expanded, sanitized sources → checksum + SW-QA hygiene checks

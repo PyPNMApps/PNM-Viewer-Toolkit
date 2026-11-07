@@ -98,12 +98,12 @@ class InstallerSampleTests(unittest.TestCase):
         """Bundle deterministic ZIPs and verify deployed bytes on each OS layout."""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            first = root / 'first/share/examples'
-            second = root / 'second/share/examples'
+            first = root / 'first/files/demo'
+            second = root / 'second/files/demo'
             samples.bundle(first)
             samples.bundle(second)
             self.assertEqual(samples.installed_directory(root / 'first/pnm-viewer.exe'), first)
-            mac = root / 'Viewer.app/Contents/Resources/share/examples'
+            mac = root / 'Viewer.app/Contents/Resources/files/demo'
             mac.parent.mkdir(parents=True)
             shutil.copytree(first, mac)
             self.assertEqual(samples.installed_directory(root / 'Viewer.app/Contents/MacOS/pnm-viewer'), mac)
@@ -176,8 +176,8 @@ class SamplePackageTests(unittest.TestCase):
     def test_samples_are_complete_verified_and_read_only_to_the_builder(self):
         """Copy nine approved captures and notices without adding Python tests."""
         for relative, executable in (
-                ('share/examples', 'pnm-viewer.exe'),
-                ('Contents/Resources/share/examples', 'Contents/MacOS/pnm-viewer')):
+                ('files/demo', 'pnm-viewer.exe'),
+                ('Contents/Resources/files/demo', 'Contents/MacOS/pnm-viewer')):
             with self.subTest(layout=relative), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 destination = root / relative

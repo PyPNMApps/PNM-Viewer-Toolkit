@@ -8,7 +8,7 @@ import QtQuick.Controls
 Button {
     id: button
     required property Theme theme
-    property color traceColor: theme.accent
+    property color traceColor: theme.chartLineColor
     property bool showIndicator: true
     readonly property bool selected: checked || highlighted
     implicitWidth: 108

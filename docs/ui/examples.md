@@ -1,14 +1,15 @@
 # Bundled example captures
 
-Desktop installers include single captures, RxMER collections and an upstream
-pre-EQ comparison pair. No download, modem or server is required.
+Desktop installers include single captures, RxMER and Spectrum collections, and
+an upstream pre-EQ comparison pair. No download, modem or server is required.
 
-Choose **Open** to start in the examples folder. A dialog remembers navigation
-for the current application session. Source builds without packaged resources
+Capture, archive and folder selection starts in **files → demo**. Choose
+**Open** for a single capture or use the left-gutter collection/compare actions.
+A dialog remembers navigation for the current application session. Source builds without packaged resources
 fall back to the home directory.
 
 ```text
-examples/
+files/demo/
 ├── README.md
 ├── manifest.json
 ├── single/
@@ -37,9 +38,9 @@ examples/
 
 | Platform | Installed folder |
 | --- | --- |
-| Windows | `C:\Program Files\PNM Viewer Toolkit\share\examples` |
-| macOS | `/Applications/PNM Viewer Toolkit.app/Contents/Resources/share/examples` |
-| Ubuntu | `/opt/pnm-viewer-toolkit/share/examples` |
+| Windows | `C:\Program Files\PNM Viewer Toolkit\files\demo` |
+| macOS | `/Applications/PNM Viewer Toolkit.app/Contents/Resources/files/demo` |
+| Ubuntu | `/opt/pnm-viewer-toolkit/files/demo` |
 
 Treat installed examples as read-only. Export JSON into Documents or another
 user-selected writable folder. CLI-only archives remain capture-free.

@@ -182,6 +182,9 @@ upstream PyPNM. This policy concerns development fixtures, not user captures.
 Desktop installers include nine single captures, generated RxMER collection ZIPs
 and the sanitized pre-EQ comparison pair, with applicable license/NOTICE and
 provenance. Expanded sources are registered in tests/fixtures/demos/installer-demos.json.
+Install demos under files/demo beside Windows/Linux executables and under
+Contents/Resources/files/demo on macOS. Initialize all capture file/folder/archive
+pickers from that demo root; exports use a user-selected writable destination.
 Use scripts/release/samples.py to check hygiene before creating ZIPs; never use
 prebuilt demo archives as installer sources. Apply skills/sw-qa-hygiene/SKILL.md; do not ship Python tests,
 private evidence or arbitrary customer captures. Standalone CLI archives stay

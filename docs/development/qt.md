@@ -325,3 +325,13 @@ Master/PR now exercises native Cocoa QML on both Mac architectures before a tag
 when the branch is pushed separately. Windows packaging-tool tests run in the
 same lightweight preflight, without compiling Rust. See the
 [CI failure audit and release sequence](ci.md#recurring-failure-audit).
+
+## Shared chart style
+
+`Theme.qml` owns session-scoped chart width and color overrides;
+`ChartSettingsDialog.qml` exposes them under Settings → Charts. The default
+width is 0.75 px. Empty color overrides preserve the dark/light palette. The
+shared `chartStyleChanged` signal repaints Canvas-based line charts immediately,
+while Min/Avg/Max legend outlines bind to the same effective colors. Grid and
+carrier-marker geometry remain separate from trace width. No measurement math
+or JSON contract changes. See the [user guide](../ui/settings.md).

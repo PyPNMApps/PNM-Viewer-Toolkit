@@ -27,6 +27,10 @@ Rust, Python, or separate Qt SDK is needed to run packaged binaries. APT may
 download system libraries. An `_apt` sandbox permission notice by itself is
 nonfatal; confirm both packages installed successfully.
 
+Capture, archive and folder selection starts in the bundled
+[demo files](../ui/examples.md) at `/opt/pnm-viewer-toolkit/files/demo`.
+Export JSON to your own writable folder.
+
 <details>
 <summary>Optional: download and install the latest release entirely from a terminal</summary>
 
