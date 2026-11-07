@@ -7,7 +7,7 @@ mod import;
 use crate::capture::{Diagnostic, MAX_VIEW_SAMPLES};
 pub use import::ImportLimits;
 pub use pnm::pnm::analysis::rxmer::aggregate::RxMerAggregate as AggregateResult;
-use pnm::pnm::analysis::rxmer::aggregate::{GroupKey, RxMerAggregate, Series};
+use pnm::pnm::analysis::rxmer::aggregate::{GroupKey, RxMerAggregate, Series, Source};
 use serde::Serialize;
 use std::{collections::BTreeMap, path::Path, sync::atomic::AtomicBool};
 
@@ -16,6 +16,8 @@ use std::{collections::BTreeMap, path::Path, sync::atomic::AtomicBool};
 pub struct Group {
     pub id: usize,
     pub label: String,
+    pub tree_label: String,
+    pub sources: Vec<Source>,
     #[serde(flatten)]
     pub key: GroupKey,
     pub capture_count: usize,
@@ -67,8 +69,20 @@ impl Collection {
             .enumerate()
             .map(|(id, captures)| Group {
                 id,
+                tree_label: format!(
+                    "Channel {} · {:.3} MHz (index 0)",
+                    captures[0].key.channel_id,
+                    f64::from(captures[0].key.zero_frequency_hz) / 1_000_000.0
+                ),
+                sources: captures
+                    .iter()
+                    .map(|capture| Source {
+                        name: capture.source.clone(),
+                        capture_time: capture.capture_time,
+                    })
+                    .collect(),
                 label: format!(
-                    "Channel {} · {:.3} MHz zero · first {} · {} kHz · {} carriers",
+                    "Channel {} · {:.3} MHz (index 0) · first {} · {} kHz · {} carriers",
                     captures[0].key.channel_id,
                     f64::from(captures[0].key.zero_frequency_hz) / 1_000_000.0,
                     captures[0].key.first_active_subcarrier_index,

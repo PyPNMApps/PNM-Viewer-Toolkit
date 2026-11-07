@@ -128,8 +128,8 @@ read automatically. Nothing is unpacked onto your filesystem.
    to choose another channel/grid. Compact chips show MAC, channel and grid
    metadata. Each channel and distinct frequency
    grid stays separate, even when it belongs to the same MAC.
-3. View the **Min** (blue), **Avg** (teal) and **Max** (amber) lines. Their buttons
-   show or hide individual curves. Drag to zoom; double-click to reset.
+3. View the **Min** (green), **Avg** (blue) and **Max** (red) lines. Matching button
+   outlines identify each visible curve; click to show or hide it. Drag to zoom; double-click to reset.
 4. Right-click the graph and select **Modulation & Capacity…**. The existing
    models and controls analyze the **average** over the visible frequency range,
    using full-resolution values rather than the displayed subset of points.
@@ -169,11 +169,40 @@ For the prepared local lab demo, open
 `captures.zip` or `captures.tar.gz`; use one input source at a time. Lab inputs
 remain local and are not included in Git or release installers.
 
-The screenshots use twelve lab captures from one compatible channel, with the
-MAC replaced by the repository's demonstration address for documentation.
+The screenshots show 56 lab captures from one channel in a five-channel
+collection. The MAC is replaced by the repository's demonstration address
+for documentation.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/rxmer-min-avg-max-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="images/rxmer-min-avg-max-light.png">
-  <img alt="RxMER Min-Avg-Max workspace with header-based MAC/channel selection and three temporal statistic curves" src="images/rxmer-min-avg-max-dark.png" width="1000">
+  <img alt="RxMER Min-Avg-Max workspace with MAC/channel/epoch capture tree and three temporal statistic curves" src="images/rxmer-min-avg-max-dark.png" width="1000">
 </picture>
+
+### Capture tree
+
+The left gutter organizes imported files as:
+
+```text
+MAC address
+  Channel ID · index-zero frequency in MHz
+    epoch (oldest)
+    epoch
+    epoch (newest)
+```
+
+Expand the arrow beside a MAC to see its channels. Click a channel label to
+show its Min-Avg-Max graph; expand its arrow to see capture epochs in ascending
+order. Hover an epoch for its source path. Channels show the decoded
+**subcarrier-zero frequency**, not the first active carrier's frequency.
+The metadata chips preserve the separate first-active index.
+
+All channel groups are retained; the tree has no five-channel limit. Distinct
+formats or grids remain separate even if their MAC and channel IDs match.
+Epoch ties remain separate captures with source-path ordering. The scrolling
+tree creates controls only for visible rows, so hundreds of epochs stay browsable.
+
+The larger local demo is
+`~/Downloads/demo-rxmer-all-channels-over-time/captures.zip`: 279 unchanged
+captures from one MAC across five channels. Its folder also contains `TREE.txt`
+with the full hierarchy in epoch order.

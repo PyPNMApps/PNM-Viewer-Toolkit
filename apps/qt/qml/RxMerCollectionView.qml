@@ -31,6 +31,16 @@ ColumnLayout {
             deviceDialog.open()
         }
     }
+    // Select a tree channel through the same path as the MAC/channel dialogs.
+    // Unknown IDs and busy requests retain the currently displayed result.
+    function selectGroup(macAddress, groupId) {
+        if (working) return
+        const group=(catalog.groups || []).find(group => group.id===groupId && group.mac_address===macAddress)
+        if (!group) return
+        selectedMac=macAddress
+        channelChoice.currentIndex=groups.findIndex(candidate => candidate.id===groupId)
+        groupRequested(groupId)
+    }
     spacing: 10
     Label { text: "RxMER · Min-Avg-Max"; color: workspace.theme.text; font.pixelSize: 20; font.bold: true }
     Flow {
@@ -66,12 +76,9 @@ ColumnLayout {
     }
     RowLayout {
         visible: workspace.hasResult
-        ThemeButton { id: minimum; theme: workspace.theme; text: "Min"; checkable: true; checked: true; borderHighlighted: checked; onClicked: plot.showRxmerMinimum=checked }
-        Rectangle { implicitWidth: 16; implicitHeight: 3; color: workspace.theme.dark ? "#69aaff" : "#2563a6" }
-        ThemeButton { id: average; theme: workspace.theme; text: "Avg"; checkable: true; checked: true; borderHighlighted: checked; onClicked: plot.showRxmerAverage=checked }
-        Rectangle { implicitWidth: 16; implicitHeight: 3; color: workspace.theme.accent }
-        ThemeButton { id: maximum; theme: workspace.theme; text: "Max"; checkable: true; checked: true; borderHighlighted: checked; onClicked: plot.showRxmerMaximum=checked }
-        Rectangle { implicitWidth: 16; implicitHeight: 3; color: workspace.theme.dark ? "#f6bc63" : "#9a5700" }
+        ThemeButton { id: minimum; theme: workspace.theme; outlineColor: workspace.theme.rxmerMinimum; text: "Min"; checkable: true; checked: true; borderHighlighted: checked; onClicked: plot.showRxmerMinimum=checked }
+        ThemeButton { id: average; theme: workspace.theme; outlineColor: workspace.theme.rxmerAverage; text: "Avg"; checkable: true; checked: true; borderHighlighted: checked; onClicked: plot.showRxmerAverage=checked }
+        ThemeButton { id: maximum; theme: workspace.theme; outlineColor: workspace.theme.rxmerMaximum; text: "Max"; checkable: true; checked: true; borderHighlighted: checked; onClicked: plot.showRxmerMaximum=checked }
     }
     MeasurementChart {
         id: plot

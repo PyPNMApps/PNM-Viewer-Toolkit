@@ -221,10 +221,10 @@ ColumnLayout {
             context.fillText("Frequency · MHz", width / 2, height - 3)
             const overlays = chart.viewport.modulation_profiles
             const statistics = chart.viewport.rxmer_statistics
-            const traces = overlays ? overlays.series : (statistics && !chart.showRxmerAverage ? [] : [{points: chart.viewport.points}])
+            const traces = overlays ? overlays.series : (statistics && !chart.showRxmerAverage ? [] : [{points: chart.viewport.points, color: statistics ? chart.theme.rxmerAverage : chart.theme.accent}])
             if (statistics) {
-                if (chart.showRxmerMinimum) traces.push({points: statistics.minimum, color: chart.theme.dark ? "#69aaff" : "#2563a6"})
-                if (chart.showRxmerMaximum) traces.push({points: statistics.maximum, color: chart.theme.dark ? "#f6bc63" : "#9a5700"})
+                if (chart.showRxmerMinimum) traces.push({points: statistics.minimum, color: chart.theme.rxmerMinimum})
+                if (chart.showRxmerMaximum) traces.push({points: statistics.maximum, color: chart.theme.rxmerMaximum})
             }
             if (!overlays && chart.showSpectrumAverage && chart.viewport.spectrum_average) {
                 traces.push({points: chart.viewport.spectrum_average.points, color: chart.theme.spectrumAverage})

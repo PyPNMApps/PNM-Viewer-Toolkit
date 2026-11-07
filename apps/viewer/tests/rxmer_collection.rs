@@ -49,6 +49,17 @@ fn mixed_directory_groups_by_headers_deduplicates_and_sorts_epochs() {
     assert_eq!(collection.catalog.duplicate_count, 1);
     assert_eq!(collection.catalog.skipped_count, 1);
     assert_eq!(collection.catalog.groups.len(), 2);
+    let group = &collection.catalog.groups[0];
+    assert!(group.tree_label.starts_with("Channel 34 · "));
+    assert!(group.tree_label.ends_with(" MHz (index 0)"));
+    assert_eq!(
+        group
+            .sources
+            .iter()
+            .map(|source| source.capture_time)
+            .collect::<Vec<_>>(),
+        vec![10, 20]
+    );
     let aggregate = collection.aggregate(0).unwrap();
     assert_eq!(aggregate.sources[0].capture_time, 10);
     assert_eq!(aggregate.sources[1].capture_time, 20);
@@ -147,4 +158,21 @@ fn import_limits_cancellation_and_corrupt_containers_fail_explicitly() {
     assert!(Collection::scan(&path, Default::default(), &AtomicBool::new(false)).is_err());
     std::fs::write(&path, b"PK\x03\x04bad").unwrap();
     assert!(Collection::scan(&path, Default::default(), &AtomicBool::new(false)).is_err());
+}
+
+#[test]
+fn oversized_archive_names_do_not_expand_tree_metadata_without_bounds() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("long-name.zip");
+    let mut archive = zip::ZipWriter::new(std::fs::File::create(&path).unwrap());
+    archive
+        .start_file(
+            format!("{}.bin", "x".repeat(4097)),
+            zip::write::SimpleFileOptions::default(),
+        )
+        .unwrap();
+    archive.write_all(&capture(1, 34)).unwrap();
+    archive.finish().unwrap();
+    let result = Collection::scan(&path, ImportLimits::default(), &AtomicBool::new(false));
+    assert!(matches!(result,Err(error) if error.code=="ImportLimit"));
 }

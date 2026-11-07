@@ -245,7 +245,7 @@ ApplicationWindow {
         spacing: 0
         Rectangle {
             visible: window.navigationVisible
-            Layout.preferredWidth: backend.pre_eq_current ? 244 : 180
+            Layout.preferredWidth: window.rxmerCollectionSelected ? 340 : backend.pre_eq_current ? 244 : 180
             Layout.fillHeight: true
             color: appTheme.sidebar
             ScrollView {
@@ -323,6 +323,16 @@ ApplicationWindow {
                     visible: window.rxmerCollectionSelected
                     Layout.fillWidth: true
                     onClicked: window.rxmerCollectionSelected=false
+                }
+                RxMerCollectionTree {
+                    visible: window.rxmerCollectionSelected && (catalog.groups || []).length>0
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 360
+                    theme: appTheme
+                    catalog: JSON.parse(backend.rxmer_collection_catalog)
+                    selectedMac: rxmerCollection.selectedMac
+                    working: backend.rxmer_collection_busy
+                    onGroupRequested: (macAddress,groupId) => rxmerCollection.selectGroup(macAddress,groupId)
                 }
                 PreEqComparisonSidebar {
                     id: preEqSidebar

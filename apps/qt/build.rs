@@ -69,6 +69,7 @@ fn main() {
                 "qml/PreEqComparisonSidebar.qml",
                 "qml/FileErrorDialog.qml",
                 "qml/RxMerCollectionView.qml",
+                "qml/RxMerCollectionTree.qml",
                 "qml/MetadataChip.qml",
                 "qml/PreEqComparisonChart.qml",
                 "qml/PreEqComparisonView.qml",

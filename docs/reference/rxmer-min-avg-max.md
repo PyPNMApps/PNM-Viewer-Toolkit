@@ -72,3 +72,15 @@ always use retained full-resolution data. Sources are not rewritten or copied
 into a synthetic quarter-dB capture.
 
 See the [user walkthrough](../ui/measurements/rxmer/README.md#min-avg-max).
+
+## Capture catalog hierarchy
+
+Each desktop catalog group also carries a Rust-formatted `tree_label`, such as
+`Channel 193 · 827.600 MHz (index 0)`, and `sources` in ascending encoded epoch
+order. Source records contain `name` and `capture_time` only; coefficient arrays
+are never copied into tree rows. MACs/channels retain the existing catalog/group
+order. Expanded/collapsed state is transient QML navigation state, and the
+flattened visible tree uses ListView virtualization. The index-zero frequency is
+`zero_frequency_hz / 1e6` for display; it is independent of the first active
+index. There is no limit of five channels baked into the collection model.
+Archive source names are bounded to 4096 UTF-8 bytes to limit catalog metadata.

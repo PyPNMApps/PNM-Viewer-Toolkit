@@ -20,6 +20,8 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
+const MAX_SOURCE_NAME_BYTES: usize = 4096;
+
 /// Application limits shared across the entire recursive import.
 #[derive(Clone, Copy)]
 pub struct ImportLimits {
@@ -181,6 +183,12 @@ impl Scanner<'_> {
     }
     fn bytes(&mut self, bytes: &[u8], name: &str, depth: usize) -> Result<(), Diagnostic> {
         self.check(depth)?;
+        if name.len() > MAX_SOURCE_NAME_BYTES {
+            return Err(Diagnostic::new(
+                "ImportLimit",
+                "Archive source name exceeds the metadata limit.",
+            ));
+        }
         if bytes.starts_with(&[0x1f, 0x8b]) {
             let expanded = self.read(flate2::read::MultiGzDecoder::new(bytes))?;
             return self.bytes(&expanded, name, depth + 1);
