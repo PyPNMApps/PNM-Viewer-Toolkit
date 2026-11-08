@@ -64,7 +64,11 @@ class ReleasePageTests(unittest.TestCase):
         base = 'https://github.com/PyPNMApps/PNM-Viewer-Toolkit'
         for manifest in self.index:
             for artifact in manifest['artifacts']:
-                self.assertIn(base + '/releases/download/' + self.tag + '/' + artifact['name'], page)
+                link = base + '/releases/download/' + self.tag + '/' + artifact['name']
+                if artifact['name'].endswith(('.deb', '.msi', '.dmg')):
+                    self.assertIn(link, page)
+                else:
+                    self.assertNotIn(link, page)
         self.assertIn('(2.20 MB)', page)
         self.assertIn(base + '/blob/' + self.tag + '/docs/ui/README.md', page)
         self.assertIn('sudo apt install ./pnm-decode_12.34.56_amd64.deb', page)
@@ -76,6 +80,16 @@ class ReleasePageTests(unittest.TestCase):
         self.assertIn('Under development', page)
         self.assertNotIn('{{', page)
         self.assertNotIn('](../', page)
+
+    def test_installer_only_index_needs_no_cli_archives(self):
+        """Render the five installer downloads without broken archive links."""
+        index = copy.deepcopy(self.index)
+        for manifest in index:
+            manifest['artifacts'] = [item for item in manifest['artifacts']
+                                     if item['name'].endswith(('.deb', '.msi', '.dmg'))]
+        page = self.render(manifests=index)
+        self.assertEqual(page.count('Included in desktop installer'), 3)
+        self.assertNotIn('/releases/download/' + self.tag + '/pnm-decode-', page)
 
     def test_windows_requires_msi_and_mac_requires_matching_architecture(self):
         """Do not publish legacy EXEs or mislabeled DMGs behind new OS instructions."""

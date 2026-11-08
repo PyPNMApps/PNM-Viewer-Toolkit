@@ -15,11 +15,13 @@ EXPECTED_TARGETS = {('Linux', 'x64'), ('Windows', 'x64'), ('Darwin', 'arm64'), (
 
 
 def collect(source, output, allow_partial=False, include_artifacts=None):
-    """Verify the complete target set before copying packages and metadata.
+    """Verify native artifacts before selecting public installers and checksums.
 
     source contains one subdirectory per uploaded platform artifact. output must
     be absent. Reject target duplication, missing targets or basename collisions;
-    return the fresh directory with unified checksums and prefixed metadata.
+    Return the fresh directory with installers, matching checksums and a local
+    release index for rendering notes. Reports and CLI archives stay in native
+    workflow artifacts; the index is not uploaded to the public release.
     allow_partial explicitly permits a nonempty known subset. include_artifacts
     restricts input to same-run names approved by the platform eligibility gate.
     """
@@ -46,20 +48,22 @@ def collect(source, output, allow_partial=False, include_artifacts=None):
             if item['name'] in names:
                 raise ValueError('Duplicate release asset name')
             names.add(item['name'])
-        manifests.append((directory, manifest))
+        installers = [item for item in manifest['artifacts']
+                      if Path(item['name']).suffix in ('.deb', '.msi', '.dmg')]
+        if not installers:
+            raise ValueError('Platform has no public installer')
+        manifests.append((directory, dict(manifest, artifacts=installers)))
     if not targets or not targets.issubset(EXPECTED_TARGETS) or (not allow_partial and targets != EXPECTED_TARGETS):
         raise ValueError(f'Incomplete platform set: {targets}')
     output.mkdir(exist_ok=False)
     sums = []
     for directory, manifest in manifests:
-        prefix = manifest['system'].lower() + '-' + manifest['architecture']
-        for path in directory.iterdir():
-            if path.name == 'SHA256SUMS':
-                sums.extend(path.read_text(encoding='utf-8').splitlines())
-            elif path.suffix == '.json':
-                shutil.copy2(path, output / (prefix + '-' + path.name))
-            elif path.name in names:
-                shutil.copy2(path, output / path.name)
+        installer_names = {item['name'] for item in manifest['artifacts']}
+        for line in (directory / 'SHA256SUMS').read_text(encoding='utf-8').splitlines():
+            if line.split('  ', 1)[1] in installer_names:
+                sums.append(line)
+        for name in installer_names:
+            shutil.copy2(directory / name, output / name)
     (output / 'SHA256SUMS').write_text('\n'.join(sorted(sums)) + '\n', encoding='utf-8')
     (output / 'release-index.json').write_text(json.dumps([manifest for _, manifest in manifests], indent=2) + '\n', encoding='utf-8')
 

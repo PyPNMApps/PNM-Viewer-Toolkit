@@ -177,14 +177,15 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: ubuntu-22.04-deb-${{ github.ref_name }}
-          path: release-assets
+          path: native-artifacts/ubuntu
       - name: Verify packages and render Ubuntu-only notes
         env:
           RELEASE_TAG: ${{ github.ref_name }}
           RELEASE_REPOSITORY: ${{ github.repository }}
         run: |
-          python3 scripts/release/notes.py --ubuntu-only --assets release-assets \
+          python3 scripts/release/notes.py --ubuntu-only --assets native-artifacts/ubuntu \
             --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY" --output release-page.md
+          python3 scripts/release/collect.py --source native-artifacts --output release-assets --allow-partial
       - name: Verify uploaded bytes and publish automatically
         env:
           GH_TOKEN: ${{ github.token }}

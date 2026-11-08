@@ -9,8 +9,9 @@ downloaded bytes, then automatically publishes the release for update discovery.
 
 {{ASSET_TABLE}}
 
-`SHA256SUMS`, license/SBOM and build/dependency metadata are attached alongside
-the packages. Verify downloaded package hashes before installation.
+`SHA256SUMS` accompanies the paired DEBs. Build reports and CLI archives remain
+in [workflow artifacts]({{RUNS_URL}}); license notices stay inside the packages.
+Verify downloaded package hashes before installation.
 
 ## Ubuntu 22.04 x64 — install or upgrade
 

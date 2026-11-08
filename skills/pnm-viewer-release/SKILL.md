@@ -74,6 +74,12 @@ public assets remain immutable; missing targets need a new version/tag.
 Verify uploaded sizes, GitHub DEB SHA-256 digests and re-downloaded bytes before
 automatically publishing; only complete passing releases are marked latest.
 Never mutate a public release.
+Keep complete public releases to six assets: Windows MSI, Intel and Apple
+Silicon DMGs, Ubuntu viewer and CLI DEBs, and SHA256SUMS covering those five
+installers. Keep dependency reports, inventories and standalone CLI archives
+in native Actions artifacts. The release index is local renderer input only.
+Preserve all upstream integrity/lifecycle gates and Ubuntu's paired-DEB updater.
+Partial releases expose only eligible installers and their matching checksums.
 The user restored automatic full tag delivery on 2026-11-04; the old Ubuntu-only
 workflow is manual troubleshooting only. Require MSI/DMG and all Ubuntu lifecycle
 gates; do not treat legacy Ubuntu-only success as multi-OS validation. Windows

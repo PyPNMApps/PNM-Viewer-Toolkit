@@ -40,9 +40,12 @@ class PublishTests(unittest.TestCase):
             assets = Path(directory) / 'assets'
             assets.mkdir()
             (assets / filename).write_bytes(b'package')
+            (assets / 'release-index.json').write_text('[]')
             calls = []
             def github(*arguments):
                 calls.append(arguments)
+                if arguments[:2] == ('release', 'upload'):
+                    self.assertNotIn(assets / 'release-index.json', arguments)
                 if arguments[0] == 'api':
                     if mode == 'api-error':
                         raise RuntimeError('API failed')
@@ -92,6 +95,17 @@ class PublishTests(unittest.TestCase):
         for mode in ('public', 'api-error', 'size', 'digest', 'bytes'):
             with self.subTest(mode=mode):
                 self.exercise(mode)
+
+    def test_reports_and_archives_cannot_be_published(self):
+        """Reject accidental report/archive inclusion before any GitHub request."""
+        for filename in ('bom.cdx.json', 'pnm-decode-windows-x64.zip', 'cli.tar.gz'):
+            with self.subTest(filename=filename), tempfile.TemporaryDirectory() as directory:
+                assets = Path(directory)
+                (assets / filename).write_bytes(b'internal artifact')
+                with patch.object(MODULE, 'github') as github:
+                    with self.assertRaisesRegex(ValueError, 'only installers'):
+                        MODULE.publish(assets, Path('notes'), 'v1.2.3', 'owner/repo', 'Title')
+                    github.assert_not_called()
 
 
 if __name__ == '__main__':

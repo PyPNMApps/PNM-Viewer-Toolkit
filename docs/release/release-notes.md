@@ -11,9 +11,10 @@ required Ubuntu system libraries and may need network access.
 {{ASSET_TABLE}}
 
 Sizes above are compressed download bytes expressed in decimal MB, not installed
-sizes. `SHA256SUMS`, `release-index.json` and platform inventories accompany the
-packages. GitHub's **Source code** ZIP/tar archives contain source, not installers.
-CLI archives install no desktop UI.
+sizes. A complete release has five installers and `SHA256SUMS` for verification.
+Build reports and standalone CLI archives remain workflow artifacts linked under
+[workflow results]({{RUNS_URL}}). GitHub's **Source code** ZIP/tar archives contain
+source, not installers.
 
 ## Ubuntu 22.04 / 24.04 / 26.04 — x64
 
@@ -29,7 +30,6 @@ inside your graphical desktop session. The CLI is available as `pnm-decode`;
 read its manual with `man pnm-decode`.
 
 **CLI only:** install just `pnm-decode_{{VERSION}}_amd64.deb` using APT.
-The Linux CLI archive is also available for manual extraction.
 
 **Update:** quit the viewer, then install both new-version DEBs with APT.
 
@@ -57,8 +57,8 @@ the installer does not add it to PATH. From PowerShell at the default location:
 & "$env:ProgramFiles\PNM Viewer Toolkit\pnm-decode.exe" --help
 ```
 
-**CLI only:** extract the Windows CLI ZIP and run `pnm-decode.exe` from its
-versioned folder. Add that folder to your user PATH only if desired.
+For a standalone CLI without the viewer, use the Windows CLI ZIP from the
+[workflow artifacts]({{RUNS_URL}}), or [build from source]({{SOURCE_URL}}/docs/install/source.md).
 
 The MSI is unsigned. Verify the project release and SHA-256 before approving
 Windows security/UAC prompts. If double-click does not start installation, use the
@@ -90,8 +90,8 @@ The bundled CLI can be run from a terminal:
 "/Applications/PNM Viewer Toolkit.app/Contents/MacOS/pnm-decode" --help
 ```
 
-**CLI only:** extract the matching Darwin CLI `.tar.gz`; run `pnm-decode`
-from its versioned folder. The archive includes the manual and license notices.
+For a standalone CLI without the viewer, use the matching Darwin CLI archive from
+[workflow artifacts]({{RUNS_URL}}), or [build from source]({{SOURCE_URL}}/docs/install/source.md).
 
 **Update:** quit the viewer and replace the app in Applications from the new DMG.
 

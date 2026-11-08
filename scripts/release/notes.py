@@ -52,9 +52,9 @@ def render(template, manifests, version, tag, repository, ubuntu_only=False, par
         expected_targets = set(platforms)
     required_packages = {
         ('Linux', 'x64'): {f'pnm-viewer-toolkit_{version}_amd64.deb', f'pnm-decode_{version}_amd64.deb'},
-        ('Windows', 'x64'): {f'PNM-Viewer-Toolkit-{version}-windows-x64.msi', f'pnm-decode-{version}-windows-x64.zip'},
-        ('Darwin', 'arm64'): {f'PNM-Viewer-Toolkit-{version}-macos-arm64.dmg', f'pnm-decode-{version}-darwin-arm64.tar.gz'},
-        ('Darwin', 'x64'): {f'PNM-Viewer-Toolkit-{version}-macos-x64.dmg', f'pnm-decode-{version}-darwin-x64.tar.gz'},
+        ('Windows', 'x64'): {f'PNM-Viewer-Toolkit-{version}-windows-x64.msi'},
+        ('Darwin', 'arm64'): {f'PNM-Viewer-Toolkit-{version}-macos-arm64.dmg'},
+        ('Darwin', 'x64'): {f'PNM-Viewer-Toolkit-{version}-macos-x64.dmg'},
     }
     base = 'https://github.com/' + repository
     download = base + '/releases/download/' + tag + '/'
@@ -76,6 +76,8 @@ def render(template, manifests, version, tag, repository, ubuntu_only=False, par
             if type(size) is not int or not 0 < size <= MAX_PACKAGE_BYTES:
                 raise ValueError('Invalid package download size')
             names.add(name)
+            if name.startswith('pnm-decode-') and name.endswith(('.tar.gz', '.zip')):
+                continue
             link = f'[{name}]({download}{quote(name)}) ({size / 1_000_000:.2f} MB)'
             if name.startswith('pnm-decode'):
                 cli.append(link)
@@ -88,15 +90,16 @@ def render(template, manifests, version, tag, repository, ubuntu_only=False, par
             f'pnm-decode_{version}_amd64.deb',
         }.issubset(names):
             raise ValueError('Ubuntu draft requires matching viewer and CLI DEBs')
-        if len(viewer) != 1 or not cli:
-            raise ValueError('Each target needs one viewer installer and CLI packages')
+        if len(viewer) != 1:
+            raise ValueError('Each target needs one viewer installer')
         target_names = {artifact['name'] for artifact in manifest['artifacts']}
         if not required_packages[target].issubset(target_names):
             raise ValueError('Target installer or CLI package missing; require MSI/DMG/DEB for the correct architecture')
-        targets[target] = ' | '.join((platforms[target], '<br>'.join(viewer), '<br>'.join(cli)))
+        cli_description = '<br>'.join(cli) or 'Included in desktop installer'
+        targets[target] = ' | '.join((platforms[target], '<br>'.join(viewer), cli_description))
     if not targets or (not partial and set(targets) != expected_targets):
         raise ValueError('Incomplete release platform set')
-    table = ['| Platform | Desktop installer | CLI only |', '| --- | --- | --- |']
+    table = ['| Platform | Desktop installer | CLI |', '| --- | --- | --- |']
     table.extend('| ' + targets[target] + ' |' for target in platforms if target in targets)
     replacements = {
         '{{TAG}}': tag,

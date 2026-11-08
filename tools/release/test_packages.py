@@ -160,6 +160,51 @@ class PackageContractTests(unittest.TestCase):
                                 include_artifacts=['native-windows-2022'])
             self.assertFalse((root / 'corrupt').exists())
 
+    def test_public_collection_has_five_installers_and_matching_checksums(self):
+        """Keep reports/archives internal while verifying all original bytes."""
+        version = common.release_version()
+        packages = {
+            ('Linux', 'x64'): [f'pnm-viewer-toolkit_{version}_amd64.deb', f'pnm-decode_{version}_amd64.deb'],
+            ('Windows', 'x64'): [f'PNM-Viewer-Toolkit-{version}-windows-x64.msi'],
+            ('Darwin', 'arm64'): [f'PNM-Viewer-Toolkit-{version}-macos-arm64.dmg'],
+            ('Darwin', 'x64'): [f'PNM-Viewer-Toolkit-{version}-macos-x64.dmg'],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / 'native'
+            installers = set()
+            for (system, architecture), filenames in packages.items():
+                platform = source / f'{system}-{architecture}'
+                platform.mkdir(parents=True)
+                installers.update(filenames)
+                archive = f'pnm-decode-{version}-{system}-{architecture}.zip'
+                entries, checksums = [], []
+                for name in [*filenames, archive]:
+                    content = name.encode()
+                    (platform / name).write_bytes(content)
+                    entries.append({'name': name, 'bytes': len(content)})
+                    checksums.append(hashlib.sha256(content).hexdigest() + '  ' + name)
+                (platform / 'SHA256SUMS').write_text('\n'.join(checksums) + '\n')
+                (platform / 'release-manifest.json').write_text(json.dumps({
+                    'version': version, 'system': system, 'architecture': architecture,
+                    'artifacts': entries}))
+                (platform / 'bom.cdx.json').write_text('{}')
+            output = root / 'public'
+            collect.collect(source, output)
+            self.assertEqual({path.name for path in output.iterdir()},
+                             installers | {'SHA256SUMS', 'release-index.json'})
+            checksums = (output / 'SHA256SUMS').read_text().splitlines()
+            self.assertEqual({line.split('  ', 1)[1] for line in checksums}, installers)
+            for line in checksums:
+                digest, name = line.split('  ', 1)
+                self.assertEqual(hashlib.sha256((output / name).read_bytes()).hexdigest(), digest)
+            index = json.loads((output / 'release-index.json').read_text())
+            self.assertEqual({item['name'] for manifest in index for item in manifest['artifacts']}, installers)
+            # Excluded archives still pass the upstream integrity gate.
+            next(source.glob('*/*.zip')).write_bytes(b'corrupted archive')
+            with self.assertRaisesRegex(ValueError, 'Checksum'):
+                collect.collect(source, root / 'corrupt')
+
     def test_native_target_and_existing_output(self):
         """Reject unsupported hosts and preserve existing output without builds."""
         with patch('common.platform.system', return_value='Linux'), patch('common.platform.machine', return_value='aarch64'):

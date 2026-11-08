@@ -126,8 +126,17 @@ an installation page from `release-index.json` and root VERSION. It requires a
 matching tag and complete target set, uses actual asset names/download sizes,
 and rejects mixed versions, unsafe/duplicate names and unresolved placeholders.
 The rendered page links source documentation at the exact release tag, so guides
-and screenshots do not drift with master. SHA256SUMS and inventory metadata stay
-attached alongside the installers.
+and screenshots do not drift with master.
+
+A complete public release has exactly six assets: the Windows MSI, Intel and
+Apple Silicon DMGs, Ubuntu viewer and CLI DEBs, and `SHA256SUMS`. Both DEBs
+remain necessary for the Ubuntu installer/updater. Checksums cover only the five
+published installers. GitHub adds its own source ZIP/tar links separately.
+Dependency inventories, graphs, installed-file lists, original manifests and
+standalone CLI archives remain in the native workflow artifacts. Their integrity
+checks still run before collection. `release-index.json` is local input for the
+page renderer and is never uploaded. Partial releases publish only installers
+for eligible platforms plus matching checksums; failed platforms stay excluded.
 
 The workflow supplies this generated page when creating a draft and refreshes
 its text when retrying an existing draft. Existing public releases remain

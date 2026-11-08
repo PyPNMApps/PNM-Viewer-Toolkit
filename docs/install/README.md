@@ -22,10 +22,16 @@ earlier releases contain Ubuntu 22.04 packages only.
 
 | Platform | Desktop viewer | CLI only |
 | --- | --- | --- |
-| Ubuntu 22.04 / 24.04 / 26.04 x64 | Viewer DEB plus same-version CLI DEB; install both with APT | CLI DEB or Linux `.tar.gz` |
-| Windows x64 | Per-machine MSI installer with private Qt, Microsoft runtime DLLs and bundled CLI | ZIP containing `pnm-decode.exe` |
-| macOS Apple Silicon | arm64 DMG; drag the app into Applications | Darwin arm64 `.tar.gz` |
-| macOS Intel | x64 DMG; drag the app into Applications | Darwin x64 `.tar.gz` |
+| Ubuntu 22.04 / 24.04 / 26.04 x64 | Viewer DEB plus same-version CLI DEB; install both with APT | CLI DEB |
+| Windows x64 | Per-machine MSI installer with private Qt, Microsoft runtime DLLs and bundled CLI | Bundled CLI or source build |
+| macOS Apple Silicon | arm64 DMG; drag the app into Applications | Bundled CLI or source build |
+| macOS Intel | x64 DMG; drag the app into Applications | Bundled CLI or source build |
+
+Complete releases publish five installers and `SHA256SUMS`. Standalone CLI
+archives and build reports are available in the matching
+[Actions run](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions) artifacts
+(GitHub sign-in required, with limited retention). For a lasting CLI-only setup,
+use the Ubuntu CLI DEB or [build from source](source.md).
 
 Desktop packages provide the same-version decoder and manual. The viewer uses
 shared Rust code directly. Rust, Python and a separate Qt SDK are not needed to

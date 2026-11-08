@@ -31,14 +31,16 @@ application-approval controls. Do not disable system protections globally.
 
 ## CLI only
 
-Extract the matching Darwin arm64 or x64 CLI `.tar.gz` and run `pnm-decode --help`
-from its versioned folder. The desktop application's CLI is also available:
+The desktop application's CLI is available:
 
 ```bash
 "/Applications/PNM Viewer Toolkit.app/Contents/MacOS/pnm-decode" --help
 ```
 
-The standalone archive includes the manual and license notices.
+Without the viewer, [build the CLI from source](source.md) or extract the matching
+Darwin CLI archive from the native Actions artifact (sign-in required, limited
+retention). Standalone CLI archives are not public release assets; they retain
+the manual and license notices.
 
 ## Update and uninstall
 

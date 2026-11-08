@@ -76,12 +76,15 @@ shows the version of the running process, which stays unchanged until relaunch.
 
 ## CLI only
 
-Extract the Windows CLI ZIP and run `pnm-decode.exe --help` from its versioned
-folder. Or use the copy bundled with the viewer:
+Use the copy bundled with the viewer:
 
 ```powershell
 & "$env:ProgramFiles\PNM Viewer Toolkit\pnm-decode.exe" --help
 ```
+
+Without the viewer, [build the CLI from source](source.md) or extract the
+Windows CLI ZIP from the matching native Actions artifact (sign-in required,
+limited retention). Standalone CLI ZIPs are not public release assets.
 
 ## Uninstall
 

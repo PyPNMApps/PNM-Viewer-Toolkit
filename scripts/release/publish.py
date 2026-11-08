@@ -34,7 +34,8 @@ def publish(assets, notes, tag, repository, title, partial=False):
     """Publish a tested tag only after exact remote asset bytes are verified.
 
     Args:
-        assets: Directory already verified by the upstream artifact gate.
+        assets: Directory already verified by the upstream artifact gate. Its
+            release-index.json is local renderer input, never a public asset.
         notes: Rendered version-specific installation instructions.
         tag: Validated tag from the workflow's identity gate.
         repository: GitHub owner/repository, passed explicitly to every gh call.
@@ -48,9 +49,15 @@ def publish(assets, notes, tag, repository, title, partial=False):
             mismatched upload or missing GitHub SHA-256 package digests.
         subprocess.CalledProcessError: Failed API, upload, download or publication.
     """
-    paths = sorted(assets.iterdir())
-    if not paths or any(not path.is_file() or path.is_symlink() for path in paths):
+    entries = sorted(assets.iterdir())
+    if any(not path.is_file() or path.is_symlink() for path in entries):
         raise ValueError('Expected regular verified release assets')
+    paths = [path for path in entries if path.name != 'release-index.json']
+    if not paths:
+        raise ValueError('Expected regular verified release assets')
+    if any(path.name != 'SHA256SUMS' and path.suffix not in ('.deb', '.msi', '.dmg')
+           for path in paths):
+        raise ValueError('Public releases contain only installers and SHA256SUMS')
     # Listing includes drafts and distinguishes API failure from an absent tag.
     releases = json.loads(github('api', '--paginate', '--slurp',
                                  f'repos/{repository}/releases?per_page=100'))
