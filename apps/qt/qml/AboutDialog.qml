@@ -61,7 +61,7 @@ Dialog {
             Layout.alignment: Qt.AlignHCenter
         }
         Label { text: "PNM Viewer Toolkit"; color: dialog.theme.text; font.pixelSize: 20; font.bold: true }
-        Label { text: "Version " + dialog.appVersion + " · In development"; color: dialog.theme.muted }
+        Label { objectName: "installedVersionLabel"; text: "Version " + dialog.appVersion; color: dialog.theme.muted }
         RowLayout {
             ThemeButton {
                 theme: dialog.theme
@@ -77,22 +77,9 @@ Dialog {
                 ToolTip.text: "Open a GitHub issue draft to review before submitting"
                 onClicked: dialog.openIssueRequested(dialog.updates.issue_report_url)
             }
-            ThemeButton {
-                theme: dialog.theme
-                objectName: "windowsUninstallButton"
-                text: "Uninstall…"
-                visible: dialog.platformOs === "windows"
-                onClicked: dialog.openUninstallRequested()
-            }
         }
         Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: dialog.theme.line }
-        Label { text: "Software updates"; color: dialog.theme.text; font.bold: true }
-        Label {
-            objectName: "latestReleaseLabel"
-            text: dialog.updates.latest_version.length > 0
-                ? "Latest release: " + dialog.updates.latest_version : "Latest release: —"
-            color: dialog.theme.muted
-        }
+        Label { objectName: "softwareSectionLabel"; text: "Software"; color: dialog.theme.text; font.bold: true }
         Label {
             objectName: "updateStatusLabel"
             text: dialog.updates.update_status
@@ -102,7 +89,10 @@ Dialog {
             color: dialog.theme.text
             Accessible.name: text
         }
-        RowLayout {
+        Flow {
+            objectName: "softwareActions"
+            Layout.fillWidth: true
+            spacing: 6
             ThemeButton {
                 theme: dialog.theme
                 objectName: "checkUpdatesButton"
@@ -112,9 +102,24 @@ Dialog {
             }
             ThemeButton {
                 theme: dialog.theme
+                objectName: "downloadInstallerButton"
+                text: dialog.updates.download_label
+                visible: dialog.updates.download_url.length > 0
+                enabled: !dialog.installBusy && dialog.updates.update_state !== "checking"
+                onClicked: dialog.openReleaseRequested(dialog.updates.download_url)
+            }
+            ThemeButton {
+                theme: dialog.theme
                 objectName: "releaseDownloadsButton"
-                text: dialog.updates.update_state === "available" ? "Release notes and downloads" : "View releases"
+                text: "Release notes"
                 onClicked: dialog.openReleaseRequested(dialog.updates.release_url)
+            }
+            ThemeButton {
+                theme: dialog.theme
+                objectName: "windowsUninstallButton"
+                text: "Uninstall…"
+                visible: dialog.platformOs === "windows"
+                onClicked: dialog.openUninstallRequested()
             }
         }
         RowLayout {

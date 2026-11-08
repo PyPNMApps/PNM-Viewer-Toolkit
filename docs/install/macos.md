@@ -42,8 +42,10 @@ The standalone archive includes the manual and license notices.
 
 ## Update and uninstall
 
-Quit the app and replace it in Applications using the matching architecture's
-new DMG. macOS updates are manual.
+In **About → Software**, choose **Download DMG** for the latest published stable
+release. The link selects Intel or Apple Silicon for the running build. Choose
+**Release notes** to view the release page. Quit the app and replace it in
+Applications using the downloaded DMG. macOS updates remain manual.
 
 To uninstall, quit the app and move it from Applications to Trash. Delete the
 extracted folder of any independently installed CLI separately. Keep capture

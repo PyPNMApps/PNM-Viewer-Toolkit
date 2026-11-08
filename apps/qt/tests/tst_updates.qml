@@ -21,6 +21,8 @@ RenderTestCase {
         property string update_state: "idle"
         property string update_status: "Updates have not been checked."
         property string latest_version: ""
+        property string download_url: ""
+        property string download_label: "Download MSI"
         property string release_url: "https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases"
         property string issue_report_url: "https://github.com/PyPNMApps/PNM-Viewer-Toolkit/issues/new?title=test&body=Environment"
         property bool install_available: false
@@ -65,6 +67,8 @@ RenderTestCase {
         service.update_state = "idle"
         service.update_status = "Updates have not been checked."
         service.latest_version = ""
+        service.download_url = ""
+        service.download_label = "Download MSI"
         service.requests = 0
         service.install_available = false
         service.install_state = "idle"
@@ -110,7 +114,8 @@ RenderTestCase {
         verify(chip.visible)
         mouseClick(chip)
         tryCompare(about, "opened", true)
-        compare(findChild(about, "latestReleaseLabel").text, "Latest release: 0.2.0")
+        compare(findChild(about, "latestReleaseLabel"), null)
+        compare(findChild(about, "installedVersionLabel").text, "Version 0.1.5")
     }
     function test_manual_check_is_disabled_until_finished_and_can_retry() {
         about.open()
@@ -138,7 +143,7 @@ RenderTestCase {
             about.open()
             tryCompare(about, "opened", true)
             const downloads = findChild(about, "releaseDownloadsButton")
-            compare(downloads.text, "Release notes and downloads")
+            compare(downloads.text, "Release notes")
             mouseClick(downloads)
             compare(releaseOpened.count, preference)
             compare(releaseOpened.signalArguments[preference - 1][0].toString(), service.release_url)
@@ -146,6 +151,36 @@ RenderTestCase {
             about.close()
             tryCompare(about, "opened", false)
         }
+    }
+    function test_native_installer_download_uses_selected_url_both_themes_data() {
+        return [{tag:"windows-dark",platform:"windows",theme:1,label:"Download MSI",suffix:"windows-x64.msi"},
+            {tag:"windows-light",platform:"windows",theme:2,label:"Download MSI",suffix:"windows-x64.msi"},
+            {tag:"mac-dark",platform:"osx",theme:1,label:"Download DMG",suffix:"macos-arm64.dmg"},
+            {tag:"mac-light",platform:"osx",theme:2,label:"Download DMG",suffix:"macos-x64.dmg"},
+            {tag:"linux",platform:"linux",theme:1,label:"Download packages",suffix:""}]
+    }
+    function test_native_installer_download_uses_selected_url_both_themes(data) {
+        about.platformOs=data.platform
+        appearance.preference=data.theme
+        service.update_state="available"
+        service.download_label=data.label
+        service.download_url=data.suffix.length
+            ? "https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases/download/v0.3.3/PNM-Viewer-Toolkit-0.3.3-"+data.suffix
+            : "https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases/tag/v0.3.3"
+        service.update_status="Version 0.3.3 is available."
+        about.open()
+        tryCompare(about,"opened",true)
+        const button=findChild(about,"downloadInstallerButton")
+        verify(button.visible && button.enabled)
+        compare(button.text,data.label)
+        verify(waitForFrame(button))
+        mouseClick(button)
+        compare(releaseOpened.count,1)
+        compare(releaseOpened.signalArguments[0][0].toString(),service.download_url)
+        compare(service.installs,0)
+        compare(findChild(about,"updateStatusLabel").text,service.update_status)
+        service.download_url=""
+        verify(!button.visible)
     }
     function test_windows_uninstall_link_is_platform_specific_data() {
         const cases=[]
@@ -162,6 +197,7 @@ RenderTestCase {
         about.open()
         tryCompare(about,"opened",true)
         const button=findChild(about,"windowsUninstallButton")
+        compare(button.parent,findChild(about,"softwareActions"))
         compare(button.visible,data.platform==="windows")
         if (data.platform==="windows") {
             verify(waitForPolish(button))

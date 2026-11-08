@@ -16,6 +16,8 @@ mod bridge {
         #[qproperty(QString, update_status)]
         #[qproperty(QString, latest_version)]
         #[qproperty(QString, release_url)]
+        #[qproperty(QString, download_url)]
+        #[qproperty(QString, download_label)]
         #[qproperty(QString, issue_report_url)]
         #[qproperty(bool, install_available)]
         #[qproperty(QString, install_state)]
@@ -57,6 +59,8 @@ pub struct UpdateBackendRust {
     update_status: QString,
     latest_version: QString,
     release_url: QString,
+    download_url: QString,
+    download_label: QString,
     issue_report_url: QString,
     install_available: bool,
     install_state: QString,
@@ -76,6 +80,8 @@ impl Default for UpdateBackendRust {
             update_status: QString::from("Updates have not been checked."),
             latest_version: QString::default(),
             release_url: QString::from(RELEASES_URL),
+            download_url: QString::default(),
+            download_label: QString::from("Download installer"),
             issue_report_url: QString::from(viewer::support::issue_report_url(
                 env!("CARGO_PKG_VERSION"),
                 std::env::consts::OS,
@@ -110,6 +116,7 @@ impl bridge::UpdateBackend {
         self.as_mut()
             .set_update_status(QString::from("Checking for updates…"));
         self.as_mut().set_install_available(false);
+        self.as_mut().set_download_url(QString::default());
         self.as_mut().rust_mut().plan = None;
         let qt_thread = self.qt_thread();
         let worker = std::thread::Builder::new()
@@ -118,6 +125,14 @@ impl bridge::UpdateBackend {
                 let result = check_release(env!("CARGO_PKG_VERSION"));
                 let _queued = qt_thread.queue(move |mut controller| match result {
                     Ok(release) => {
+                        if let Some(download) = &release.download {
+                            controller
+                                .as_mut()
+                                .set_download_url(QString::from(&download.url));
+                            controller
+                                .as_mut()
+                                .set_download_label(QString::from(download.label));
+                        }
                         let can_install = release.state == "available"
                             && release.ubuntu.is_some()
                             && ubuntu::supported();

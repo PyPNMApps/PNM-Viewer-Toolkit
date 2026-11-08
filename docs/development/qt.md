@@ -16,8 +16,8 @@ palette for both themes; this does not select a fallback file chooser.
 implementation for About actions and the highlighted Open capture action. This
 avoids Windows' pale button backgrounds even when palette inheritance differs.
 Tests check rendered contrast for ordinary, highlighted and disabled buttons in
-Dark, Light and both System appearances. About keeps its version, project link,
-update status and actions; descriptive/license text and update instructions have
+Dark, Light and both System appearances. About keeps its version, project/report links,
+single update status and Software actions; descriptive/license text and update instructions have
 been removed from this dialog. Distribution license/NOTICE files remain intact.
 Installed smoke tests clear development control-style overrides so the executable
 must select its own style, as it does when opened from a desktop shortcut.
@@ -233,6 +233,16 @@ JSON, draft/prerelease or invalid-version cases produce update-only errors.
 Release links are generated from the fixed project URL and validated numeric
 tags, never arbitrary remote HTML/URLs. A newer stable release reveals the
 green chip; equal/newer installed versions and errors keep it hidden.
+
+About displays the installed version once, without the development suffix or a
+second latest-version label. Windows Uninstall belongs to its Software actions.
+`updates/installers/` selects an exact published MSI or architecture-specific DMG
+from the same stable release metadata; missing, duplicate, empty or redirected
+assets have no download action. The bridge exposes the selected label/URL to QML;
+the browser handles this manual download. Ubuntu's manual action opens the
+release page only when both verified DEBs are offered. Its existing authenticated
+installer, verification and restart path is unchanged. Native Mac installer
+selection has unit coverage; interactive macOS installation still needs a device.
 
 The HTTPS dependency is pinned; both lockfiles retain Rust-1.85.1-compatible
 IDNA dependencies. Preserve that compatibility when refreshing dependencies.

@@ -24,6 +24,8 @@ pub struct ReleaseCheck {
     pub latest_version: Option<String>,
     /// Project-owned release page or fixed releases index.
     pub release_url: String,
+    /// Published native installer link, independent of automatic installation.
+    pub download: Option<super::installers::InstallerDownload>,
     /// Verified metadata for the paired Ubuntu packages, when offered.
     pub ubuntu: Option<super::ubuntu::InstallPlan>,
 }
@@ -103,6 +105,7 @@ fn fetch_release(
                 status: "No published release is available yet.".into(),
                 latest_version: None,
                 release_url: RELEASES_URL.into(),
+                download: None,
                 ubuntu: None,
             });
         }
@@ -150,10 +153,7 @@ fn parse_release(installed_version: &str, bytes: &[u8]) -> Result<ReleaseCheck, 
     let (state, status) = match latest.cmp(&installed) {
         std::cmp::Ordering::Greater => (
             "available",
-            format!(
-                "Update available: {}. Installed: {installed_version}.",
-                release.tag_name
-            ),
+            format!("Version {latest_version} is available."),
         ),
         std::cmp::Ordering::Equal => ("current", "You are up to date.".into()),
         std::cmp::Ordering::Less => (
@@ -163,6 +163,12 @@ fn parse_release(installed_version: &str, bytes: &[u8]) -> Result<ReleaseCheck, 
     };
     let ubuntu = super::ubuntu::InstallPlan::from_assets(&latest_version, &release.assets).ok();
     Ok(ReleaseCheck {
+        download: super::installers::select(
+            &latest_version,
+            &release.assets,
+            std::env::consts::OS,
+            std::env::consts::ARCH,
+        ),
         ubuntu,
         state,
         status,

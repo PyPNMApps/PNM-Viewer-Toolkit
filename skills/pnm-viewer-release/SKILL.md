@@ -141,3 +141,10 @@ requests a frame even for unchanged scenes. For input assertions await polished,
 visible hit geometry and check the actual signal arguments. Never replace failed
 assertions with retries, sleeps or skips. A Linux offscreen pass does not prove
 native Cocoa behavior; retain reports and require native confirmation.
+
+About installer downloads must select the exact published asset matching the
+Rust OS/architecture and release version, with no guessed links when assets are
+missing. Keep Windows MSI and Intel/Apple Silicon DMG cases independently tested.
+Ubuntu manual downloads expose the paired DEB release page; preserve verified
+in-app installation and restart. Keep one compact update status and the installed
+version header, with Windows Uninstall under Software.

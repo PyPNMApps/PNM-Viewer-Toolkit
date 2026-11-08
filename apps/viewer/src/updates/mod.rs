@@ -3,5 +3,6 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 //! Application maintenance independent of capture processing.
+pub mod installers;
 pub mod release;
 pub mod ubuntu;

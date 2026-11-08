@@ -67,8 +67,10 @@ and MSP patches are deferred; About links to release downloads. A legacy EXE/NSI
 installation must be uninstalled through Installed apps before the first MSI.
 
 The **Update** button opens About; **Check for updates** checks the available
-version. Neither installs a Windows update. Choose **Release notes and downloads**,
-download the Windows MSI, close every running viewer window, then run the MSI
+version. Neither installs a Windows update. Choose **Download MSI** in
+**About → Software** to open the exact installer
+for the latest published stable release. **Release notes** opens its release
+page. Close every running viewer window, then run the downloaded MSI
 and relaunch. Uninstalling a previous MSI first is normally unnecessary. About
 shows the version of the running process, which stays unchanged until relaunch.
 
@@ -83,7 +85,7 @@ folder. Or use the copy bundled with the viewer:
 
 ## Uninstall
 
-In Windows builds, **About → Uninstall…** opens Windows **Installed apps**.
+In Windows builds, **About → Software → Uninstall…** opens Windows **Installed apps**.
 Close the viewer, select **PNM Viewer Toolkit**, then choose **Uninstall**.
 You can also open this page directly:
 

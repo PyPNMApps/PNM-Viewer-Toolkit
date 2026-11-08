@@ -102,11 +102,11 @@ System follows the desktop appearance. This preference lasts for the current
 session. Screenshots follow your documentation viewer's theme.
 
 The panel button at the top right shows or hides the left navigation pane.
-**About** shows the installed version, development status, project link and
-software-update status. A background check runs once per normal launch;
+**About** shows the installed version, project/report links and one
+software-update status line. A background check runs once per normal launch;
 it does not delay opening captures. Offline or failed checks leave the viewer
 usable. **Check for updates** retries manually and reports the outcome. On Windows,
-**Uninstall…** opens Windows Installed apps; close the viewer and select its
+**Software → Uninstall…** opens Windows Installed apps; close the viewer and select its
 Uninstall action there. See the [Windows uninstall guide](../install/windows.md#uninstall).
 
 **Report issue** opens a GitHub draft in your browser, prefilled with the viewer
@@ -115,12 +115,20 @@ before submitting. Captures, file paths, logs and user/host names are not includ
 
 When a newer published stable release exists, a compact green **Update** button
 appears near the top-right navigation toggle. Click it to open About, see the
-latest version and open **Release notes and downloads**. Draft releases and tags
+update status and use **Download MSI** (Windows) or **Download DMG** (macOS).
+The Mac download matches Intel or Apple Silicon automatically. **Release notes**
+opens that published version's release page. Draft releases and tags
 without a published release are not updates. Until a release is published,
 **No published release is available yet** is a normal result.
 Partial releases appear on GitHub as prereleases for manual download. They
 contain only platforms that passed validation and are excluded from the stable
 update check; their associated workflow can still show failure for another OS.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/about/about-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="images/about/about-light.png">
+  <img alt="About with one installed version and a compact Software section, shown on Linux" src="images/about/about-dark.png" width="1000">
+</picture>
 
 Installed Ubuntu x64 builds offer **Install update and restart** when the
 release has matching viewer/CLI DEBs with SHA-256 digests. Downloading and
@@ -132,11 +140,12 @@ updated executable and closes the old window. An active capture/export operation
 finishes first. If launching fails, the old window stays open and **Restart viewer**
 allows a retry. Older versions that wait for this button still need that one click.
 A failed apt operation can leave a partially updated package state; check both
-package versions before retrying. Other OSes and source builds use release downloads.
-On Windows, download the new MSI, quit the viewer, run the installer and relaunch;
+package versions before retrying. **Download packages** opens the Ubuntu release downloads for the required
+same-version viewer/CLI pair. Other OSes and source builds use manual installers.
+On Windows, use **Download MSI**, quit the viewer, run the installer and relaunch;
 **Check for updates** only checks versions. An older MSI is upgraded in place.
 Older 0.1.6/0.1.7 builds require one manual upgrade to gain this installer.
-**View releases** remains available when checks fail. The check
+**Release notes** remains available when checks fail. The check
 sends only a release lookup to this project's GitHub API, not capture contents
 or device metadata. Native automated smoke tests skip the startup request.
 
