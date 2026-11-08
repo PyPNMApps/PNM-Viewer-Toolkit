@@ -62,6 +62,7 @@ ColumnLayout {
         }
     }
     Dialog {
+        property ThemePalette themePalette: ThemePalette { targetControl: frequencyDialog; theme: tools.theme }
         id: frequencyDialog
         objectName: "spectrumFrequencyDialog"
         title: "Frequency"
@@ -129,23 +130,21 @@ ColumnLayout {
                 }
             }
             Label { text: "Start"; color: tools.theme.text }
-            Basic.TextField {
+            ThemeTextField {
+                theme: tools.theme
                 id: startInput
                 objectName: "spectrumStartFrequency"
                 Layout.fillWidth: true
-                color: tools.theme.text
                 validator: DoubleValidator { bottom: 0; top: 4294967295; decimals: 9; notation: DoubleValidator.StandardNotation }
-                background: Rectangle { color: tools.theme.button; border.color: tools.theme.line; radius: 4 }
                 Accessible.name: "Start frequency"
             }
             Label { text: "Stop"; color: tools.theme.text }
-            Basic.TextField {
+            ThemeTextField {
+                theme: tools.theme
                 id: stopInput
                 objectName: "spectrumStopFrequency"
                 Layout.fillWidth: true
-                color: tools.theme.text
                 validator: DoubleValidator { bottom: 0; top: 4294967295; decimals: 9; notation: DoubleValidator.StandardNotation }
-                background: Rectangle { color: tools.theme.button; border.color: tools.theme.line; radius: 4 }
                 Accessible.name: "Stop frequency"
             }
             Label { text: frequencyDialog.validationMessage; color: tools.theme.muted; wrapMode: Text.Wrap; Layout.fillWidth: true }

@@ -18,17 +18,10 @@ ApplicationWindow {
     visible: true
     title: "PNM Viewer Toolkit"
     color: appTheme.background
+    property ThemePalette themePalette: ThemePalette { targetControl: window; theme: appTheme }
     font.family: "Sans Serif"
     font.pixelSize: 13
-    palette.window: appTheme.background
-    palette.windowText: appTheme.text
-    palette.base: appTheme.panel
-    palette.alternateBase: appTheme.button
-    palette.text: appTheme.text
-    palette.button: appTheme.button
-    palette.buttonText: appTheme.text
-    palette.highlight: appTheme.accent
-    palette.highlightedText: appTheme.background
+
     Theme { id: appTheme }
     ViewerBackend { id: backend }
     ViewerBackend { id: comparisonBackend }
@@ -75,7 +68,6 @@ ApplicationWindow {
         function onRxmer_collection_errorChanged() { fileError.showError(backend.rxmer_collection_error) }
         function onError_messageChanged() { fileError.showError(backend.error_message) }
         function onPre_eq_errorChanged() { fileError.showError(backend.pre_eq_error) }
-
 
         function onMetadata_jsonChanged() {
             window.selectWorkspace("single")
@@ -203,7 +195,6 @@ ApplicationWindow {
     Shortcut { sequences: [StandardKey.Open]; enabled: !window.blocked; onActivated: openDialog.open() }
     Shortcut { sequences: [StandardKey.Close]; enabled: !window.blocked; onActivated: backend.close_capture() }
 
-
     header: ToolBar {
         height: 38
         background: Rectangle { color: appTheme.sidebar }
@@ -218,6 +209,7 @@ ApplicationWindow {
                 enabled: !window.blocked
                 onClicked: settingsMenu.open()
                 Menu {
+                    property ThemePalette themePalette: ThemePalette { targetControl: settingsMenu; theme: appTheme }
                     id: settingsMenu
                     y: parent.height
                     MenuItem { text: "System…"; onTriggered: systemDialog.open() }
@@ -241,6 +233,7 @@ ApplicationWindow {
         }
     }
     Dialog {
+        property ThemePalette themePalette: ThemePalette { targetControl: systemDialog; theme: appTheme }
         id: systemDialog
         title: "System settings"
         anchors.centerIn: parent
@@ -251,7 +244,8 @@ ApplicationWindow {
             anchors.fill: parent
             spacing: 16
             Label { text: "Appearance"; color: appTheme.text }
-            ComboBox {
+            ThemeComboBox {
+                theme: appTheme
                 objectName: "themeSelector"
                 Accessible.name: "Appearance"
                 model: ["System", "Dark", "Light"]

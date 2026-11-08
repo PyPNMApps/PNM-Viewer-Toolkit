@@ -30,6 +30,7 @@ ToolButton {
         border.color: chip.activeFocus ? chip.theme.accent : chip.theme.line
     }
     Dialog {
+        property ThemePalette themePalette: ThemePalette { targetControl: bandwidthDialog; theme: chip.theme }
         id: bandwidthDialog
         objectName: "profileBandwidthDialog"
         parent: Overlay.overlay

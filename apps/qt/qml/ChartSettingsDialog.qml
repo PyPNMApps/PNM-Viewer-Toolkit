@@ -8,18 +8,14 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 
 Dialog {
+    property ThemePalette themePalette: ThemePalette { targetControl: dialog; theme: dialog.theme }
     id: dialog
     required property Theme theme
     title: "Chart settings"
     width: 440
     modal: true
     standardButtons: Dialog.Close
-    palette.window: theme.panel
-    palette.windowText: theme.text
-    palette.base: theme.background
-    palette.text: theme.text
-    palette.button: theme.button
-    palette.buttonText: theme.text
+
     readonly property var widths: [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4]
     readonly property var colorChoices: [
         {label: "Main trace", setting: "traceColorOverride", effective: "chartLineColor"},
@@ -43,7 +39,8 @@ Dialog {
         spacing: 12
         RowLayout {
             Label { text: "Line thickness"; color: dialog.theme.text; Layout.fillWidth: true }
-            ComboBox {
+            ThemeComboBox {
+                theme: dialog.theme
                 objectName: "chartLineWidthSelector"
                 Accessible.name: "Chart line thickness"
                 model: dialog.widths.map(value => value + " px")

@@ -41,7 +41,8 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         Label { text: "Profile"; color: chart.theme.muted }
-        ComboBox {
+        ThemeComboBox {
+            theme: chart.theme
             id: profiles
             objectName: "fecProfileSelector"
             Accessible.name: "FEC profile"

@@ -4,7 +4,6 @@
  */
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 
 RowLayout {
@@ -21,7 +20,8 @@ RowLayout {
     signal averageRequested(int windowPoints)
     spacing: 8
     Label { text: "N-point"; color: controls.theme.muted }
-    Basic.TextField {
+    ThemeTextField {
+        theme: controls.theme
         id: input
         objectName: "spectrumAverageInput"
         text: "101"
@@ -29,14 +29,6 @@ RowLayout {
         validator: IntValidator { bottom: 1; top: 2147483647 }
         inputMethodHints: Qt.ImhDigitsOnly
         Accessible.name: "Window average points"
-        color: controls.theme.text
-        selectionColor: controls.theme.accent
-        selectedTextColor: controls.theme.background
-        background: Rectangle {
-            radius: 4
-            color: controls.theme.button
-            border.color: input.activeFocus ? controls.theme.accent : controls.theme.line
-        }
     }
     ThemeButton {
         objectName: "spectrumWindowAverageButton"

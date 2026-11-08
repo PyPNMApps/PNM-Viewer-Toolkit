@@ -119,10 +119,11 @@ ColumnLayout {
     }
     Item {visible:!workspace.hasResult;Layout.fillHeight:true}
     Dialog {
+        property ThemePalette themePalette: ThemePalette { targetControl: devicesDialog; theme: workspace.theme }
         id:devicesDialog;objectName:"spectrumDeviceDialog";parent:Overlay.overlay;anchors.centerIn:parent;width:390;modal:true;title:"Select spectrum MAC address"
         background:Rectangle {color:workspace.theme.panel;border.color:workspace.theme.line;radius:10}
         header:Label {text:devicesDialog.title;padding:16;color:workspace.theme.text;font.bold:true}
-        contentItem:ComboBox {id:deviceChoice;objectName:"spectrumDeviceChoice";Accessible.name:"Spectrum MAC address";model:workspace.devices}
+        contentItem:ThemeComboBox { theme: workspace.theme;id:deviceChoice;objectName:"spectrumDeviceChoice";Accessible.name:"Spectrum MAC address";model:workspace.devices}
         footer:DialogButtonBox {
             ThemeButton {theme:workspace.theme;text:"Select";enabled:deviceChoice.currentIndex>=0;DialogButtonBox.buttonRole:DialogButtonBox.AcceptRole}
             ThemeButton {theme:workspace.theme;text:"Cancel";DialogButtonBox.buttonRole:DialogButtonBox.RejectRole}
@@ -134,16 +135,18 @@ ColumnLayout {
         }
     }
     Dialog {
+        property ThemePalette themePalette: ThemePalette { targetControl: settingsDialog; theme: workspace.theme }
         id:settingsDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(900,parent.width-24);modal:true;title:"Select capture settings"
         background:Rectangle {color:workspace.theme.panel;border.color:workspace.theme.line;radius:10}
         header:Label {text:settingsDialog.title;padding:16;color:workspace.theme.text;font.bold:true}
-        contentItem:ComboBox {objectName:"spectrumCaptureSettings";Accessible.name:"Spectrum capture settings";model:workspace.groups;textRole:"label";onActivated:if(currentIndex>=0){workspace.selectGroup(workspace.selectedMac,workspace.groups[currentIndex].id);settingsDialog.close()}}
+        contentItem:ThemeComboBox { theme: workspace.theme;objectName:"spectrumCaptureSettings";Accessible.name:"Spectrum capture settings";model:workspace.groups;textRole:"label";onActivated:if(currentIndex>=0){workspace.selectGroup(workspace.selectedMac,workspace.groups[currentIndex].id);settingsDialog.close()}}
         footer:DialogButtonBox {ThemeButton {theme:workspace.theme;text:"Close";DialogButtonBox.buttonRole:DialogButtonBox.RejectRole}onRejected:settingsDialog.close()}
     }
     Dialog {
-        id:detailsDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(700,parent.width-24);height:Math.min(500,parent.height-24);modal:true;title:"Spectrum import details"
+        property ThemePalette themePalette: ThemePalette { targetControl: detailsDialog; theme: workspace.theme }
+        id:detailsDialog;objectName:"spectrumImportDetails";parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(700,parent.width-24);height:Math.min(500,parent.height-24);modal:true;title:"Spectrum import details"
         background:Rectangle {color:workspace.theme.panel;border.color:workspace.theme.line;radius:10}
-        contentItem:ScrollView {clip:true;TextArea {readOnly:true;color:workspace.theme.text;wrapMode:TextEdit.Wrap;text:"Accepted: "+(workspace.catalog.accepted_count || 0)+"\nDuplicates: "+(workspace.catalog.duplicate_count || 0)+"\nSkipped: "+(workspace.catalog.skipped_count || 0)+"\n\n"+(workspace.catalog.issues || []).join("\n")}}
+        contentItem:ScrollView {clip:true;ThemeTextArea { theme: workspace.theme; objectName: "spectrumImportReport";readOnly:true;wrapMode:TextEdit.Wrap;text:"Accepted: "+(workspace.catalog.accepted_count || 0)+"\nDuplicates: "+(workspace.catalog.duplicate_count || 0)+"\nSkipped: "+(workspace.catalog.skipped_count || 0)+"\n\n"+(workspace.catalog.issues || []).join("\n")}}
         footer:DialogButtonBox {ThemeButton {theme:workspace.theme;text:"Close";DialogButtonBox.buttonRole:DialogButtonBox.RejectRole}onRejected:detailsDialog.close()}
     }
 }

@@ -61,7 +61,8 @@ ColumnLayout {
                 }
             }
         }
-        ComboBox {
+        ThemeComboBox {
+            theme: panel.theme
             id: mode
             objectName: "preEqUpdateMode"
             Accessible.name: "Pre-EQ correction mode"

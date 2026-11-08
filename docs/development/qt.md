@@ -23,6 +23,22 @@ Installed smoke tests clear development control-style overrides so the executabl
 must select its own style, as it does when opened from a desktop shortcut.
 See [Qt control styles](https://doc.qt.io/qt-6/qtquickcontrols-styles.html).
 
+Text surfaces use `ThemeTextArea`, `ThemeTextField` and `ThemeComboBox` across
+collection reports, analysis, playback, comparisons and settings. Report/input
+components paint foreground, background and selection colors explicitly.
+`ThemePalette` binds live palette roles directly on application controls and
+each dialog/menu, including disabled text; overlay reparenting must not restore
+an OS light palette inside app Dark mode. Keep these bindings when adding popups.
+Native OS file/folder/color dialogs retain operating-system appearance.
+
+`tst_text_contrast.qml` checks Dark, Light and both System modes against a
+deliberately conflicting host palette. It checks unselected rendered glyphs,
+background contrast, disabled controls, selection/placeholder colors, dropdown
+popups and both RxMER/Spectrum import reports. ScrollView/overlay pixel tests
+map item coordinates to the window before sampling. Local Linux validation
+does not establish interactive Windows 11 behavior; verify those surfaces on
+Windows after installing the next build, including switching themes while open.
+
 Linux application startup defaults `QT_QPA_PLATFORMTHEME` to `gtk3` before
 creating Qt, so Open and Export use the operating system's GTK file chooser
 in both development and installed builds. An explicit platform-theme setting

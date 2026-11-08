@@ -152,6 +152,7 @@ ColumnLayout {
     }
     Item { visible: !workspace.hasResult; Layout.fillHeight: true }
     Dialog {
+        property ThemePalette themePalette: ThemePalette { targetControl: deviceDialog; theme: workspace.theme }
         id: deviceDialog
         objectName: "rxmerDeviceDialog"
         parent: Overlay.overlay
@@ -161,7 +162,7 @@ ColumnLayout {
         title: "Select RxMER MAC address"
         background: Rectangle { color: workspace.theme.panel; border.color: workspace.theme.line; radius: 10 }
         header: Label { text: deviceDialog.title; padding: 16; color: workspace.theme.text; font.bold: true }
-        contentItem: ComboBox { id: deviceChoice; objectName: "rxmerDeviceChoice"; Accessible.name: "RxMER MAC address"; model: workspace.devices }
+        contentItem: ThemeComboBox { theme: workspace.theme; id: deviceChoice; objectName: "rxmerDeviceChoice"; Accessible.name: "RxMER MAC address"; model: workspace.devices }
         footer: DialogButtonBox {
             ThemeButton { theme: workspace.theme; text: "Select"; enabled: deviceChoice.currentIndex>=0; DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
             ThemeButton { theme: workspace.theme; text: "Cancel"; DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
@@ -175,6 +176,7 @@ ColumnLayout {
         }
     }
     Dialog {
+        property ThemePalette themePalette: ThemePalette { targetControl: channelDialog; theme: workspace.theme }
         id: channelDialog
         parent: Overlay.overlay
         anchors.centerIn: parent
@@ -183,7 +185,8 @@ ColumnLayout {
         title: "Select channel and frequency grid"
         background: Rectangle { color: workspace.theme.panel; border.color: workspace.theme.line; radius: 10 }
         header: Label { text: channelDialog.title; padding: 16; color: workspace.theme.text; font.bold: true }
-        contentItem: ComboBox {
+        contentItem: ThemeComboBox {
+            theme: workspace.theme
             id: channelChoice
             objectName: "rxmerCollectionChannel"
             Accessible.name: "RxMER channel and frequency grid"
@@ -201,7 +204,9 @@ ColumnLayout {
         }
     }
     Dialog {
+        property ThemePalette themePalette: ThemePalette { targetControl: detailsDialog; theme: workspace.theme }
         id: detailsDialog
+        objectName: "rxmerImportDetails"
         parent: Overlay.overlay
         anchors.centerIn: parent
         width: Math.min(640,parent.width-32)
@@ -211,9 +216,10 @@ ColumnLayout {
         background: Rectangle { color: workspace.theme.panel; border.color: workspace.theme.line; radius: 10 }
         contentItem: ScrollView {
             clip: true
-            TextArea {
+            ThemeTextArea {
+                theme: workspace.theme
+                objectName: "rxmerImportReport"
                 readOnly: true
-                color: workspace.theme.text
                 wrapMode: TextEdit.Wrap
                 text: "Accepted: " + (workspace.catalog.accepted_count || 0) + "\nDuplicates: " + (workspace.catalog.duplicate_count || 0)
                     + "\nSkipped: " + (workspace.catalog.skipped_count || 0) + "\n\n" + (workspace.catalog.issues || []).join("\n")

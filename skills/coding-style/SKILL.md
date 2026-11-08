@@ -200,6 +200,11 @@ Use the shared ThemeButton for themed action buttons, including highlighted
 actions. It paints foreground and background explicitly on the Basic control
 implementation; platform palette inheritance alone left Windows buttons pale.
 Keep disabled and System-theme states readable and test actual rendered contrast.
+Use ThemeTextArea, ThemeTextField and ThemeComboBox for report/input/dropdown
+controls. Bind ThemePalette to each popup/menu and the application window;
+do not rely on OS palette inheritance across overlays. Keep text, background,
+selection and disabled colors paired, and test unselected rendered text in both
+explicit and System themes. Native OS file dialogs retain OS styling.
 For QML tests that click dynamically positioned controls, wait for layout polish
 and rendering before sending mouse events. Fixed sleeps do not establish stable
 geometry. Retain exact action/index assertions and cover model replacement.

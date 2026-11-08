@@ -29,11 +29,11 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 8
         visible: !!view.result.pair
-        ComboBox { id: metric; objectName: "preEqComparisonMetric"; Accessible.name: "Pre-EQ comparison metric"; model:["Magnitude","Group delay","I/Q scatter"]; implicitWidth: 150 }
-        ComboBox { id: alignment; objectName: "preEqAlignment"; Accessible.name: "Pre-EQ magnitude alignment"; visible: metric.currentIndex===0; model:["Level-aligned flatness","Raw coefficient magnitude"]; implicitWidth: 220 }
+        ThemeComboBox { theme: view.theme; id: metric; objectName: "preEqComparisonMetric"; Accessible.name: "Pre-EQ comparison metric"; model:["Magnitude","Group delay","I/Q scatter"]; implicitWidth: 150 }
+        ThemeComboBox { theme: view.theme; id: alignment; objectName: "preEqAlignment"; Accessible.name: "Pre-EQ magnitude alignment"; visible: metric.currentIndex===0; model:["Level-aligned flatness","Raw coefficient magnitude"]; implicitWidth: 220 }
         MeasurementToggle { id: original; theme: view.theme; text: "Original"; checked: true; visible: metric.currentIndex!==2 }
         MeasurementToggle { id: predicted; theme: view.theme; text: "Predicted"; checked: true; traceColor: view.theme.dark ? "#ffbc66" : "#ac6500"; visible: metric.currentIndex!==2 }
-        ComboBox { id: iqSet; objectName: "preEqIqDataset"; visible: metric.currentIndex===2; model:["Original","Predicted","Delta"]; currentIndex: 2 }
+        ThemeComboBox { theme: view.theme; id: iqSet; objectName: "preEqIqDataset"; visible: metric.currentIndex===2; model:["Original","Predicted","Delta"]; currentIndex: 2 }
     }
     PreEqComparisonChart {
         visible: !!view.result.pair && metric.currentIndex!==2

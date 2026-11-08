@@ -20,7 +20,8 @@ GridLayout {
     signal allCarriersRequested()
 
     Label { text: "Y axis"; color: controls.theme.muted }
-    ComboBox {
+    ThemeComboBox {
+        theme: controls.theme
         objectName: "modulationMetricSelector"
         Accessible.name: "Modulation metric"
         model: ["dB", "Bit loading"]

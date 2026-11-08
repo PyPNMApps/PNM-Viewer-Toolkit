@@ -75,6 +75,6 @@ RowLayout {
         onClicked: controls.jump(controls.frameIndex+1)
     }
     Label { text: "Frames/s"; color: controls.theme.muted }
-    ComboBox { id: speed; objectName: controls.namePrefix+"PlaybackSpeed"; Accessible.name: "Playback frames per second"; model: ["1","2","4","8"]; currentIndex: 1 }
+    ThemeComboBox { theme: controls.theme; id: speed; objectName: controls.namePrefix+"PlaybackSpeed"; Accessible.name: "Playback frames per second"; model: ["1","2","4","8"]; currentIndex: 1 }
     Label { text: controls.frameCount>0 ? (controls.frameIndex+1)+" / "+controls.frameCount : "—"; color: controls.theme.text }
 }

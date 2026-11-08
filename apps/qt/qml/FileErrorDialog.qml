@@ -5,6 +5,7 @@
 import QtQuick
 import QtQuick.Controls
 Dialog {
+    property ThemePalette themePalette: ThemePalette { targetControl: dialog; theme: dialog.theme }
     id: dialog
     required property var theme
     property string errorMessage: ""

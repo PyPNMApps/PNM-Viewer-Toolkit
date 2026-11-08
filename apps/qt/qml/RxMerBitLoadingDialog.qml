@@ -7,6 +7,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 Dialog {
+    property ThemePalette themePalette: ThemePalette { targetControl: dialog; theme: dialog.theme }
     id: dialog
     objectName: "rxmerBitLoadingDialog"
     required property var theme
@@ -72,7 +73,8 @@ Dialog {
             Layout.fillWidth: true
             enabled: !dialog.working
             Label { text: "Model"; color: dialog.theme.muted }
-            ComboBox {
+            ThemeComboBox {
+                theme: dialog.theme
                 id: model
                 objectName: "rxmerBitLoadingModel"
                 Accessible.name: "RxMER modulation model"
@@ -82,7 +84,8 @@ Dialog {
                 Layout.preferredWidth: 215
             }
             Label { text: "Margin · dB"; color: dialog.theme.muted }
-            TextField {
+            ThemeTextField {
+                theme: dialog.theme
                 id: margin
                 objectName: "rxmerBitLoadingMargin"
                 Accessible.name: "Additional RxMER margin in dB"
@@ -91,7 +94,8 @@ Dialog {
                 validator: DoubleValidator { bottom: 0; decimals: 2; notation: DoubleValidator.StandardNotation }
             }
             Label { text: "Maximum"; color: dialog.theme.muted }
-            ComboBox {
+            ThemeComboBox {
+                theme: dialog.theme
                 id: cap
                 objectName: "rxmerBitLoadingCap"
                 Accessible.name: "Maximum RxMER bit loading"
@@ -171,6 +175,7 @@ Dialog {
         RowLayout { Item { Layout.fillWidth: true } ThemeButton { theme: dialog.theme; text: "Close"; onClicked: dialog.close() } }
     }
     Dialog {
+        property ThemePalette themePalette: ThemePalette { targetControl: ratesDialog; theme: dialog.theme }
         id: ratesDialog
         objectName: "rxmerUniformRatesDialog"
         parent: Overlay.overlay

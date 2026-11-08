@@ -7,6 +7,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 Dialog {
+    property ThemePalette themePalette: ThemePalette { targetControl: dialog; theme: dialog.theme }
     id: dialog
     required property var theme
     required property var updates
@@ -40,14 +41,7 @@ Dialog {
     }
     objectName: "aboutDialog"
     title: "About PNM Viewer Toolkit"
-    palette.window: theme.background
-    palette.windowText: theme.text
-    palette.base: theme.panel
-    palette.text: theme.text
-    palette.button: theme.button
-    palette.buttonText: theme.text
-    palette.highlight: theme.accent
-    palette.highlightedText: theme.background
+
     width: 500
     modal: true
     readonly property bool installBusy: updates.install_state === "downloading" || updates.install_state === "installing" || updates.install_state === "restarting"
