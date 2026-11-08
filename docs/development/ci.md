@@ -158,6 +158,17 @@ repeated parser/compiler defects:
 | v0.2.11 | Apple Silicon constellation overlay render wait | [Job](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/42292766066/job/128152702197) |
 | v0.2.13 | Mac temporary-root symlink guard and Windows fixture bytes | [Run](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/42346987106) |
 | v0.3.0 | Apple Silicon RxMER epoch-leaf render wait | [Run](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/42348046251) |
+| v0.3.3 | Intel Mac playback polled a transient frame index | [Job](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/42506694454/job/128811910957) |
+
+The v0.3.3 Intel Mac playback test observed frame 2 while waiting for frame 1;
+134 other QML checks passed. Both Mac preflight suites passed for the same
+commit. Polling a transient frame does not reliably observe each timer event
+on a busy host. The regression now records every `frameRequested` signal and
+checks the exact `[1, 2]` playback and `[0, 1, 2]` restart sequences after
+playback stops. Pause is exercised separately with room before the final frame;
+Previous, Next and the end boundary remain checked in both themes. Production
+timer behavior is unchanged. No test is skipped or retried. Hosted Intel Mac
+confirmation still requires the next branch CI run.
 
 A local Linux/offscreen pass does not establish Cocoa event/render readiness.
 The previous static-only branch pipeline left native presentation and packaging

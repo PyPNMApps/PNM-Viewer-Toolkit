@@ -20,6 +20,11 @@ RenderTestCase {
         theme: appearance
         onFrameRequested: frameIndex=> { testCase.requested=frameIndex; controls.frameIndex=frameIndex }
     }
+    SignalSpy {
+        id: frameRequests
+        target: controls
+        signalName: "frameRequested"
+    }
     RxMerCollectionView {
         id: workspace
         y: 80; width: 1080; height: 700
@@ -31,20 +36,38 @@ RenderTestCase {
     function init() {
         controls.playing=false;controls.suspended=false;controls.frameCount=3;controls.frameIndex=0
         requested=-1
+        frameRequests.clear()
         workspace.visible=false;workspace.catalog=({});workspace.viewport=({});workspace.playbackMode=false
+    }
+    function cleanup() {
+        controls.playing=false
     }
     function test_play_pause_step_restart_and_end_data() {return [{tag:"dark",theme:1},{tag:"light",theme:2}]}
     function test_play_pause_step_restart_and_end(data) {
         appearance.preference=data.theme
         const play=findChild(controls,"rxmerPlayPause")
         verify(waitForPolish(controls));verify(waitForFrame(play))
+        // Keep Pause independent of reaching the last frame on a busy host.
+        controls.frameCount=100
         mouseClick(play);verify(controls.playing)
-        tryCompare(testCase,"requested",1,1500)
         mouseClick(play);verify(!controls.playing)
+        controls.jump(0)
+        controls.frameCount=3
+        frameRequests.clear()
+        mouseClick(play);verify(controls.playing)
+        tryCompare(controls,"playing",false,2500)
+        compare(controls.frameIndex,2)
+        // Inspect every emitted frame after completion, rather than polling
+        // frame 1 while the timer is already advancing toward frame 2.
+        compare(frameRequests.signalArguments.map(arguments=>arguments[0]),[1,2])
+        mouseClick(findChild(controls,"rxmerPreviousFrame"));compare(controls.frameIndex,1)
         mouseClick(findChild(controls,"rxmerNextFrame"));compare(controls.frameIndex,2)
         verify(!findChild(controls,"rxmerNextFrame").enabled)
+        frameRequests.clear()
         mouseClick(play);compare(controls.frameIndex,0);verify(controls.playing)
-        tryCompare(controls,"frameIndex",2,2500);verify(!controls.playing)
+        tryCompare(controls,"playing",false,2500)
+        compare(controls.frameIndex,2)
+        compare(frameRequests.signalArguments.map(arguments=>arguments[0]),[0,1,2])
         mouseClick(findChild(controls,"rxmerPreviousFrame"));compare(controls.frameIndex,1)
     }
     function test_blocking_and_one_capture_disable_playback() {
